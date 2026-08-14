@@ -17,10 +17,10 @@ import AdminShell from "@/app/components/admin/AdminShell";
 export default async function AdminDashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await requireAdminSessionOrRedirect();
 
-  const requestCounts = countRequestsByStatus();
+  const requestCounts = await countRequestsByStatus();
   const counts = {
     requests: requestCounts.new,
-    messages: countUnreadMessages(),
+    messages: await countUnreadMessages(),
   };
 
   return (

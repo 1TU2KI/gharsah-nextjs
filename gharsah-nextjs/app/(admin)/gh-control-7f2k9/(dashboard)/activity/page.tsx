@@ -12,8 +12,8 @@ const TARGET_TYPE_LABEL: Record<string, string> = {
   settings: "إعدادات",
 };
 
-export default function ActivityLogPage() {
-  const entries = listActivity(300);
+export default async function ActivityLogPage() {
+  const entries = await listActivity(300);
 
   return (
     <div>

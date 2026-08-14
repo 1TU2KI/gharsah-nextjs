@@ -17,7 +17,12 @@ export const metadata: Metadata = { title: "الإعدادات | لوحة تحك
 
 export default async function SettingsPage() {
   const session = await getAdminSession();
-  const admins = listAdmins();
+  const admins = await listAdmins();
+  const platforms = await getPlatforms();
+  const devBadgeVisible = await getDevBadgeVisible();
+  const maintenanceMessage = await getMaintenanceMessage();
+  const contactEmail = await getPublicContactEmail();
+  const defaultCampaignSort = await getDefaultCampaignSort();
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -26,13 +31,13 @@ export default async function SettingsPage() {
         <p className="mt-1 text-sm text-muted">تغييرات هنا تنعكس مباشرة على الموقع العام حسب الإعداد</p>
       </div>
 
-      <PlatformsSettings initialPlatforms={getPlatforms()} />
+      <PlatformsSettings initialPlatforms={platforms} />
 
       <GeneralSettingsForm
-        devBadgeVisible={getDevBadgeVisible()}
-        maintenanceMessage={getMaintenanceMessage()}
-        contactEmail={getPublicContactEmail()}
-        defaultCampaignSort={getDefaultCampaignSort()}
+        devBadgeVisible={devBadgeVisible}
+        maintenanceMessage={maintenanceMessage}
+        contactEmail={contactEmail}
+        defaultCampaignSort={defaultCampaignSort}
       />
 
       <ChangePasswordForm />

@@ -4,8 +4,8 @@ import MessagesTable from "@/app/components/admin/MessagesTable";
 
 export const metadata: Metadata = { title: "الرسائل | لوحة تحكم غرسة" };
 
-export default function MessagesPage() {
-  const rows = listContactMessages({ includeArchived: true });
+export default async function MessagesPage() {
+  const rows = await listContactMessages({ includeArchived: true });
 
   return (
     <div>

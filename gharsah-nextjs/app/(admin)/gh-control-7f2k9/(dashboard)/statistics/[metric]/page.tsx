@@ -101,12 +101,12 @@ export default async function MetricDrilldownPage({ params, searchParams }: Page
 
 type SeriesFn = (rows: { day: string; count: number }[]) => { label: string; value: number }[];
 
-function VisitsDetail({ sinceIso, toSeries }: { sinceIso: string | null; toSeries: SeriesFn }) {
-  const visits = getVisitTotals();
-  const pageViews = pageViewsByRoute();
-  const referrers = referrerBreakdown();
-  const devices = deviceBreakdown();
-  const series = toSeries(visitsByDay(sinceIso));
+async function VisitsDetail({ sinceIso, toSeries }: { sinceIso: string | null; toSeries: SeriesFn }) {
+  const visits = await getVisitTotals();
+  const pageViews = await pageViewsByRoute();
+  const referrers = await referrerBreakdown();
+  const devices = await deviceBreakdown();
+  const series = toSeries(await visitsByDay(sinceIso));
 
   return (
     <div className="space-y-6">
@@ -137,14 +137,14 @@ function VisitsDetail({ sinceIso, toSeries }: { sinceIso: string | null; toSerie
   );
 }
 
-function UniqueVisitorsDetail({ sinceIso, toSeries }: { sinceIso: string | null; toSeries: SeriesFn }) {
-  const visits = getVisitTotals();
-  const newVsReturning = newVsReturningVisitorsByDay(sinceIso);
+async function UniqueVisitorsDetail({ sinceIso, toSeries }: { sinceIso: string | null; toSeries: SeriesFn }) {
+  const visits = await getVisitTotals();
+  const newVsReturning = await newVsReturningVisitorsByDay(sinceIso);
   const totalNew = newVsReturning.reduce((sum, r) => sum + r.newCount, 0);
   const totalReturning = newVsReturning.reduce((sum, r) => sum + r.returningCount, 0);
-  const uniqueSeries = toSeries(uniqueVisitorsByDay(sinceIso));
-  const devices = deviceBreakdown();
-  const referrers = referrerBreakdown();
+  const uniqueSeries = toSeries(await uniqueVisitorsByDay(sinceIso));
+  const devices = await deviceBreakdown();
+  const referrers = await referrerBreakdown();
 
   return (
     <div className="space-y-6">
@@ -180,11 +180,11 @@ function UniqueVisitorsDetail({ sinceIso, toSeries }: { sinceIso: string | null;
   );
 }
 
-function CampaignViewsDetail({ sinceIso, toSeries }: { sinceIso: string | null; toSeries: SeriesFn }) {
-  const total = countEventsByType("campaign_detail_view");
-  const engagement = campaignEngagement();
+async function CampaignViewsDetail({ sinceIso, toSeries }: { sinceIso: string | null; toSeries: SeriesFn }) {
+  const total = await countEventsByType("campaign_detail_view");
+  const engagement = await campaignEngagement();
   const mostViewed = [...engagement].sort((a, b) => b.views - a.views).slice(0, 10);
-  const series = toSeries(eventCountsByDay(["campaign_detail_view"], sinceIso));
+  const series = toSeries(await eventCountsByDay(["campaign_detail_view"], sinceIso));
 
   return (
     <div className="space-y-6">
@@ -208,12 +208,12 @@ function CampaignViewsDetail({ sinceIso, toSeries }: { sinceIso: string | null; 
   );
 }
 
-function DonationClicksDetail({ sinceIso, toSeries }: { sinceIso: string | null; toSeries: SeriesFn }) {
-  const total = countEventsByType("donation_click");
-  const engagement = campaignEngagement();
+async function DonationClicksDetail({ sinceIso, toSeries }: { sinceIso: string | null; toSeries: SeriesFn }) {
+  const total = await countEventsByType("donation_click");
+  const engagement = await campaignEngagement();
   const mostClicked = [...engagement].sort((a, b) => b.donationClicks - a.donationClicks).slice(0, 10);
   const highestCtr = [...engagement].filter((c) => c.views > 0).sort((a, b) => b.ctr - a.ctr).slice(0, 10);
-  const series = toSeries(eventCountsByDay(["donation_click"], sinceIso));
+  const series = toSeries(await eventCountsByDay(["donation_click"], sinceIso));
 
   return (
     <div className="space-y-6">
@@ -244,11 +244,11 @@ function DonationClicksDetail({ sinceIso, toSeries }: { sinceIso: string | null;
   );
 }
 
-function LinkCopiesDetail({ sinceIso, toSeries }: { sinceIso: string | null; toSeries: SeriesFn }) {
-  const total = countEventsByType("campaign_link_copy");
-  const engagement = campaignEngagement();
+async function LinkCopiesDetail({ sinceIso, toSeries }: { sinceIso: string | null; toSeries: SeriesFn }) {
+  const total = await countEventsByType("campaign_link_copy");
+  const engagement = await campaignEngagement();
   const mostCopied = [...engagement].sort((a, b) => b.linkCopies - a.linkCopies).slice(0, 10);
-  const series = toSeries(eventCountsByDay(["campaign_link_copy"], sinceIso));
+  const series = toSeries(await eventCountsByDay(["campaign_link_copy"], sinceIso));
 
   return (
     <div className="space-y-6">
@@ -271,10 +271,10 @@ function LinkCopiesDetail({ sinceIso, toSeries }: { sinceIso: string | null; toS
   );
 }
 
-function RandomPickerDetail({ sinceIso, toSeries }: { sinceIso: string | null; toSeries: SeriesFn }) {
-  const stats = randomFeatureStats();
+async function RandomPickerDetail({ sinceIso, toSeries }: { sinceIso: string | null; toSeries: SeriesFn }) {
+  const stats = await randomFeatureStats();
   const followThroughRate = stats.selectedCount > 0 ? Math.round((stats.followedToDonation / stats.selectedCount) * 100) : 0;
-  const series = toSeries(eventCountsByDay(["random_campaign_use"], sinceIso));
+  const series = toSeries(await eventCountsByDay(["random_campaign_use"], sinceIso));
 
   return (
     <div className="space-y-6">
@@ -295,14 +295,14 @@ function RandomPickerDetail({ sinceIso, toSeries }: { sinceIso: string | null; t
   );
 }
 
-function RequestsDetail({ toSeries, statusFilter }: { toSeries: SeriesFn; statusFilter?: string }) {
-  const counts = countRequestsByStatus();
+async function RequestsDetail({ toSeries, statusFilter }: { toSeries: SeriesFn; statusFilter?: string }) {
+  const counts = await countRequestsByStatus();
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
   const acceptanceRate = total > 0 ? Math.round((counts.completed / total) * 100) : 0;
-  const series = toSeries(requestsCreatedByDay());
+  const series = toSeries(await requestsCreatedByDay());
 
   const validStatus = statusFilter && statusFilter in REQUEST_STATUS_LABEL ? (statusFilter as RequestStatus) : null;
-  let recent = listCampaignRequests();
+  let recent = await listCampaignRequests();
   if (validStatus) recent = recent.filter((r) => r.status === validStatus);
   recent = recent.slice(0, 10);
 
@@ -343,7 +343,7 @@ function RequestsDetail({ toSeries, statusFilter }: { toSeries: SeriesFn; status
   );
 }
 
-function RequestsMiniTable({ rows }: { rows: ReturnType<typeof listCampaignRequests> }) {
+function RequestsMiniTable({ rows }: { rows: Awaited<ReturnType<typeof listCampaignRequests>> }) {
   if (rows.length === 0) return <p className="py-6 text-center text-sm text-muted">{NO_DATA_YET}</p>;
   return (
     <div className="overflow-x-auto">
@@ -377,13 +377,13 @@ function RequestsMiniTable({ rows }: { rows: ReturnType<typeof listCampaignReque
   );
 }
 
-function MessagesDetail({ toSeries, readFilter }: { toSeries: SeriesFn; readFilter?: string }) {
-  const all = listContactMessages({ includeArchived: true });
+async function MessagesDetail({ toSeries, readFilter }: { toSeries: SeriesFn; readFilter?: string }) {
+  const all = await listContactMessages({ includeArchived: true });
   const active = all.filter((m) => !m.archived_at);
   const unread = active.filter((m) => m.is_read === 0).length;
   const read = active.filter((m) => m.is_read === 1).length;
   const archived = all.length - active.length;
-  const series = toSeries(messagesCreatedByDay());
+  const series = toSeries(await messagesCreatedByDay());
 
   let recent = active;
   if (readFilter === "unread") recent = recent.filter((m) => m.is_read === 0);
@@ -426,7 +426,7 @@ function MessagesDetail({ toSeries, readFilter }: { toSeries: SeriesFn; readFilt
   );
 }
 
-function MessagesMiniTable({ rows }: { rows: ReturnType<typeof listContactMessages> }) {
+function MessagesMiniTable({ rows }: { rows: Awaited<ReturnType<typeof listContactMessages>> }) {
   if (rows.length === 0) return <p className="py-6 text-center text-sm text-muted">{NO_DATA_YET}</p>;
   return (
     <div className="overflow-x-auto">

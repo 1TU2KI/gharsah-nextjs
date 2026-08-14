@@ -13,9 +13,9 @@ import { getDevBadgeVisible, getMaintenanceMessage } from "@/app/lib/db/settings
  * which has its own layout under `app/(admin)/`. The route group's parens
  * add no URL segment, so every public path is unchanged.
  */
-export default function SiteLayout({ children }: { children: React.ReactNode }) {
-  const devBadgeVisible = getDevBadgeVisible();
-  const maintenanceMessage = getMaintenanceMessage();
+export default async function SiteLayout({ children }: { children: React.ReactNode }) {
+  const devBadgeVisible = await getDevBadgeVisible();
+  const maintenanceMessage = await getMaintenanceMessage();
 
   return (
     <LanguageProvider>

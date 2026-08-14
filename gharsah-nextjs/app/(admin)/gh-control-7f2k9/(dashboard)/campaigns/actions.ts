@@ -193,17 +193,17 @@ export async function createCampaignAction(
     return { fieldErrors: parsed.error.flatten().fieldErrors as CampaignFormFieldErrors, formError: null };
   }
 
-  if (isSlugTaken(parsed.data.slug)) {
+  if (await isSlugTaken(parsed.data.slug)) {
     return { fieldErrors: { slug: "هذا الرابط الداخلي مستخدم بالفعل" }, formError: null };
   }
 
   const input = await buildCampaignInput(parsed.data);
-  const row = createCampaignRow(input);
+  const row = await createCampaignRow(input);
 
   const sourceRequestId = String(formData.get("sourceRequestId") ?? "").trim();
   if (sourceRequestId) {
-    markCampaignRequestConverted(sourceRequestId, row.id);
-    logActivity({
+    await markCampaignRequestConverted(sourceRequestId, row.id);
+    await logActivity({
       action: "request_converted",
       targetType: "request",
       targetId: sourceRequestId,
@@ -212,7 +212,7 @@ export async function createCampaignAction(
     });
   }
 
-  logActivity({
+  await logActivity({
     action: "campaign_created",
     targetType: "campaign",
     targetId: row.id,
@@ -231,7 +231,7 @@ export async function updateCampaignAction(
 ): Promise<CampaignFormState> {
   const session = await requireAdminSession();
 
-  const existing = getCampaignRowById(id);
+  const existing = await getCampaignRowById(id);
   if (!existing) return { fieldErrors: {}, formError: "الحملة غير موجودة." };
 
   const parsed = parseForm(formData);
@@ -239,15 +239,15 @@ export async function updateCampaignAction(
     return { fieldErrors: parsed.error.flatten().fieldErrors as CampaignFormFieldErrors, formError: null };
   }
 
-  if (isSlugTaken(parsed.data.slug, id)) {
+  if (await isSlugTaken(parsed.data.slug, id)) {
     return { fieldErrors: { slug: "هذا الرابط الداخلي مستخدم بالفعل" }, formError: null };
   }
 
   const statusChanged = existing.status !== parsed.data.status;
   const input = await buildCampaignInput(parsed.data, existing);
-  updateCampaignRow(id, input);
+  await updateCampaignRow(id, input);
 
-  logActivity({
+  await logActivity({
     action: "campaign_updated",
     targetType: "campaign",
     targetId: id,
@@ -255,7 +255,7 @@ export async function updateCampaignAction(
     adminUsername: session.username,
   });
   if (statusChanged) {
-    logActivity({
+    await logActivity({
       action: "campaign_status_changed",
       targetType: "campaign",
       targetId: id,
@@ -278,7 +278,7 @@ export async function updateCampaignAction(
 /** Re-attempts translation for title/description/relation regardless of whether they changed (bypasses buildCampaignInput's normal change-detection via `forceRetranslate`) — used after a prior failure, or to force-regenerate English without touching the Arabic. memorialPrefix is unaffected by this and resolves exactly as it would on a normal edit (from its fixed lookup). */
 export async function retryCampaignTranslationAction(id: string): Promise<{ error: string | null }> {
   const session = await requireAdminSession();
-  const existing = getCampaignRowById(id);
+  const existing = await getCampaignRowById(id);
   if (!existing) return { error: "الحملة غير موجودة." };
 
   const input = await buildCampaignInput(
@@ -298,8 +298,8 @@ export async function retryCampaignTranslationAction(id: string): Promise<{ erro
     { forceRetranslate: true }, // title/description/relation re-translate regardless of whether they "changed" (they haven't, since the values above came straight from `existing`)
   );
 
-  updateCampaignRow(id, input);
-  logActivity({
+  await updateCampaignRow(id, input);
+  await logActivity({
     action: "campaign_updated",
     targetType: "campaign",
     targetId: id,
@@ -314,11 +314,11 @@ export async function retryCampaignTranslationAction(id: string): Promise<{ erro
 
 export async function deleteCampaignAction(id: string): Promise<void> {
   const session = await requireAdminSession();
-  const existing = getCampaignRowById(id);
+  const existing = await getCampaignRowById(id);
   if (!existing) return;
 
-  deleteCampaignRow(id);
-  logActivity({
+  await deleteCampaignRow(id);
+  await logActivity({
     action: "campaign_deleted",
     targetType: "campaign",
     targetId: id,
@@ -330,11 +330,11 @@ export async function deleteCampaignAction(id: string): Promise<void> {
 
 export async function setCampaignArchivedAction(id: string, archived: boolean): Promise<void> {
   const session = await requireAdminSession();
-  const existing = getCampaignRowById(id);
+  const existing = await getCampaignRowById(id);
   if (!existing) return;
 
-  setCampaignArchived(id, archived);
-  logActivity({
+  await setCampaignArchived(id, archived);
+  await logActivity({
     action: archived ? "campaign_archived" : "campaign_restored",
     targetType: "campaign",
     targetId: id,
@@ -346,10 +346,10 @@ export async function setCampaignArchivedAction(id: string, archived: boolean): 
 
 export async function duplicateCampaignAction(id: string): Promise<void> {
   const session = await requireAdminSession();
-  const duplicate = duplicateCampaignRow(id);
+  const duplicate = await duplicateCampaignRow(id);
   if (!duplicate) return;
 
-  logActivity({
+  await logActivity({
     action: "campaign_duplicated",
     targetType: "campaign",
     targetId: duplicate.id,
@@ -362,11 +362,11 @@ export async function duplicateCampaignAction(id: string): Promise<void> {
 
 export async function quickChangeStatusAction(id: string, status: "active" | "completed"): Promise<void> {
   const session = await requireAdminSession();
-  const existing = getCampaignRowById(id);
+  const existing = await getCampaignRowById(id);
   if (!existing) return;
 
-  updateCampaignStatus(id, status);
-  logActivity({
+  await updateCampaignStatus(id, status);
+  await logActivity({
     action: "campaign_status_changed",
     targetType: "campaign",
     targetId: id,
@@ -379,8 +379,8 @@ export async function quickChangeStatusAction(id: string, status: "active" | "co
 
 export async function moveCampaignAction(id: string, direction: "up" | "down"): Promise<void> {
   const session = await requireAdminSession();
-  moveCampaignRow(id, direction);
-  logActivity({
+  await moveCampaignRow(id, direction);
+  await logActivity({
     action: "campaign_reordered",
     targetType: "campaign",
     targetId: id,
@@ -393,8 +393,8 @@ export async function moveCampaignAction(id: string, direction: "up" | "down"): 
 
 export async function reorderCampaignsAction(orderedIds: string[]): Promise<void> {
   const session = await requireAdminSession();
-  reorderCampaignRows(orderedIds);
-  logActivity({
+  await reorderCampaignRows(orderedIds);
+  await logActivity({
     action: "campaign_reordered",
     targetType: "campaign",
     targetId: null,
@@ -407,8 +407,8 @@ export async function reorderCampaignsAction(orderedIds: string[]): Promise<void
 
 export async function setCampaignPositionAction(id: string, position: number): Promise<void> {
   const session = await requireAdminSession();
-  setCampaignPosition(id, position);
-  logActivity({
+  await setCampaignPosition(id, position);
+  await logActivity({
     action: "campaign_reordered",
     targetType: "campaign",
     targetId: id,

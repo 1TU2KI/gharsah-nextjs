@@ -30,7 +30,7 @@ export async function login(_prevState: LoginState, formData: FormData): Promise
     return { error: "الرجاء إدخال اسم المستخدم وكلمة المرور." };
   }
 
-  const admin = verifyAdminCredentials(username, password);
+  const admin = await verifyAdminCredentials(username, password);
   if (!admin) {
     recordFailedAttempt(clientKey);
     return { error: "اسم المستخدم أو كلمة المرور غير صحيحة." };
@@ -48,7 +48,7 @@ export async function login(_prevState: LoginState, formData: FormData): Promise
     maxAge: SESSION_MAX_AGE_SECONDS,
   });
 
-  logActivity({
+  await logActivity({
     action: "admin_login",
     targetType: "admin",
     targetId: admin.id,
@@ -67,7 +67,7 @@ export async function logout(): Promise<void> {
   if (token) {
     const session = await verifySessionToken(token);
     if (session) {
-      logActivity({
+      await logActivity({
         action: "admin_logout",
         targetType: "admin",
         targetId: session.sub,

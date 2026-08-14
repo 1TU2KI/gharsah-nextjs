@@ -4,8 +4,8 @@ import RequestsTable from "@/app/components/admin/RequestsTable";
 
 export const metadata: Metadata = { title: "الطلبات | لوحة تحكم غرسة" };
 
-export default function RequestsPage() {
-  const rows = listCampaignRequests({ includeArchived: true });
+export default async function RequestsPage() {
+  const rows = await listCampaignRequests({ includeArchived: true });
 
   return (
     <div>

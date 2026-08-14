@@ -8,9 +8,9 @@ import CampaignsTable from "@/app/components/admin/CampaignsTable";
 
 export const metadata: Metadata = { title: "الحملات | لوحة تحكم غرسة" };
 
-export default function CampaignsListPage() {
-  const rows = listAllCampaignRows();
-  const engagement = campaignEngagement();
+export default async function CampaignsListPage() {
+  const rows = await listAllCampaignRows();
+  const engagement = await campaignEngagement();
 
   return (
     <div>

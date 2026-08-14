@@ -20,10 +20,10 @@ export default async function EditCampaignPage({
 }) {
   const { id } = await params;
   const { created } = await searchParams;
-  const campaign = getCampaignRowById(id);
+  const campaign = await getCampaignRowById(id);
   if (!campaign) notFound();
 
-  const platforms = getPlatforms();
+  const platforms = await getPlatforms();
   const boundAction = updateCampaignAction.bind(null, id);
 
   const initialValues: CampaignFormValues = {
@@ -41,7 +41,8 @@ export default async function EditCampaignPage({
     percent: campaign.percent !== null ? String(campaign.percent) : "",
   };
 
-  const engagement = campaignEngagement().find((c) => c.campaignId === id);
+  const engagementRows = await campaignEngagement();
+  const engagement = engagementRows.find((c) => c.campaignId === id);
 
   const translation: CampaignTranslationInfo = {
     titleEn: campaign.title_en,

@@ -1,6 +1,6 @@
-import type { DatabaseSync } from "node:sqlite";
 import { randomUUID } from "node:crypto";
 import { hashPassword } from "../auth/password";
+import type { RawQuery } from "./client";
 
 /**
  * The 22 campaigns that used to live as a hardcoded array in
@@ -355,23 +355,21 @@ const SEED_CAMPAIGNS = [
   },
 ];
 
-export function runSeed(database: DatabaseSync): void {
-  const { count } = database.prepare("SELECT COUNT(*) as count FROM campaigns").get() as { count: number };
-  if (count === 0) {
+export async function runSeed(rawQuery: RawQuery): Promise<void> {
+  const [{ count }] = await rawQuery<{ count: string | number }>("SELECT COUNT(*)::int as count FROM campaigns");
+  if (Number(count) === 0) {
     // translation_status is hardcoded 'ok' below: this seed data's English
     // was hand-authored (see git history), not AI-translated, and is
     // trustworthy as-is — it should never be flagged as a translation
     // failure needing a retry. description_source/title_source are both
     // 'manual' for the same reason — none of it was fetched from Ehsan by
     // this feature.
-    const insert = database.prepare(
-      `INSERT INTO campaigns
-        (id, slug, order_index, url, platform, memorial_prefix_ar, memorial_prefix_en, username, relation_ar, relation_en, title_ar, title_en, status, description_ar, description_en, percent, archived_at, created_at, updated_at, translation_status, translation_error, description_source, title_source)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, ?, ?, 'ok', NULL, 'manual', 'manual')`,
-    );
+    const insertSql = `INSERT INTO campaigns
+      (id, slug, order_index, url, platform, memorial_prefix_ar, memorial_prefix_en, username, relation_ar, relation_en, title_ar, title_en, status, description_ar, description_en, percent, archived_at, created_at, updated_at, translation_status, translation_error, description_source, title_source)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, ?, ?, 'ok', NULL, 'manual', 'manual')`;
     const now = new Date().toISOString();
     for (const c of SEED_CAMPAIGNS) {
-      insert.run(
+      await rawQuery(insertSql, [
         randomUUID(),
         c.slug,
         c.orderIndex,
@@ -389,28 +387,27 @@ export function runSeed(database: DatabaseSync): void {
         c.descriptionEn,
         now,
         now,
-      );
+      ]);
     }
     console.warn(`[db] Seeded ${SEED_CAMPAIGNS.length} campaigns from the original static dataset.`);
   }
 
-  bootstrapAdmin(database);
+  await bootstrapAdmin(rawQuery);
 }
 
 /**
  * Creates the first admin account from ADMIN_USERNAME/ADMIN_PASSWORD if the
- * `admins` table is still empty. Deliberately takes the raw `database`
- * handle as a parameter and does its own inline INSERT rather than calling
- * into `./admins` (which imports the `db` singleton from `./client`) —
- * this runs from inside `client.ts`'s own `createDb()`, before that
- * module's `export const db = ...` has finished initializing, so importing
- * the singleton here would hit the temporal dead zone. `./admins`'s own
- * `ensureBootstrapAdmin` does the same check for any other future caller
- * that already has a fully-initialized `db` to work with.
+ * `admins` table is still empty. Takes the raw, ungated query function as a
+ * parameter rather than importing the `db/admins.ts` helpers — this runs
+ * from inside `client.ts`'s own `initialize()`, before initialization has
+ * completed, so going through the gated `all/get/run` wrappers (which await
+ * that same initialization) would deadlock. `./admins`'s own
+ * `verifyAdminCredentials` etc. are for any other caller that already has a
+ * fully-initialized database to work with.
  */
-function bootstrapAdmin(database: DatabaseSync): void {
-  const { count } = database.prepare("SELECT COUNT(*) as count FROM admins").get() as { count: number };
-  if (count > 0) return;
+async function bootstrapAdmin(rawQuery: RawQuery): Promise<void> {
+  const [{ count }] = await rawQuery<{ count: string | number }>("SELECT COUNT(*)::int as count FROM admins");
+  if (Number(count) > 0) return;
 
   const username = process.env.ADMIN_USERNAME;
   const password = process.env.ADMIN_PASSWORD;
@@ -422,8 +419,12 @@ function bootstrapAdmin(database: DatabaseSync): void {
   }
 
   const { hash, salt } = hashPassword(password);
-  database
-    .prepare("INSERT INTO admins (id, username, password_hash, password_salt, created_at) VALUES (?, ?, ?, ?, ?)")
-    .run(randomUUID(), username, hash, salt, new Date().toISOString());
+  await rawQuery("INSERT INTO admins (id, username, password_hash, password_salt, created_at) VALUES (?, ?, ?, ?, ?)", [
+    randomUUID(),
+    username,
+    hash,
+    salt,
+    new Date().toISOString(),
+  ]);
   console.warn(`[admin] Bootstrapped initial admin account "${username}" from environment variables.`);
 }

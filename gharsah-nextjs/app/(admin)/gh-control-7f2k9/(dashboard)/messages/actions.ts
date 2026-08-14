@@ -18,11 +18,11 @@ function refresh(id: string) {
 
 export async function markMessageReadAction(id: string, isRead: boolean): Promise<void> {
   const session = await requireAdminSession();
-  const existing = getContactMessageById(id);
+  const existing = await getContactMessageById(id);
   if (!existing) return;
 
-  setContactMessageRead(id, isRead);
-  logActivity({
+  await setContactMessageRead(id, isRead);
+  await logActivity({
     action: "message_read_changed",
     targetType: "message",
     targetId: id,
@@ -35,11 +35,11 @@ export async function markMessageReadAction(id: string, isRead: boolean): Promis
 
 export async function updateMessageNotesAction(id: string, notes: string): Promise<void> {
   const session = await requireAdminSession();
-  const existing = getContactMessageById(id);
+  const existing = await getContactMessageById(id);
   if (!existing) return;
 
-  updateContactMessageNotes(id, notes);
-  logActivity({
+  await updateContactMessageNotes(id, notes);
+  await logActivity({
     action: "message_note_added",
     targetType: "message",
     targetId: id,
@@ -51,11 +51,11 @@ export async function updateMessageNotesAction(id: string, notes: string): Promi
 
 export async function setMessageArchivedAction(id: string, archived: boolean): Promise<void> {
   const session = await requireAdminSession();
-  const existing = getContactMessageById(id);
+  const existing = await getContactMessageById(id);
   if (!existing) return;
 
-  setContactMessageArchived(id, archived);
-  logActivity({
+  await setContactMessageArchived(id, archived);
+  await logActivity({
     action: "message_archived",
     targetType: "message",
     targetId: id,

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { db } from "./client";
+import { all, get, run } from "./client";
 import { toPlain, toPlainArray } from "./utils";
 
 export type CampaignStatusDb = "active" | "completed" | "closed";
@@ -57,47 +57,45 @@ export type CampaignInput = {
 };
 
 /** Every non-archived campaign, in display order — the exact set/order the public site renders. */
-export function listCampaignRows(): CampaignRow[] {
+export async function listCampaignRows(): Promise<CampaignRow[]> {
   return toPlainArray(
-    db.prepare("SELECT * FROM campaigns WHERE archived_at IS NULL ORDER BY order_index ASC").all() as CampaignRow[],
+    await all<CampaignRow>("SELECT * FROM campaigns WHERE archived_at IS NULL ORDER BY order_index ASC"),
   );
 }
 
 /** Admin-only: includes archived campaigns, for the "show archived" filter. */
-export function listAllCampaignRows(): CampaignRow[] {
-  return toPlainArray(db.prepare("SELECT * FROM campaigns ORDER BY order_index ASC").all() as CampaignRow[]);
+export async function listAllCampaignRows(): Promise<CampaignRow[]> {
+  return toPlainArray(await all<CampaignRow>("SELECT * FROM campaigns ORDER BY order_index ASC"));
 }
 
-export function getCampaignRowBySlug(slug: string): CampaignRow | undefined {
-  const row = db.prepare("SELECT * FROM campaigns WHERE slug = ? AND archived_at IS NULL").get(slug) as
-    | CampaignRow
-    | undefined;
+export async function getCampaignRowBySlug(slug: string): Promise<CampaignRow | undefined> {
+  const row = await get<CampaignRow>("SELECT * FROM campaigns WHERE slug = ? AND archived_at IS NULL", [slug]);
   return row ? toPlain(row) : undefined;
 }
 
-export function getCampaignRowById(id: string): CampaignRow | undefined {
-  const row = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(id) as CampaignRow | undefined;
+export async function getCampaignRowById(id: string): Promise<CampaignRow | undefined> {
+  const row = await get<CampaignRow>("SELECT * FROM campaigns WHERE id = ?", [id]);
   return row ? toPlain(row) : undefined;
 }
 
-export function isSlugTaken(slug: string, excludeId?: string): boolean {
+export async function isSlugTaken(slug: string, excludeId?: string): Promise<boolean> {
   const row = excludeId
-    ? db.prepare("SELECT id FROM campaigns WHERE slug = ? AND id != ?").get(slug, excludeId)
-    : db.prepare("SELECT id FROM campaigns WHERE slug = ?").get(slug);
+    ? await get("SELECT id FROM campaigns WHERE slug = ? AND id != ?", [slug, excludeId])
+    : await get("SELECT id FROM campaigns WHERE slug = ?", [slug]);
   return row !== undefined;
 }
 
-function nextOrderIndex(): number {
-  const row = db.prepare("SELECT MAX(order_index) as maxOrder FROM campaigns").get() as { maxOrder: number | null };
-  return (row.maxOrder ?? 0) + 1;
+async function nextOrderIndex(): Promise<number> {
+  const row = await get<{ maxOrder: number | null }>("SELECT MAX(order_index) as maxOrder FROM campaigns");
+  return (row?.maxOrder ?? 0) + 1;
 }
 
-export function createCampaignRow(input: CampaignInput): CampaignRow {
+export async function createCampaignRow(input: CampaignInput): Promise<CampaignRow> {
   const now = new Date().toISOString();
   const row: CampaignRow = {
     id: randomUUID(),
     slug: input.slug,
-    order_index: nextOrderIndex(),
+    order_index: await nextOrderIndex(),
     url: input.url,
     platform: input.platform,
     memorial_prefix_ar: input.memorialPrefixAr ?? null,
@@ -120,72 +118,74 @@ export function createCampaignRow(input: CampaignInput): CampaignRow {
     description_source: input.descriptionSource ?? null,
     title_source: input.titleSource ?? null,
   };
-  db.prepare(
+  await run(
     `INSERT INTO campaigns
       (id, slug, order_index, url, platform, memorial_prefix_ar, memorial_prefix_en, username, relation_ar, relation_en, title_ar, title_en, status, description_ar, description_en, percent, archived_at, created_at, updated_at, completed_at, translation_status, translation_error, description_source, title_source)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-  ).run(
-    row.id,
-    row.slug,
-    row.order_index,
-    row.url,
-    row.platform,
-    row.memorial_prefix_ar,
-    row.memorial_prefix_en,
-    row.username,
-    row.relation_ar,
-    row.relation_en,
-    row.title_ar,
-    row.title_en,
-    row.status,
-    row.description_ar,
-    row.description_en,
-    row.percent,
-    row.archived_at,
-    row.created_at,
-    row.updated_at,
-    row.completed_at,
-    row.translation_status,
-    row.translation_error,
-    row.description_source,
-    row.title_source,
+    [
+      row.id,
+      row.slug,
+      row.order_index,
+      row.url,
+      row.platform,
+      row.memorial_prefix_ar,
+      row.memorial_prefix_en,
+      row.username,
+      row.relation_ar,
+      row.relation_en,
+      row.title_ar,
+      row.title_en,
+      row.status,
+      row.description_ar,
+      row.description_en,
+      row.percent,
+      row.archived_at,
+      row.created_at,
+      row.updated_at,
+      row.completed_at,
+      row.translation_status,
+      row.translation_error,
+      row.description_source,
+      row.title_source,
+    ],
   );
   return row;
 }
 
-export function updateCampaignRow(id: string, input: CampaignInput): CampaignRow | undefined {
-  const existing = getCampaignRowById(id);
+export async function updateCampaignRow(id: string, input: CampaignInput): Promise<CampaignRow | undefined> {
+  const existing = await getCampaignRowById(id);
   const completedAt = resolveCompletedAt(existing?.status, existing?.completed_at ?? null, input.status);
 
-  db.prepare(
+  await run(
     `UPDATE campaigns SET
       slug = ?, url = ?, platform = ?, memorial_prefix_ar = ?, memorial_prefix_en = ?, username = ?,
       relation_ar = ?, relation_en = ?, title_ar = ?, title_en = ?, status = ?,
       description_ar = ?, description_en = ?, percent = ?, updated_at = ?, completed_at = ?,
       translation_status = ?, translation_error = ?, description_source = ?, title_source = ?
      WHERE id = ?`,
-  ).run(
-    input.slug,
-    input.url,
-    input.platform,
-    input.memorialPrefixAr ?? null,
-    input.memorialPrefixEn ?? null,
-    input.username ?? null,
-    input.relationAr,
-    input.relationEn,
-    input.titleAr,
-    input.titleEn,
-    input.status,
-    input.descriptionAr ?? null,
-    input.descriptionEn,
-    input.percent ?? null,
-    new Date().toISOString(),
-    completedAt,
-    input.translationStatus,
-    input.translationError ?? null,
-    input.descriptionSource ?? null,
-    input.titleSource ?? null,
-    id,
+    [
+      input.slug,
+      input.url,
+      input.platform,
+      input.memorialPrefixAr ?? null,
+      input.memorialPrefixEn ?? null,
+      input.username ?? null,
+      input.relationAr,
+      input.relationEn,
+      input.titleAr,
+      input.titleEn,
+      input.status,
+      input.descriptionAr ?? null,
+      input.descriptionEn,
+      input.percent ?? null,
+      new Date().toISOString(),
+      completedAt,
+      input.translationStatus,
+      input.translationError ?? null,
+      input.descriptionSource ?? null,
+      input.titleSource ?? null,
+      id,
+    ],
   );
   return getCampaignRowById(id);
 }
@@ -208,37 +208,37 @@ function resolveCompletedAt(
   return new Date().toISOString();
 }
 
-export function updateCampaignStatus(id: string, status: CampaignStatusDb): void {
-  const existing = getCampaignRowById(id);
+export async function updateCampaignStatus(id: string, status: CampaignStatusDb): Promise<void> {
+  const existing = await getCampaignRowById(id);
   const completedAt = resolveCompletedAt(existing?.status, existing?.completed_at ?? null, status);
-  db.prepare("UPDATE campaigns SET status = ?, completed_at = ?, updated_at = ? WHERE id = ?").run(
+  await run("UPDATE campaigns SET status = ?, completed_at = ?, updated_at = ? WHERE id = ?", [
     status,
     completedAt,
     new Date().toISOString(),
     id,
-  );
+  ]);
 }
 
-export function deleteCampaignRow(id: string): void {
-  db.prepare("DELETE FROM campaigns WHERE id = ?").run(id);
+export async function deleteCampaignRow(id: string): Promise<void> {
+  await run("DELETE FROM campaigns WHERE id = ?", [id]);
 }
 
-export function setCampaignArchived(id: string, archived: boolean): void {
-  db.prepare("UPDATE campaigns SET archived_at = ?, updated_at = ? WHERE id = ?").run(
+export async function setCampaignArchived(id: string, archived: boolean): Promise<void> {
+  await run("UPDATE campaigns SET archived_at = ?, updated_at = ? WHERE id = ?", [
     archived ? new Date().toISOString() : null,
     new Date().toISOString(),
     id,
-  );
+  ]);
 }
 
 /** Copies every field except identity (new id/slug) and ordering (appended at the end), status carried over unchanged. */
-export function duplicateCampaignRow(id: string): CampaignRow | undefined {
-  const source = getCampaignRowById(id);
+export async function duplicateCampaignRow(id: string): Promise<CampaignRow | undefined> {
+  const source = await getCampaignRowById(id);
   if (!source) return undefined;
 
   let candidateSlug = `${source.slug}-copy`;
   let suffix = 2;
-  while (isSlugTaken(candidateSlug)) {
+  while (await isSlugTaken(candidateSlug)) {
     candidateSlug = `${source.slug}-copy-${suffix}`;
     suffix += 1;
   }
@@ -272,17 +272,16 @@ export function duplicateCampaignRow(id: string): CampaignRow | undefined {
 }
 
 /** Full reorder: `orderedIds` is the complete new top-to-bottom id order (drag-and-drop drop result). Ids not present keep their relative order appended after. */
-export function reorderCampaignRows(orderedIds: string[]): void {
-  const update = db.prepare("UPDATE campaigns SET order_index = ?, updated_at = ? WHERE id = ?");
+export async function reorderCampaignRows(orderedIds: string[]): Promise<void> {
   const now = new Date().toISOString();
-  orderedIds.forEach((id, index) => {
-    update.run(index + 1, now, id);
-  });
+  for (const [index, id] of orderedIds.entries()) {
+    await run("UPDATE campaigns SET order_index = ?, updated_at = ? WHERE id = ?", [index + 1, now, id]);
+  }
 }
 
 /** Single-step move (the accessible up/down-button fallback to drag-and-drop): swaps order_index with the adjacent campaign in the full (non-archived) list. */
-export function moveCampaignRow(id: string, direction: "up" | "down"): void {
-  const rows = listCampaignRows();
+export async function moveCampaignRow(id: string, direction: "up" | "down"): Promise<void> {
+  const rows = await listCampaignRows();
   const index = rows.findIndex((row) => row.id === id);
   if (index === -1) return;
   const swapIndex = direction === "up" ? index - 1 : index + 1;
@@ -291,16 +290,8 @@ export function moveCampaignRow(id: string, direction: "up" | "down"): void {
   const current = rows[index];
   const swapWith = rows[swapIndex];
   const now = new Date().toISOString();
-  db.prepare("UPDATE campaigns SET order_index = ?, updated_at = ? WHERE id = ?").run(
-    swapWith.order_index,
-    now,
-    current.id,
-  );
-  db.prepare("UPDATE campaigns SET order_index = ?, updated_at = ? WHERE id = ?").run(
-    current.order_index,
-    now,
-    swapWith.id,
-  );
+  await run("UPDATE campaigns SET order_index = ?, updated_at = ? WHERE id = ?", [swapWith.order_index, now, current.id]);
+  await run("UPDATE campaigns SET order_index = ?, updated_at = ? WHERE id = ?", [current.order_index, now, swapWith.id]);
 }
 
 /**
@@ -310,8 +301,8 @@ export function moveCampaignRow(id: string, direction: "up" | "down"): void {
  * sequentially, rather than trying to resolve order_index collisions.
  * `position` is clamped to the valid range.
  */
-export function setCampaignPosition(id: string, position: number): void {
-  const rows = listCampaignRows();
+export async function setCampaignPosition(id: string, position: number): Promise<void> {
+  const rows = await listCampaignRows();
   const currentIndex = rows.findIndex((row) => row.id === id);
   if (currentIndex === -1) return;
 
@@ -319,45 +310,39 @@ export function setCampaignPosition(id: string, position: number): void {
   const targetIndex = Math.min(Math.max(position - 1, 0), rows.length);
   rows.splice(targetIndex, 0, moved);
 
-  reorderCampaignRows(rows.map((row) => row.id));
+  await reorderCampaignRows(rows.map((row) => row.id));
 }
 
 // ---- Aggregates for the admin overview/statistics pages ----
 
-export function countCampaigns(): number {
-  const row = db.prepare("SELECT COUNT(*) as count FROM campaigns WHERE archived_at IS NULL").get() as {
-    count: number;
-  };
-  return row.count;
+export async function countCampaigns(): Promise<number> {
+  const row = await get<{ count: number }>("SELECT COUNT(*)::int as count FROM campaigns WHERE archived_at IS NULL");
+  return row?.count ?? 0;
 }
 
-export function countCampaignsByStatus(): Record<CampaignStatusDb, number> {
-  const rows = db
-    .prepare("SELECT status, COUNT(*) as count FROM campaigns WHERE archived_at IS NULL GROUP BY status")
-    .all() as { status: CampaignStatusDb; count: number }[];
+export async function countCampaignsByStatus(): Promise<Record<CampaignStatusDb, number>> {
+  const rows = await all<{ status: CampaignStatusDb; count: number }>(
+    "SELECT status, COUNT(*)::int as count FROM campaigns WHERE archived_at IS NULL GROUP BY status",
+  );
   const result: Record<CampaignStatusDb, number> = { active: 0, completed: 0, closed: 0 };
   for (const row of rows) result[row.status] = row.count;
   return result;
 }
 
-export function countCampaignsByPlatform(): { platform: string; count: number }[] {
+export async function countCampaignsByPlatform(): Promise<{ platform: string; count: number }[]> {
   return toPlainArray(
-    db
-      .prepare(
-        "SELECT platform, COUNT(*) as count FROM campaigns WHERE archived_at IS NULL GROUP BY platform ORDER BY count DESC",
-      )
-      .all() as { platform: string; count: number }[],
+    await all<{ platform: string; count: number }>(
+      "SELECT platform, COUNT(*)::int as count FROM campaigns WHERE archived_at IS NULL GROUP BY platform ORDER BY count DESC",
+    ),
   );
 }
 
 /** Campaign creation activity bucketed by day (for the "campaigns added over time" chart) — ISO date string -> count. */
-export function campaignsCreatedByDay(): { day: string; count: number }[] {
+export async function campaignsCreatedByDay(): Promise<{ day: string; count: number }[]> {
   return toPlainArray(
-    db
-      .prepare(
-        "SELECT substr(created_at, 1, 10) as day, COUNT(*) as count FROM campaigns GROUP BY day ORDER BY day ASC",
-      )
-      .all() as { day: string; count: number }[],
+    await all<{ day: string; count: number }>(
+      "SELECT substr(created_at, 1, 10) as day, COUNT(*)::int as count FROM campaigns GROUP BY day ORDER BY day ASC",
+    ),
   );
 }
 
@@ -367,12 +352,10 @@ export function campaignsCreatedByDay(): { day: string; count: number }[] {
  * `updated_at`. Campaigns that were already completed when seeded have no
  * true historical date and are correctly absent here rather than guessed.
  */
-export function campaignsCompletedByDay(): { day: string; count: number }[] {
+export async function campaignsCompletedByDay(): Promise<{ day: string; count: number }[]> {
   return toPlainArray(
-    db
-      .prepare(
-        "SELECT substr(completed_at, 1, 10) as day, COUNT(*) as count FROM campaigns WHERE completed_at IS NOT NULL GROUP BY day ORDER BY day ASC",
-      )
-      .all() as { day: string; count: number }[],
+    await all<{ day: string; count: number }>(
+      "SELECT substr(completed_at, 1, 10) as day, COUNT(*)::int as count FROM campaigns WHERE completed_at IS NOT NULL GROUP BY day ORDER BY day ASC",
+    ),
   );
 }

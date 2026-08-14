@@ -4,8 +4,9 @@ import CampaignDetailClient from "./CampaignDetailClient";
 import { getCampaigns } from "@/app/lib/campaigns";
 import { getCampaignBySlugLive } from "@/app/lib/campaignLiveSync";
 
-export function generateStaticParams() {
-  return getCampaigns().map((campaign) => ({ slug: campaign.slug }));
+export async function generateStaticParams() {
+  const campaigns = await getCampaigns();
+  return campaigns.map((campaign) => ({ slug: campaign.slug }));
 }
 
 export async function generateMetadata({

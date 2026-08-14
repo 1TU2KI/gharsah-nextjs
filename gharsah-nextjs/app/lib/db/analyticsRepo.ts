@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { db } from "./client";
+import { all, get, run } from "./client";
 import { toPlainArray } from "./utils";
 import { listAllCampaignRows } from "./campaignsRepo";
 
@@ -23,7 +23,7 @@ export type AnalyticsEventType =
   | "contact_submit"
   | "campaign_request_submit";
 
-export function recordAnalyticsEvent(input: {
+export async function recordAnalyticsEvent(input: {
   eventType: AnalyticsEventType;
   campaignId?: string | null;
   route?: string | null;
@@ -34,31 +34,32 @@ export function recordAnalyticsEvent(input: {
   browser?: string | null;
   os?: string | null;
   metadata?: string | null;
-}): void {
-  db.prepare(
+}): Promise<void> {
+  await run(
     `INSERT INTO analytics_events
       (id, event_type, campaign_id, route, visitor_id, session_id, referrer_source, device_category, browser, os, metadata, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-  ).run(
-    randomUUID(),
-    input.eventType,
-    input.campaignId ?? null,
-    input.route ?? null,
-    input.visitorId,
-    input.sessionId,
-    input.referrerSource ?? null,
-    input.deviceCategory ?? null,
-    input.browser ?? null,
-    input.os ?? null,
-    input.metadata ?? null,
-    new Date().toISOString(),
+    [
+      randomUUID(),
+      input.eventType,
+      input.campaignId ?? null,
+      input.route ?? null,
+      input.visitorId,
+      input.sessionId,
+      input.referrerSource ?? null,
+      input.deviceCategory ?? null,
+      input.browser ?? null,
+      input.os ?? null,
+      input.metadata ?? null,
+      new Date().toISOString(),
+    ],
   );
 }
 
 /** Simple all-time total for one event type — used for the Overview page's single-number stat cards (e.g. total donation-button clicks). */
-export function countEventsByType(eventType: AnalyticsEventType): number {
-  const row = db.prepare(`SELECT COUNT(*) as c FROM analytics_events WHERE event_type = ?`).get(eventType) as { c: number };
-  return row.c;
+export async function countEventsByType(eventType: AnalyticsEventType): Promise<number> {
+  const row = await get<{ c: number }>(`SELECT COUNT(*)::int as c FROM analytics_events WHERE event_type = ?`, [eventType]);
+  return row?.c ?? 0;
 }
 
 function isoDaysAgo(days: number): string {
@@ -90,41 +91,39 @@ export type VisitTotals = {
  * from `page_view` events specifically (not every event type), since a
  * "visit" should mean an actual page load.
  */
-export function getVisitTotals(): VisitTotals {
+export async function getVisitTotals(): Promise<VisitTotals> {
   const today = isoTodayStartUtc();
   const d7 = isoDaysAgo(7);
   const d30 = isoDaysAgo(30);
 
-  const countDistinct = (column: "session_id" | "visitor_id", sinceIso?: string) => {
+  const countDistinct = async (column: "session_id" | "visitor_id", sinceIso?: string) => {
     const sql = sinceIso
-      ? `SELECT COUNT(DISTINCT ${column}) as c FROM analytics_events WHERE event_type = 'page_view' AND created_at >= ?`
-      : `SELECT COUNT(DISTINCT ${column}) as c FROM analytics_events WHERE event_type = 'page_view'`;
-    const row = (sinceIso ? db.prepare(sql).get(sinceIso) : db.prepare(sql).get()) as { c: number };
-    return row.c;
+      ? `SELECT COUNT(DISTINCT ${column})::int as c FROM analytics_events WHERE event_type = 'page_view' AND created_at >= ?`
+      : `SELECT COUNT(DISTINCT ${column})::int as c FROM analytics_events WHERE event_type = 'page_view'`;
+    const row = await get<{ c: number }>(sql, sinceIso ? [sinceIso] : []);
+    return row?.c ?? 0;
   };
 
   return {
-    totalVisits: countDistinct("session_id"),
-    uniqueVisitors: countDistinct("visitor_id"),
-    visitsToday: countDistinct("session_id", today),
-    visitsLast7d: countDistinct("session_id", d7),
-    visitsLast30d: countDistinct("session_id", d30),
-    uniqueToday: countDistinct("visitor_id", today),
-    uniqueLast7d: countDistinct("visitor_id", d7),
-    uniqueLast30d: countDistinct("visitor_id", d30),
+    totalVisits: await countDistinct("session_id"),
+    uniqueVisitors: await countDistinct("visitor_id"),
+    visitsToday: await countDistinct("session_id", today),
+    visitsLast7d: await countDistinct("session_id", d7),
+    visitsLast30d: await countDistinct("session_id", d30),
+    uniqueToday: await countDistinct("visitor_id", today),
+    uniqueLast7d: await countDistinct("visitor_id", d7),
+    uniqueLast30d: await countDistinct("visitor_id", d30),
   };
 }
 
 /** Page views (raw load count, not deduplicated) grouped by route — excludes campaign detail pages, which are tracked separately via `campaign_detail_view` (see campaignEngagement) so they can carry a campaign id. */
-export function pageViewsByRoute(): { route: string; count: number }[] {
+export async function pageViewsByRoute(): Promise<{ route: string; count: number }[]> {
   return toPlainArray(
-    db
-      .prepare(
-        `SELECT route, COUNT(*) as count FROM analytics_events
-         WHERE event_type = 'page_view' AND route IS NOT NULL
-         GROUP BY route ORDER BY count DESC`,
-      )
-      .all() as { route: string; count: number }[],
+    await all<{ route: string; count: number }>(
+      `SELECT route, COUNT(*)::int as count FROM analytics_events
+       WHERE event_type = 'page_view' AND route IS NOT NULL
+       GROUP BY route ORDER BY count DESC`,
+    ),
   );
 }
 
@@ -147,16 +146,14 @@ export type CampaignEngagementRow = {
  * at zero, never fabricate") — never a row for a deleted campaign's
  * orphaned events, since there's nothing to link them to for admin display.
  */
-export function campaignEngagement(): CampaignEngagementRow[] {
-  const rows = db
-    .prepare(
-      `SELECT campaign_id, event_type, COUNT(*) as count
-       FROM analytics_events
-       WHERE campaign_id IS NOT NULL
-         AND event_type IN ('campaign_detail_view','campaign_card_click','donation_click','campaign_link_copy','random_campaign_selected')
-       GROUP BY campaign_id, event_type`,
-    )
-    .all() as { campaign_id: string; event_type: string; count: number }[];
+export async function campaignEngagement(): Promise<CampaignEngagementRow[]> {
+  const rows = await all<{ campaign_id: string; event_type: string; count: number }>(
+    `SELECT campaign_id, event_type, COUNT(*)::int as count
+     FROM analytics_events
+     WHERE campaign_id IS NOT NULL
+       AND event_type IN ('campaign_detail_view','campaign_card_click','donation_click','campaign_link_copy','random_campaign_selected')
+     GROUP BY campaign_id, event_type`,
+  );
 
   const byCampaign = new Map<string, Partial<Record<AnalyticsEventType, number>>>();
   for (const r of rows) {
@@ -165,7 +162,8 @@ export function campaignEngagement(): CampaignEngagementRow[] {
     byCampaign.set(r.campaign_id, entry);
   }
 
-  return listAllCampaignRows().map((c) => {
+  const campaigns = await listAllCampaignRows();
+  return campaigns.map((c) => {
     const counts = byCampaign.get(c.id) ?? {};
     const views = counts.campaign_detail_view ?? 0;
     const donationClicks = counts.donation_click ?? 0;
@@ -185,22 +183,20 @@ export function campaignEngagement(): CampaignEngagementRow[] {
 }
 
 /** e.g. "activeCases" -> count — see the fixed tag vocabulary Header.tsx sends as `metadata`. */
-export function navClicksBreakdown(): { key: string; count: number }[] {
+export async function navClicksBreakdown(): Promise<{ key: string; count: number }[]> {
   return toPlainArray(
-    db
-      .prepare(
-        `SELECT metadata as key, COUNT(*) as count FROM analytics_events
-         WHERE event_type = 'nav_click' AND metadata IS NOT NULL
-         GROUP BY metadata ORDER BY count DESC`,
-      )
-      .all() as { key: string; count: number }[],
+    await all<{ key: string; count: number }>(
+      `SELECT metadata as key, COUNT(*)::int as count FROM analytics_events
+       WHERE event_type = 'nav_click' AND metadata IS NOT NULL
+       GROUP BY metadata ORDER BY count DESC`,
+    ),
   );
 }
 
-export function toggleUsageCounts(): { languageSwitch: number; themeToggle: number } {
-  const langRow = db.prepare(`SELECT COUNT(*) as c FROM analytics_events WHERE event_type = 'language_switch'`).get() as { c: number };
-  const themeRow = db.prepare(`SELECT COUNT(*) as c FROM analytics_events WHERE event_type = 'theme_toggle'`).get() as { c: number };
-  return { languageSwitch: langRow.c, themeToggle: themeRow.c };
+export async function toggleUsageCounts(): Promise<{ languageSwitch: number; themeToggle: number }> {
+  const langRow = await get<{ c: number }>(`SELECT COUNT(*)::int as c FROM analytics_events WHERE event_type = 'language_switch'`);
+  const themeRow = await get<{ c: number }>(`SELECT COUNT(*)::int as c FROM analytics_events WHERE event_type = 'theme_toggle'`);
+  return { languageSwitch: langRow?.c ?? 0, themeToggle: themeRow?.c ?? 0 };
 }
 
 /**
@@ -209,18 +205,18 @@ export function toggleUsageCounts(): { languageSwitch: number; themeToggle: numb
  * computed by correlating the two event types on (campaign_id, visitor_id)
  * within a 30-minute window, entirely in JS rather than SQL date arithmetic
  * (this codebase's other day-bucketing already relies on plain ISO-string
- * comparison, not SQLite's datetime() functions — matching that rather than
+ * comparison, not SQL date functions — matching that rather than
  * introducing a new pattern). Volumes here are small enough for this project
  * that the O(n·m) scan is instant.
  */
-function randomToDonationFollowThrough(): { selected: number; followedToDonation: number } {
+async function randomToDonationFollowThrough(): Promise<{ selected: number; followedToDonation: number }> {
   const WINDOW_MS = 30 * 60 * 1000;
-  const selected = db
-    .prepare(`SELECT campaign_id, visitor_id, created_at FROM analytics_events WHERE event_type = 'random_campaign_selected'`)
-    .all() as { campaign_id: string; visitor_id: string; created_at: string }[];
-  const donations = db
-    .prepare(`SELECT campaign_id, visitor_id, created_at FROM analytics_events WHERE event_type = 'donation_click'`)
-    .all() as { campaign_id: string; visitor_id: string; created_at: string }[];
+  const selected = await all<{ campaign_id: string; visitor_id: string; created_at: string }>(
+    `SELECT campaign_id, visitor_id, created_at FROM analytics_events WHERE event_type = 'random_campaign_selected'`,
+  );
+  const donations = await all<{ campaign_id: string; visitor_id: string; created_at: string }>(
+    `SELECT campaign_id, visitor_id, created_at FROM analytics_events WHERE event_type = 'donation_click'`,
+  );
 
   let followed = 0;
   for (const s of selected) {
@@ -242,113 +238,104 @@ export type RandomFeatureStats = {
   topCampaigns: { campaignId: string; titleAr: string; count: number }[];
 };
 
-export function randomFeatureStats(): RandomFeatureStats {
-  const usesRow = db.prepare(`SELECT COUNT(*) as c FROM analytics_events WHERE event_type = 'random_campaign_use'`).get() as { c: number };
+export async function randomFeatureStats(): Promise<RandomFeatureStats> {
+  const usesRow = await get<{ c: number }>(`SELECT COUNT(*)::int as c FROM analytics_events WHERE event_type = 'random_campaign_use'`);
 
-  const topRows = db
-    .prepare(
-      `SELECT campaign_id, COUNT(*) as count FROM analytics_events
-       WHERE event_type = 'random_campaign_selected'
-       GROUP BY campaign_id ORDER BY count DESC LIMIT 5`,
-    )
-    .all() as { campaign_id: string; count: number }[];
+  const topRows = await all<{ campaign_id: string; count: number }>(
+    `SELECT campaign_id, COUNT(*)::int as count FROM analytics_events
+     WHERE event_type = 'random_campaign_selected'
+     GROUP BY campaign_id ORDER BY count DESC LIMIT 5`,
+  );
 
-  const titleById = new Map(listAllCampaignRows().map((c) => [c.id, c.title_ar]));
+  const campaigns = await listAllCampaignRows();
+  const titleById = new Map(campaigns.map((c) => [c.id, c.title_ar]));
   const topCampaigns = topRows.map((r) => ({
     campaignId: r.campaign_id,
     titleAr: titleById.get(r.campaign_id) ?? "(حملة محذوفة)",
     count: r.count,
   }));
 
-  const { selected, followedToDonation } = randomToDonationFollowThrough();
+  const { selected, followedToDonation } = await randomToDonationFollowThrough();
 
-  return { uses: usesRow.c, selectedCount: selected, followedToDonation, topCampaigns };
+  return { uses: usesRow?.c ?? 0, selectedCount: selected, followedToDonation, topCampaigns };
 }
 
 /** Distinct-session breakdowns (one visit counted once, not once per click) — computed from `page_view` events, the one event every real visit always includes. */
-export function deviceBreakdown(): { label: string; count: number }[] {
+export async function deviceBreakdown(): Promise<{ label: string; count: number }[]> {
   return toPlainArray(
-    db
-      .prepare(
-        `SELECT device_category as label, COUNT(DISTINCT session_id) as count FROM analytics_events
-         WHERE event_type = 'page_view' AND device_category IS NOT NULL
-         GROUP BY device_category ORDER BY count DESC`,
-      )
-      .all() as { label: string; count: number }[],
+    await all<{ label: string; count: number }>(
+      `SELECT device_category as label, COUNT(DISTINCT session_id)::int as count FROM analytics_events
+       WHERE event_type = 'page_view' AND device_category IS NOT NULL
+       GROUP BY device_category ORDER BY count DESC`,
+    ),
   );
 }
 
-export function browserBreakdown(): { label: string; count: number }[] {
+export async function browserBreakdown(): Promise<{ label: string; count: number }[]> {
   return toPlainArray(
-    db
-      .prepare(
-        `SELECT browser as label, COUNT(DISTINCT session_id) as count FROM analytics_events
-         WHERE event_type = 'page_view' AND browser IS NOT NULL
-         GROUP BY browser ORDER BY count DESC`,
-      )
-      .all() as { label: string; count: number }[],
+    await all<{ label: string; count: number }>(
+      `SELECT browser as label, COUNT(DISTINCT session_id)::int as count FROM analytics_events
+       WHERE event_type = 'page_view' AND browser IS NOT NULL
+       GROUP BY browser ORDER BY count DESC`,
+    ),
   );
 }
 
-export function osBreakdown(): { label: string; count: number }[] {
+export async function osBreakdown(): Promise<{ label: string; count: number }[]> {
   return toPlainArray(
-    db
-      .prepare(
-        `SELECT os as label, COUNT(DISTINCT session_id) as count FROM analytics_events
-         WHERE event_type = 'page_view' AND os IS NOT NULL
-         GROUP BY os ORDER BY count DESC`,
-      )
-      .all() as { label: string; count: number }[],
+    await all<{ label: string; count: number }>(
+      `SELECT os as label, COUNT(DISTINCT session_id)::int as count FROM analytics_events
+       WHERE event_type = 'page_view' AND os IS NOT NULL
+       GROUP BY os ORDER BY count DESC`,
+    ),
   );
 }
 
-export function referrerBreakdown(): { source: string; count: number }[] {
+export async function referrerBreakdown(): Promise<{ source: string; count: number }[]> {
   return toPlainArray(
-    db
-      .prepare(
-        `SELECT referrer_source as source, COUNT(DISTINCT session_id) as count FROM analytics_events
-         WHERE event_type = 'page_view' AND referrer_source IS NOT NULL
-         GROUP BY referrer_source ORDER BY count DESC`,
-      )
-      .all() as { source: string; count: number }[],
+    await all<{ source: string; count: number }>(
+      `SELECT referrer_source as source, COUNT(DISTINCT session_id)::int as count FROM analytics_events
+       WHERE event_type = 'page_view' AND referrer_source IS NOT NULL
+       GROUP BY referrer_source ORDER BY count DESC`,
+    ),
   );
 }
 
 /** Zero-day-safe: `bucketByMonth`-style helpers in chartUtils.ts fill in the gaps this leaves for a fixed-length range — this only returns days that actually had at least one event. */
-export function eventCountsByDay(eventTypes: AnalyticsEventType[], sinceIso: string | null): { day: string; count: number }[] {
+export async function eventCountsByDay(eventTypes: AnalyticsEventType[], sinceIso: string | null): Promise<{ day: string; count: number }[]> {
   const placeholders = eventTypes.map(() => "?").join(",");
   const params: string[] = [...eventTypes];
-  let sql = `SELECT substr(created_at,1,10) as day, COUNT(*) as count FROM analytics_events WHERE event_type IN (${placeholders})`;
+  let sql = `SELECT substr(created_at,1,10) as day, COUNT(*)::int as count FROM analytics_events WHERE event_type IN (${placeholders})`;
   if (sinceIso) {
     sql += " AND created_at >= ?";
     params.push(sinceIso);
   }
   sql += " GROUP BY day ORDER BY day ASC";
-  return toPlainArray(db.prepare(sql).all(...params) as { day: string; count: number }[]);
+  return toPlainArray(await all<{ day: string; count: number }>(sql, params));
 }
 
 /** Same as `eventCountsByDay` but deduplicated to one count per session per day — the correct definition for a "visits over time" chart (see getVisitTotals's doc comment). */
-export function visitsByDay(sinceIso: string | null): { day: string; count: number }[] {
+export async function visitsByDay(sinceIso: string | null): Promise<{ day: string; count: number }[]> {
   const params: string[] = [];
-  let sql = `SELECT substr(created_at,1,10) as day, COUNT(DISTINCT session_id) as count FROM analytics_events WHERE event_type = 'page_view'`;
+  let sql = `SELECT substr(created_at,1,10) as day, COUNT(DISTINCT session_id)::int as count FROM analytics_events WHERE event_type = 'page_view'`;
   if (sinceIso) {
     sql += " AND created_at >= ?";
     params.push(sinceIso);
   }
   sql += " GROUP BY day ORDER BY day ASC";
-  return toPlainArray(db.prepare(sql).all(...params) as { day: string; count: number }[]);
+  return toPlainArray(await all<{ day: string; count: number }>(sql, params));
 }
 
 /** Distinct visitor_id (not session_id) per day — for the "unique visitors" drilldown's own time series, separate from the session-based "visits" one above. */
-export function uniqueVisitorsByDay(sinceIso: string | null): { day: string; count: number }[] {
+export async function uniqueVisitorsByDay(sinceIso: string | null): Promise<{ day: string; count: number }[]> {
   const params: string[] = [];
-  let sql = `SELECT substr(created_at,1,10) as day, COUNT(DISTINCT visitor_id) as count FROM analytics_events WHERE event_type = 'page_view'`;
+  let sql = `SELECT substr(created_at,1,10) as day, COUNT(DISTINCT visitor_id)::int as count FROM analytics_events WHERE event_type = 'page_view'`;
   if (sinceIso) {
     sql += " AND created_at >= ?";
     params.push(sinceIso);
   }
   sql += " GROUP BY day ORDER BY day ASC";
-  return toPlainArray(db.prepare(sql).all(...params) as { day: string; count: number }[]);
+  return toPlainArray(await all<{ day: string; count: number }>(sql, params));
 }
 
 /**
@@ -360,13 +347,13 @@ export function uniqueVisitorsByDay(sinceIso: string | null): { day: string; cou
  * invented): a brand-new site with no repeat visitors yet will correctly
  * show `returningCount: 0` for every day.
  */
-export function newVsReturningVisitorsByDay(sinceIso: string | null): { day: string; newCount: number; returningCount: number }[] {
-  const firstSeenRows = db
-    .prepare(
-      `SELECT visitor_id, MIN(substr(created_at,1,10)) as first_day FROM analytics_events
-       WHERE event_type = 'page_view' GROUP BY visitor_id`,
-    )
-    .all() as { visitor_id: string; first_day: string }[];
+export async function newVsReturningVisitorsByDay(
+  sinceIso: string | null,
+): Promise<{ day: string; newCount: number; returningCount: number }[]> {
+  const firstSeenRows = await all<{ visitor_id: string; first_day: string }>(
+    `SELECT visitor_id, MIN(substr(created_at,1,10)) as first_day FROM analytics_events
+     WHERE event_type = 'page_view' GROUP BY visitor_id`,
+  );
   const firstSeenByVisitor = new Map(firstSeenRows.map((r) => [r.visitor_id, r.first_day]));
 
   const params: string[] = [];
@@ -375,7 +362,7 @@ export function newVsReturningVisitorsByDay(sinceIso: string | null): { day: str
     sql += " AND created_at >= ?";
     params.push(sinceIso);
   }
-  const dayVisitorRows = db.prepare(sql).all(...params) as { day: string; visitor_id: string }[];
+  const dayVisitorRows = await all<{ day: string; visitor_id: string }>(sql, params);
 
   const byDay = new Map<string, { newCount: number; returningCount: number }>();
   for (const row of dayVisitorRows) {

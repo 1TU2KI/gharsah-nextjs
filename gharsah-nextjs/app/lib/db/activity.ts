@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { db } from "./client";
+import { all, get, run } from "./client";
 
 export type ActivityAction =
   | "campaign_created"
@@ -40,34 +40,35 @@ export type ActivityLogRow = {
  * `ActivityAction` for the exact vocabulary. Never called from public-site
  * code; this is purely an admin-side audit trail.
  */
-export function logActivity(entry: {
+export async function logActivity(entry: {
   action: ActivityAction;
   targetType: string;
   targetId?: string | null;
   targetLabel?: string | null;
   adminUsername: string;
   details?: string | null;
-}): void {
-  db.prepare(
+}): Promise<void> {
+  await run(
     `INSERT INTO activity_log (id, action, target_type, target_id, target_label, admin_username, details, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-  ).run(
-    randomUUID(),
-    entry.action,
-    entry.targetType,
-    entry.targetId ?? null,
-    entry.targetLabel ?? null,
-    entry.adminUsername,
-    entry.details ?? null,
-    new Date().toISOString(),
+    [
+      randomUUID(),
+      entry.action,
+      entry.targetType,
+      entry.targetId ?? null,
+      entry.targetLabel ?? null,
+      entry.adminUsername,
+      entry.details ?? null,
+      new Date().toISOString(),
+    ],
   );
 }
 
-export function listActivity(limit = 200): ActivityLogRow[] {
-  return db.prepare("SELECT * FROM activity_log ORDER BY created_at DESC LIMIT ?").all(limit) as ActivityLogRow[];
+export async function listActivity(limit = 200): Promise<ActivityLogRow[]> {
+  return all<ActivityLogRow>("SELECT * FROM activity_log ORDER BY created_at DESC LIMIT ?", [limit]);
 }
 
-export function countActivity(): number {
-  const row = db.prepare("SELECT COUNT(*) as count FROM activity_log").get() as { count: number };
-  return row.count;
+export async function countActivity(): Promise<number> {
+  const row = await get<{ count: number }>("SELECT COUNT(*)::int as count FROM activity_log");
+  return row?.count ?? 0;
 }

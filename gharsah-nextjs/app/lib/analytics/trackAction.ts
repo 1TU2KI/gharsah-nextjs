@@ -78,7 +78,7 @@ export async function trackEvent(input: TrackInput): Promise<void> {
     const { deviceCategory, browser, os } = parseUserAgent(ua);
     const referrerSource = bucketReferrer(input.referrer ?? null, h.get("host"));
 
-    recordAnalyticsEvent({
+    await recordAnalyticsEvent({
       eventType: input.type,
       campaignId: input.campaignId ?? null,
       route: truncate(input.route),

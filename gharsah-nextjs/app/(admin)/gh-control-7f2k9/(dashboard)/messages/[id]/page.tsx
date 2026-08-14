@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "تفاصيل الرسالة | لوح
 
 export default async function MessageDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const message = getContactMessageById(id);
+  const message = await getContactMessageById(id);
   if (!message) notFound();
 
   // Opening a message marks it read — the standard inbox convention. Only

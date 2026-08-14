@@ -19,11 +19,11 @@ function refresh(id: string) {
 
 export async function changeRequestStatusAction(id: string, status: RequestStatus): Promise<void> {
   const session = await requireAdminSession();
-  const existing = getCampaignRequestById(id);
+  const existing = await getCampaignRequestById(id);
   if (!existing) return;
 
-  updateCampaignRequestStatus(id, status);
-  logActivity({
+  await updateCampaignRequestStatus(id, status);
+  await logActivity({
     action: "request_status_changed",
     targetType: "request",
     targetId: id,
@@ -36,11 +36,11 @@ export async function changeRequestStatusAction(id: string, status: RequestStatu
 
 export async function updateRequestNotesAction(id: string, notes: string): Promise<void> {
   const session = await requireAdminSession();
-  const existing = getCampaignRequestById(id);
+  const existing = await getCampaignRequestById(id);
   if (!existing) return;
 
-  updateCampaignRequestNotes(id, notes);
-  logActivity({
+  await updateCampaignRequestNotes(id, notes);
+  await logActivity({
     action: "request_note_added",
     targetType: "request",
     targetId: id,
@@ -52,11 +52,11 @@ export async function updateRequestNotesAction(id: string, notes: string): Promi
 
 export async function setRequestArchivedAction(id: string, archived: boolean): Promise<void> {
   const session = await requireAdminSession();
-  const existing = getCampaignRequestById(id);
+  const existing = await getCampaignRequestById(id);
   if (!existing) return;
 
-  setCampaignRequestArchived(id, archived);
-  logActivity({
+  await setCampaignRequestArchived(id, archived);
+  await logActivity({
     action: "request_archived",
     targetType: "request",
     targetId: id,

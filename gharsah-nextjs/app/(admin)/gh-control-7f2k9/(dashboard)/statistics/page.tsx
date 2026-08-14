@@ -44,32 +44,32 @@ export default async function StatisticsPage({ searchParams }: { searchParams: P
   const toSeries = (rows: { day: string; count: number }[]) => rangeDaySeries(range, rows);
 
   // Existing campaign-management stats (unchanged from before this page grew).
-  const totalCampaigns = countCampaigns();
-  const statusCounts = countCampaignsByStatus();
-  const platformCounts = countCampaignsByPlatform();
-  const requestCounts = countRequestsByStatus();
+  const totalCampaigns = await countCampaigns();
+  const statusCounts = await countCampaignsByStatus();
+  const platformCounts = await countCampaignsByPlatform();
+  const requestCounts = await countRequestsByStatus();
   const completionRate = totalCampaigns > 0 ? Math.round((statusCounts.completed / totalCampaigns) * 100) : 0;
-  const createdTrend = bucketByMonth(campaignsCreatedByDay());
-  const completedTrend = bucketByMonth(campaignsCompletedByDay());
+  const createdTrend = bucketByMonth(await campaignsCreatedByDay());
+  const completedTrend = bucketByMonth(await campaignsCompletedByDay());
 
   // Visitor/engagement analytics.
-  const visits = getVisitTotals();
-  const engagement = campaignEngagement();
-  const pageViews = pageViewsByRoute();
-  const navClicks = navClicksBreakdown();
-  const toggles = toggleUsageCounts();
-  const randomStats = randomFeatureStats();
-  const devices = deviceBreakdown();
-  const browsers = browserBreakdown();
-  const oses = osBreakdown();
-  const referrers = referrerBreakdown();
+  const visits = await getVisitTotals();
+  const engagement = await campaignEngagement();
+  const pageViews = await pageViewsByRoute();
+  const navClicks = await navClicksBreakdown();
+  const toggles = await toggleUsageCounts();
+  const randomStats = await randomFeatureStats();
+  const devices = await deviceBreakdown();
+  const browsers = await browserBreakdown();
+  const oses = await osBreakdown();
+  const referrers = await referrerBreakdown();
 
-  const visitsSeries = toSeries(visitsByDay(sinceIso));
-  const pageViewSeries = toSeries(eventCountsByDay(["page_view"], sinceIso));
-  const cardClickSeries = toSeries(eventCountsByDay(["campaign_card_click"], sinceIso));
-  const donationClickSeries = toSeries(eventCountsByDay(["donation_click"], sinceIso));
-  const requestsSeries = toSeries(requestsCreatedByDay());
-  const messagesSeries = toSeries(messagesCreatedByDay());
+  const visitsSeries = toSeries(await visitsByDay(sinceIso));
+  const pageViewSeries = toSeries(await eventCountsByDay(["page_view"], sinceIso));
+  const cardClickSeries = toSeries(await eventCountsByDay(["campaign_card_click"], sinceIso));
+  const donationClickSeries = toSeries(await eventCountsByDay(["donation_click"], sinceIso));
+  const requestsSeries = toSeries(await requestsCreatedByDay());
+  const messagesSeries = toSeries(await messagesCreatedByDay());
 
   const totalRequestsAllTime = Object.values(requestCounts).reduce((a, b) => a + b, 0);
   const requestConversionRate = totalRequestsAllTime > 0 ? Math.round((requestCounts.completed / totalRequestsAllTime) * 100) : 0;

@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "تفاصيل الطلب | لوحة �
 
 export default async function RequestDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const request = getCampaignRequestById(id);
+  const request = await getCampaignRequestById(id);
   if (!request) notFound();
 
   return (

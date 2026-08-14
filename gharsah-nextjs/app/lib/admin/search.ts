@@ -1,6 +1,6 @@
 "use server";
 
-import { db } from "../db/client";
+import { all } from "../db/client";
 import { requireAdminSession } from "../auth/guard";
 import { ADMIN_BASE_PATH } from "../auth/constants";
 
@@ -20,9 +20,9 @@ type MessageSearchRow = { id: string; name: string; email: string | null; messag
  * One global search across everything an admin might be looking for —
  * campaign title/username/platform/URL, request sender/email/contents,
  * message sender/email/contents — per the "Global admin search"
- * requirement. A single LIKE query per table (SQLite, small dataset by
- * design — see CLAUDE.md's own low-volume scoping) rather than a search
- * index, which would be overkill here.
+ * requirement. A single LIKE query per table (small dataset by design — see
+ * CLAUDE.md's own low-volume scoping) rather than a search index, which
+ * would be overkill here.
  */
 export async function searchAdmin(query: string): Promise<AdminSearchResult[]> {
   await requireAdminSession();
@@ -31,29 +31,26 @@ export async function searchAdmin(query: string): Promise<AdminSearchResult[]> {
   if (q.length < 2) return [];
   const like = `%${q}%`;
 
-  const campaigns = db
-    .prepare(
-      `SELECT id, title_ar, username, platform FROM campaigns
-       WHERE title_ar LIKE ? OR title_en LIKE ? OR username LIKE ? OR platform LIKE ? OR url LIKE ? OR relation_ar LIKE ? OR relation_en LIKE ?
-       ORDER BY order_index ASC LIMIT 8`,
-    )
-    .all(like, like, like, like, like, like, like) as CampaignSearchRow[];
+  const campaigns = await all<CampaignSearchRow>(
+    `SELECT id, title_ar, username, platform FROM campaigns
+     WHERE title_ar LIKE ? OR title_en LIKE ? OR username LIKE ? OR platform LIKE ? OR url LIKE ? OR relation_ar LIKE ? OR relation_en LIKE ?
+     ORDER BY order_index ASC LIMIT 8`,
+    [like, like, like, like, like, like, like],
+  );
 
-  const requests = db
-    .prepare(
-      `SELECT id, name, email, campaign_url FROM campaign_requests
-       WHERE name LIKE ? OR username LIKE ? OR email LIKE ? OR campaign_url LIKE ? OR notes LIKE ?
-       ORDER BY created_at DESC LIMIT 8`,
-    )
-    .all(like, like, like, like, like) as RequestSearchRow[];
+  const requests = await all<RequestSearchRow>(
+    `SELECT id, name, email, campaign_url FROM campaign_requests
+     WHERE name LIKE ? OR username LIKE ? OR email LIKE ? OR campaign_url LIKE ? OR notes LIKE ?
+     ORDER BY created_at DESC LIMIT 8`,
+    [like, like, like, like, like],
+  );
 
-  const messages = db
-    .prepare(
-      `SELECT id, name, email, message FROM contact_messages
-       WHERE name LIKE ? OR email LIKE ? OR message LIKE ?
-       ORDER BY created_at DESC LIMIT 8`,
-    )
-    .all(like, like, like) as MessageSearchRow[];
+  const messages = await all<MessageSearchRow>(
+    `SELECT id, name, email, message FROM contact_messages
+     WHERE name LIKE ? OR email LIKE ? OR message LIKE ?
+     ORDER BY created_at DESC LIMIT 8`,
+    [like, like, like],
+  );
 
   return [
     ...campaigns.map((c) => ({

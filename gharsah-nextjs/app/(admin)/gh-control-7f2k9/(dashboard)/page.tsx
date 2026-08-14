@@ -25,22 +25,22 @@ export const metadata: Metadata = { title: "نظرة عامة | لوحة تحك�
 
 const STATS = `${ADMIN_BASE_PATH}/statistics`;
 
-export default function AdminOverviewPage() {
-  const totalCampaigns = countCampaigns();
-  const statusCounts = countCampaignsByStatus();
-  const byPlatform = countCampaignsByPlatform();
-  const requestCounts = countRequestsByStatus();
+export default async function AdminOverviewPage() {
+  const totalCampaigns = await countCampaigns();
+  const statusCounts = await countCampaignsByStatus();
+  const byPlatform = await countCampaignsByPlatform();
+  const requestCounts = await countRequestsByStatus();
   const totalRequests = Object.values(requestCounts).reduce((a, b) => a + b, 0);
-  const totalMessages = countMessages();
-  const unreadMessages = countUnreadMessages();
+  const totalMessages = await countMessages();
+  const unreadMessages = await countUnreadMessages();
   const completionRate = totalCampaigns > 0 ? Math.round((statusCounts.completed / totalCampaigns) * 100) : 0;
-  const recentActivity = listActivity(8);
+  const recentActivity = await listActivity(8);
 
-  const visits = getVisitTotals();
-  const detailViews = countEventsByType("campaign_detail_view");
-  const donationClicks = countEventsByType("donation_click");
-  const linkCopies = countEventsByType("campaign_link_copy");
-  const randomUses = countEventsByType("random_campaign_use");
+  const visits = await getVisitTotals();
+  const detailViews = await countEventsByType("campaign_detail_view");
+  const donationClicks = await countEventsByType("donation_click");
+  const linkCopies = await countEventsByType("campaign_link_copy");
+  const randomUses = await countEventsByType("random_campaign_use");
 
   return (
     <div>

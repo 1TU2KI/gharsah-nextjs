@@ -24,8 +24,8 @@ export default async function NewCampaignPage({
   searchParams: Promise<{ fromRequest?: string }>;
 }) {
   const { fromRequest } = await searchParams;
-  const platforms = getPlatforms();
-  const sourceRequest = fromRequest ? getCampaignRequestById(fromRequest) : undefined;
+  const platforms = await getPlatforms();
+  const sourceRequest = fromRequest ? await getCampaignRequestById(fromRequest) : undefined;
 
   const initialValues: CampaignFormValues = {
     slug: "",

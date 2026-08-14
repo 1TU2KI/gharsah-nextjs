@@ -142,7 +142,7 @@ async function resolveCampaignsLiveFields(campaigns: Campaign[]): Promise<Campai
 
 /** All campaigns with live fields resolved, in display order. */
 export async function getCampaignsWithLiveFields(): Promise<Campaign[]> {
-  return resolveCampaignsLiveFields(getCampaigns());
+  return resolveCampaignsLiveFields(await getCampaigns());
 }
 
 /** Campaigns whose (live-resolved) status is "active" — filtering follows the live status, not the manual fallback. */
@@ -159,7 +159,7 @@ export async function getCompletedCampaignsLive(): Promise<Campaign[]> {
 
 /** Single campaign by slug with live fields resolved, for the detail page. */
 export async function getCampaignBySlugLive(slug: string): Promise<Campaign | undefined> {
-  const campaign = getCampaignBySlug(slug);
+  const campaign = await getCampaignBySlug(slug);
   if (!campaign) return undefined;
   return resolveCampaignLiveFields(campaign);
 }

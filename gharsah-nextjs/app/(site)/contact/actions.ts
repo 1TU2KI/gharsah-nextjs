@@ -28,7 +28,7 @@ export async function submitCampaignRequestAction(_prev: SubmitState, formData: 
     return { status: "error", message: parsed.error.issues[0]?.message ?? "تحقق من الحقول المدخلة." };
   }
 
-  createCampaignRequest({
+  await createCampaignRequest({
     name: parsed.data.name,
     username: parsed.data.username,
     relationshipType: parsed.data.relationshipType,
@@ -57,7 +57,7 @@ export async function submitContactMessageAction(_prev: SubmitState, formData: F
     return { status: "error", message: parsed.error.issues[0]?.message ?? "تحقق من الحقول المدخلة." };
   }
 
-  createContactMessage({
+  await createContactMessage({
     name: parsed.data.name,
     email: parsed.data.email || null,
     message: parsed.data.message,
