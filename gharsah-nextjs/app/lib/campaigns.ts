@@ -66,6 +66,8 @@ export type Campaign = {
   platformLabel: LocalizedText;
   platformLogo: string | null;
   platformHomepageUrl: string;
+  /** Compact public redirect code for gharsah.sa/c/<code> (see app/c/[code]/route.ts) — never null in practice (backfilled for every campaign on startup), typed nullable only because the DB column technically allows it for the brief instant before that backfill runs. */
+  shortCode: string | null;
 };
 
 async function rowToCampaign(row: CampaignRow): Promise<Campaign> {
@@ -91,6 +93,7 @@ async function rowToCampaign(row: CampaignRow): Promise<Campaign> {
     platformLabel: platformConfig ? { ar: platformConfig.labelAr, en: platformConfig.labelEn } : { ar: row.platform, en: row.platform },
     platformLogo: platformConfig?.logo ?? null,
     platformHomepageUrl: platformConfig?.homepageUrl ?? row.platform,
+    shortCode: row.short_code,
   };
 }
 

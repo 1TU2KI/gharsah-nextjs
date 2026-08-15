@@ -6,6 +6,7 @@ import { campaignEngagement } from "@/app/lib/db/analyticsRepo";
 import { ADMIN_BASE_PATH } from "@/app/lib/auth/constants";
 import CampaignForm, { type CampaignFormValues, type CampaignTranslationInfo } from "@/app/components/admin/CampaignForm";
 import CampaignEditToolbar from "@/app/components/admin/CampaignEditToolbar";
+import ShortLinkPanel from "@/app/components/admin/ShortLinkPanel";
 import { updateCampaignAction } from "../actions";
 import Link from "next/link";
 
@@ -74,6 +75,8 @@ export default async function EditCampaignPage({
         </div>
         <CampaignEditToolbar campaignId={id} slug={campaign.slug} archived={Boolean(campaign.archived_at)} />
       </div>
+
+      <ShortLinkPanel campaignId={id} initialCode={campaign.short_code} />
 
       {engagement && (
         <div className="mb-6 rounded-2xl border border-border bg-wash/60 p-4">

@@ -13,12 +13,14 @@ import {
   ChartIcon,
   HistoryIcon,
   GearIcon,
+  TrendingUpIcon,
 } from "./icons";
 
 const ICONS = {
   overview: GridIcon,
   campaigns: ListIcon,
   addCampaign: PlusCircleIcon,
+  almostThere: TrendingUpIcon,
   requests: InboxIcon,
   messages: MailIcon,
   statistics: ChartIcon,

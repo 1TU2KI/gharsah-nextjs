@@ -38,9 +38,28 @@ export default function CampaignDetailClient({ campaign }: { campaign: Campaign 
   const description = campaign.description[locale];
   const [linkCopied, setLinkCopied] = useState(false);
   const copyTimeoutRef = useRef<number | undefined>(undefined);
+  // Set from `?via=c` (the marker app/c/[code]/route.ts appends to its
+  // redirect target) inside an effect, not derived during render — same
+  // "client-only value, hydrate after mount" rule LanguageProvider follows,
+  // since `window` isn't available during SSR. Only ever flips true; a
+  // visitor who navigates onward within the site keeps it for the rest of
+  // this page instance, which is exactly the "did THIS visit start from a
+  // short link" question the donate button below needs answered.
+  const [viaShortLink, setViaShortLink] = useState(false);
 
   useEffect(() => {
     return () => window.clearTimeout(copyTimeoutRef.current);
+  }, []);
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("via") === "c") {
+      // Deliberate: hydrating this client-only value (from the URL, only
+      // available post-mount) after mount is exactly what avoids an
+      // SSR/client mismatch — same justification as LanguageProvider's own
+      // identical disable for its localStorage read.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setViaShortLink(true);
+    }
   }, []);
 
   // Once per mount (a fresh navigation to this detail page, from any
@@ -50,12 +69,16 @@ export default function CampaignDetailClient({ campaign }: { campaign: Campaign 
   // "view". The ref guard (same pattern as PageViewTracker.tsx) is what
   // keeps this to exactly one event despite React's development-only
   // Strict Mode replaying effects (mount→cleanup→mount) on initial mount —
-  // confirmed by direct testing that without it, this fires twice.
+  // confirmed by direct testing that without it, this fires twice. Reads
+  // `?via=c` directly here too (not the `viaShortLink` state above) since
+  // this effect can run in the same commit as the one that sets that state,
+  // before the resulting re-render has happened.
   const detailViewTracked = useRef<string | null>(null);
   useEffect(() => {
     if (detailViewTracked.current === campaign.id) return;
     detailViewTracked.current = campaign.id;
-    track({ type: "campaign_detail_view", campaignId: campaign.id });
+    const viaShortLinkNow = new URLSearchParams(window.location.search).get("via") === "c";
+    track({ type: "campaign_detail_view", campaignId: campaign.id, metadata: viaShortLinkNow ? "short_link" : undefined });
   }, [campaign.id]);
 
   async function handleCopyLink() {
@@ -173,7 +196,7 @@ export default function CampaignDetailClient({ campaign }: { campaign: Campaign 
                 label — is completely unchanged from before; DonationTransition
                 only supplies the click handler that inserts the brief pause,
                 via a render prop, so this element's design is untouched. */}
-            <DonationTransition url={campaign.url} campaignId={campaign.id}>
+            <DonationTransition url={campaign.url} campaignId={campaign.id} metadata={viaShortLink ? "short_link" : undefined}>
               {(onDonateClick) => (
                 <a
                   href={campaign.url}

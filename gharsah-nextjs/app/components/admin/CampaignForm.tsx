@@ -291,6 +291,9 @@ export default function CampaignForm({
       platformLabel: platformConfig ? { ar: platformConfig.labelAr, en: platformConfig.labelEn } : { ar: values.platform, en: values.platform },
       platformLogo: platformConfig?.logo ?? null,
       platformHomepageUrl: platformConfig?.homepageUrl ?? "#",
+      // The preview card never renders a short-link affordance, so this is
+      // never read — null keeps it honest rather than inventing one.
+      shortCode: null,
     };
   }, [values, platforms, campaignId]);
 

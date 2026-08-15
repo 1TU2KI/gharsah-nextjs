@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { all, get, run } from "./client";
 import { toPlain, toPlainArray } from "./utils";
+import { randomShortCode, SHORT_CODE_PATTERN } from "./shortCode";
 
 export type CampaignStatusDb = "active" | "completed" | "closed";
 
@@ -32,6 +33,8 @@ export type CampaignRow = {
   description_source: "fetched" | "manual" | null;
   /** Same as description_source, but for title_ar. */
   title_source: "fetched" | "manual" | null;
+  /** Compact public redirect code for gharsah.sa/c/<code> — see shortCode.ts. Assigned automatically on create and by a startup backfill for older rows, so this is only ever null for the brief instant between a row's INSERT and the backfill step; treat it as always-present in practice. */
+  short_code: string | null;
 };
 
 export type CampaignInput = {
@@ -85,6 +88,53 @@ export async function isSlugTaken(slug: string, excludeId?: string): Promise<boo
   return row !== undefined;
 }
 
+/** Public-facing lookup for the /c/<code> redirect route — case-insensitive (a code typed or read off a stream overlay shouldn't fail on casing) and excludes archived campaigns, matching every other public read in this file. */
+export async function getCampaignRowByShortCode(code: string): Promise<CampaignRow | undefined> {
+  const row = await get<CampaignRow>(
+    "SELECT * FROM campaigns WHERE LOWER(short_code) = LOWER(?) AND archived_at IS NULL",
+    [code],
+  );
+  return row ? toPlain(row) : undefined;
+}
+
+async function isShortCodeTaken(code: string, excludeId?: string): Promise<boolean> {
+  const row = excludeId
+    ? await get("SELECT id FROM campaigns WHERE LOWER(short_code) = LOWER(?) AND id != ?", [code, excludeId])
+    : await get("SELECT id FROM campaigns WHERE LOWER(short_code) = LOWER(?)", [code]);
+  return row !== undefined;
+}
+
+async function generateUniqueShortCode(): Promise<string> {
+  let code = randomShortCode();
+  while (await isShortCodeTaken(code)) {
+    code = randomShortCode();
+  }
+  return code;
+}
+
+/** Assigns a fresh random short code, discarding whatever it had before (including a custom alias) — the admin's "إعادة توليد" action. */
+export async function regenerateCampaignShortCode(id: string): Promise<string> {
+  const code = await generateUniqueShortCode();
+  await run("UPDATE campaigns SET short_code = ?, updated_at = ? WHERE id = ?", [code, new Date().toISOString(), id]);
+  return code;
+}
+
+/** Sets a custom alias (e.g. "turki") chosen by the admin. Validates format and uniqueness itself (not just via campaignSchema.ts) since this is also reachable from a bare server action, not only the form. */
+export async function setCampaignShortCode(
+  id: string,
+  code: string,
+): Promise<{ ok: true; code: string } | { ok: false; error: string }> {
+  const trimmed = code.trim();
+  if (!SHORT_CODE_PATTERN.test(trimmed)) {
+    return { ok: false, error: "يسمح فقط بحروف إنجليزية وأرقام وشرطات (-) أو (_)، بين 3 و20 حرفًا" };
+  }
+  if (await isShortCodeTaken(trimmed, id)) {
+    return { ok: false, error: "هذا الرابط المختصر مستخدم بالفعل" };
+  }
+  await run("UPDATE campaigns SET short_code = ?, updated_at = ? WHERE id = ?", [trimmed, new Date().toISOString(), id]);
+  return { ok: true, code: trimmed };
+}
+
 async function nextOrderIndex(): Promise<number> {
   const row = await get<{ maxOrder: number | null }>("SELECT MAX(order_index) as maxOrder FROM campaigns");
   return (row?.maxOrder ?? 0) + 1;
@@ -95,6 +145,7 @@ export async function createCampaignRow(input: CampaignInput): Promise<CampaignR
   const row: CampaignRow = {
     id: randomUUID(),
     slug: input.slug,
+    short_code: await generateUniqueShortCode(),
     order_index: await nextOrderIndex(),
     url: input.url,
     platform: input.platform,
@@ -120,8 +171,8 @@ export async function createCampaignRow(input: CampaignInput): Promise<CampaignR
   };
   await run(
     `INSERT INTO campaigns
-      (id, slug, order_index, url, platform, memorial_prefix_ar, memorial_prefix_en, username, relation_ar, relation_en, title_ar, title_en, status, description_ar, description_en, percent, archived_at, created_at, updated_at, completed_at, translation_status, translation_error, description_source, title_source)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, slug, order_index, url, platform, memorial_prefix_ar, memorial_prefix_en, username, relation_ar, relation_en, title_ar, title_en, status, description_ar, description_en, percent, archived_at, created_at, updated_at, completed_at, translation_status, translation_error, description_source, title_source, short_code)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       row.id,
       row.slug,
@@ -147,6 +198,7 @@ export async function createCampaignRow(input: CampaignInput): Promise<CampaignR
       row.translation_error,
       row.description_source,
       row.title_source,
+      row.short_code,
     ],
   );
   return row;

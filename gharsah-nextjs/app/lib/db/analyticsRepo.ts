@@ -21,7 +21,9 @@ export type AnalyticsEventType =
   | "language_switch"
   | "theme_toggle"
   | "contact_submit"
-  | "campaign_request_submit";
+  | "campaign_request_submit"
+  /** A visitor opened gharsah.sa/c/<code> (see app/c/[code]/route.ts) — fired server-side, before the redirect to the campaign detail page. `metadata` carries the code itself (see navClicksBreakdown's own use of `metadata` for a similar per-key breakdown). */
+  | "short_link_open";
 
 export async function recordAnalyticsEvent(input: {
   eventType: AnalyticsEventType;
@@ -178,6 +180,60 @@ export async function campaignEngagement(): Promise<CampaignEngagementRow[]> {
       linkCopies: counts.campaign_link_copy ?? 0,
       randomSelected: counts.random_campaign_selected ?? 0,
       ctr: views > 0 ? donationClicks / views : 0,
+    };
+  });
+}
+
+export type ShortLinkStatsRow = {
+  campaignId: string;
+  titleAr: string;
+  shortCode: string | null;
+  opens: number;
+  /** campaign_detail_view events tagged `metadata: "short_link"` — see CampaignDetailClient.tsx's `via=c` handling. */
+  attributedViews: number;
+  /** donation_click events tagged the same way — see DonationTransition.tsx's optional `metadata` prop. */
+  attributedDonationClicks: number;
+};
+
+/**
+ * Per-campaign short-link funnel for the admin اقتربت view: how many times
+ * gharsah.sa/c/<code> was opened, how many of the resulting campaign-detail
+ * visits trace back to it, and how many donate-button clicks followed. One
+ * row per CURRENT (non-archived) campaign, zero-filled — same "never
+ * fabricate, start at zero" rule as `campaignEngagement`. These are clicks
+ * toward the official platform, never claimed as actual donations.
+ */
+export async function shortLinkStats(): Promise<ShortLinkStatsRow[]> {
+  const rows = await all<{ campaign_id: string; event_type: string; count: number }>(
+    `SELECT campaign_id, event_type, COUNT(*)::int as count
+     FROM analytics_events
+     WHERE campaign_id IS NOT NULL
+       AND (
+         event_type = 'short_link_open'
+         OR (event_type IN ('campaign_detail_view', 'donation_click') AND metadata = 'short_link')
+       )
+     GROUP BY campaign_id, event_type`,
+  );
+
+  const byCampaign = new Map<string, { opens: number; views: number; donations: number }>();
+  for (const r of rows) {
+    const entry = byCampaign.get(r.campaign_id) ?? { opens: 0, views: 0, donations: 0 };
+    if (r.event_type === "short_link_open") entry.opens = r.count;
+    else if (r.event_type === "campaign_detail_view") entry.views = r.count;
+    else if (r.event_type === "donation_click") entry.donations = r.count;
+    byCampaign.set(r.campaign_id, entry);
+  }
+
+  const campaigns = await listAllCampaignRows();
+  return campaigns.map((c) => {
+    const counts = byCampaign.get(c.id) ?? { opens: 0, views: 0, donations: 0 };
+    return {
+      campaignId: c.id,
+      titleAr: c.title_ar,
+      shortCode: c.short_code,
+      opens: counts.opens,
+      attributedViews: counts.views,
+      attributedDonationClicks: counts.donations,
     };
   });
 }

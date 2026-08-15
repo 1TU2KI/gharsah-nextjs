@@ -125,11 +125,14 @@ function LogoGrowthVisual() {
 export default function DonationTransition({
   url,
   campaignId,
+  metadata,
   children,
 }: {
   url: string;
   /** Attaches this click to a campaign in the analytics data — omit for any future non-campaign donate link this component might wrap. */
   campaignId?: string;
+  /** Optional short plain-text tag forwarded to the `donation_click` event — e.g. "short_link" when this donate click follows a gharsah.sa/c/<code> visit (see CampaignDetailClient.tsx), so the admin's short-link stats can attribute it. Omitted everywhere else, unchanged from before this prop existed. */
+  metadata?: string;
   children: (onDonateClick: (e: React.MouseEvent<HTMLAnchorElement>) => void) => React.ReactNode;
 }) {
   const { t } = useLanguage();
@@ -182,7 +185,7 @@ export default function DonationTransition({
       // Fired the instant the real click is committed to (not on every
       // render) — non-blocking, so it can never delay the transition timer
       // scheduled right below.
-      track({ type: "donation_click", campaignId });
+      track({ type: "donation_click", campaignId, metadata });
 
       const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const duration = prefersReducedMotion ? REDUCED_MOTION_TRANSITION_MS : TRANSITION_MS;
@@ -196,7 +199,7 @@ export default function DonationTransition({
         }, duration),
       );
     },
-    [phase, url, campaignId],
+    [phase, url, campaignId, metadata],
   );
 
   const overlay = phase === "transitioning" && (

@@ -1,5 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 import { runSeed } from "./seed";
+import { backfillCampaignShortCodes } from "./shortCode";
 
 /**
  * Persistence for the whole admin system (campaigns, requests, messages,
@@ -105,7 +106,12 @@ const SCHEMA_STATEMENTS = [
     translation_status TEXT NOT NULL DEFAULT 'ok' CHECK (translation_status IN ('ok','error')),
     translation_error TEXT,
     description_source TEXT CHECK (description_source IN ('fetched','manual')),
-    title_source TEXT CHECK (title_source IN ('fetched','manual'))
+    title_source TEXT CHECK (title_source IN ('fetched','manual')),
+    -- Compact public redirect code for /c/<code> (see app/c/[code]/route.ts
+    -- and app/lib/db/shortCode.ts) — auto-generated on create, admin can
+    -- regenerate or replace with a custom alias from the edit page. Never
+    -- reused for ordering/status; persists independently of both.
+    short_code TEXT
   )`,
   `CREATE INDEX IF NOT EXISTS idx_campaigns_order ON campaigns (order_index)`,
   `CREATE INDEX IF NOT EXISTS idx_campaigns_status ON campaigns (status)`,
@@ -196,6 +202,12 @@ const CAMPAIGN_COLUMN_MIGRATIONS = [
   `ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS translation_error TEXT`,
   `ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS description_source TEXT DEFAULT 'manual'`,
   `ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS title_source TEXT DEFAULT 'manual'`,
+  `ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS short_code TEXT`,
+  // Safe to create while existing rows are still NULL — Postgres allows any
+  // number of NULLs in a unique index; `backfillCampaignShortCodes` (run
+  // right after seeding, below) is what actually fills them in, at which
+  // point this index starts enforcing real uniqueness.
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_campaigns_short_code ON campaigns (short_code)`,
 ];
 
 async function initialize(): Promise<void> {
@@ -210,6 +222,9 @@ async function initialize(): Promise<void> {
   // no admin exists yet — see seed.ts. Never touches a non-empty table, so
   // redeploys never reset production data or the admin password.
   await runSeed(rawQuery);
+  // Catches both rows that predate this feature and rows `runSeed` just
+  // inserted (its INSERT doesn't set a short_code itself) — see shortCode.ts.
+  await backfillCampaignShortCodes(rawQuery);
 }
 
 // Cached on `globalThis` (not a module-level `let`) so Next.js dev-mode hot

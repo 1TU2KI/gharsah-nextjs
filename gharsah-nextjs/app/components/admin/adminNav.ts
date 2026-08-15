@@ -11,7 +11,7 @@ import { ADMIN_BASE_PATH } from "@/app/lib/auth/constants";
 export type AdminNavItem = {
   href: string;
   label: string;
-  icon: "overview" | "campaigns" | "addCampaign" | "requests" | "messages" | "statistics" | "activity" | "settings";
+  icon: "overview" | "campaigns" | "addCampaign" | "requests" | "messages" | "statistics" | "activity" | "settings" | "almostThere";
   badgeKey?: "requests" | "messages";
   /** Exact-match only (not prefix) — used for the Overview link so it doesn't stay highlighted on every nested page. */
   exact?: boolean;
@@ -21,6 +21,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { href: ADMIN_BASE_PATH, label: "نظرة عامة", icon: "overview", exact: true },
   { href: `${ADMIN_BASE_PATH}/campaigns`, label: "الحملات", icon: "campaigns" },
   { href: `${ADMIN_BASE_PATH}/campaigns/new`, label: "إضافة حملة", icon: "addCampaign", exact: true },
+  { href: `${ADMIN_BASE_PATH}/almost-there`, label: "اقتربت...", icon: "almostThere", exact: true },
   { href: `${ADMIN_BASE_PATH}/requests`, label: "الطلبات", icon: "requests", badgeKey: "requests" },
   { href: `${ADMIN_BASE_PATH}/messages`, label: "الرسائل", icon: "messages", badgeKey: "messages" },
   { href: `${ADMIN_BASE_PATH}/statistics`, label: "الإحصائيات", icon: "statistics" },

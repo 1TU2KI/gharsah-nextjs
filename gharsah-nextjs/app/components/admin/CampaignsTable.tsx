@@ -200,7 +200,7 @@ export default function CampaignsTable({
                       )}
                     </div>
                     <p dir="ltr" className="truncate text-xs text-muted">
-                      /{row.slug} {row.username ? `· @${row.username}` : ""}
+                      /{row.slug} {row.short_code ? `· c/${row.short_code}` : ""} {row.username ? `· @${row.username}` : ""}
                     </p>
                   </td>
                   <td className="px-3 py-3 text-xs text-muted">{row.platform}</td>

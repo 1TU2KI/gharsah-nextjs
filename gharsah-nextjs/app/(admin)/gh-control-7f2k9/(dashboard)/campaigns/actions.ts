@@ -21,6 +21,8 @@ import {
   updateCampaignStatus,
   isSlugTaken,
   getCampaignRowById,
+  regenerateCampaignShortCode,
+  setCampaignShortCode,
   type CampaignInput,
   type CampaignRow,
 } from "@/app/lib/db/campaignsRepo";
@@ -417,4 +419,44 @@ export async function setCampaignPositionAction(id: string, position: number): P
     details: `set position → ${position}`,
   });
   revalidatePublicCampaignPages();
+}
+
+/** Discards whatever short code the campaign had (auto-generated or a custom alias) and assigns a fresh random one — reuses "campaign_updated" in the activity log rather than adding a new ActivityAction value, same pattern retryCampaignTranslationAction already uses for its own minor, non-content edit. */
+export async function regenerateShortCodeAction(id: string): Promise<{ code: string | null; error: string | null }> {
+  const session = await requireAdminSession();
+  const existing = await getCampaignRowById(id);
+  if (!existing) return { code: null, error: "الحملة غير موجودة." };
+
+  const code = await regenerateCampaignShortCode(id);
+  await logActivity({
+    action: "campaign_updated",
+    targetType: "campaign",
+    targetId: id,
+    targetLabel: existing.title_ar,
+    adminUsername: session.username,
+    details: `short link regenerated → ${code}`,
+  });
+  revalidatePublicCampaignPages(existing.slug);
+  return { code, error: null };
+}
+
+/** Sets a custom alias (e.g. "turki") in place of the auto-generated code — validated (format + uniqueness) in setCampaignShortCode itself, not just campaignSchema.ts, since this is reachable directly as its own action. */
+export async function setCustomShortCodeAction(id: string, code: string): Promise<{ code: string | null; error: string | null }> {
+  const session = await requireAdminSession();
+  const existing = await getCampaignRowById(id);
+  if (!existing) return { code: null, error: "الحملة غير موجودة." };
+
+  const result = await setCampaignShortCode(id, code);
+  if (!result.ok) return { code: null, error: result.error };
+
+  await logActivity({
+    action: "campaign_updated",
+    targetType: "campaign",
+    targetId: id,
+    targetLabel: existing.title_ar,
+    adminUsername: session.username,
+    details: `short link customized → ${result.code}`,
+  });
+  revalidatePublicCampaignPages(existing.slug);
+  return { code: result.code, error: null };
 }

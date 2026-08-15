@@ -108,6 +108,15 @@ const ar = {
     progressLabel: (percent: number) => `نسبة الإنجاز: ${percent}٪`,
     donateButton: "التبرع عبر المنصة الرسمية",
   },
+  almostThere: {
+    heading: "اقتربت...",
+    description: "حالات اقتربت من الاكتمال، وقد تصنع مساهمتك الفرق الأخير.",
+    closestLabel: "الأقرب للاكتمال",
+    percentComplete: (percent: number) => `${percent}٪ مكتملة`,
+    percentRemaining: (percent: number) => `تبقّى ${percent}٪`,
+    copyShortLink: "نسخ الرابط المختصر",
+    shortLinkCopied: "تم نسخ الرابط",
+  },
   randomCase: {
     ariaLabel: "اختيار حالة عشوائية",
     title: "دع غرسة تختار",
@@ -318,6 +327,15 @@ const en = {
     },
     progressLabel: (percent: number) => `Progress: ${percent}%`,
     donateButton: "Donate via Official Platform",
+  },
+  almostThere: {
+    heading: "Almost There",
+    description: "Cases nearing completion — your contribution could make the final difference.",
+    closestLabel: "Closest to complete",
+    percentComplete: (percent: number) => `${percent}% complete`,
+    percentRemaining: (percent: number) => `${percent}% left`,
+    copyShortLink: "Copy short link",
+    shortLinkCopied: "Link copied",
   },
   randomCase: {
     ariaLabel: "Pick a random campaign",
