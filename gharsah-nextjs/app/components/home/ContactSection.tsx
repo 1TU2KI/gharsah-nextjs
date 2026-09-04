@@ -1,7 +1,6 @@
 "use client";
 
 import ContactForms from "@/app/(site)/contact/ContactForms";
-import SectionBackdrop from "../decor/SectionBackdrop";
 import { useLanguage } from "../../lib/i18n/LanguageProvider";
 
 export default function ContactSection() {
@@ -9,8 +8,6 @@ export default function ContactSection() {
 
   return (
     <section className="relative overflow-x-hidden py-20">
-      <SectionBackdrop tone="neutral" />
-
       <div className="relative z-10 mx-auto max-w-6xl px-6">
         <div className="text-center">
           <h2

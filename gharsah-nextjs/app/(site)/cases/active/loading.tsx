@@ -1,9 +1,5 @@
-import GharsahLoader from "@/app/components/ui/GharsahLoader";
+import GharsahLoadingState from "@/app/components/ui/GharsahLoadingState";
 
 export default function Loading() {
-  return (
-    <div className="flex min-h-[70vh] items-center justify-center">
-      <GharsahLoader size={112} />
-    </div>
-  );
+  return <GharsahLoadingState />;
 }

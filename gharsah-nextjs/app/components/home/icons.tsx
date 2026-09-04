@@ -38,6 +38,21 @@ export function DonationBoxIcon({ className }: IconProps) {
   );
 }
 
+/** Simple target/bullseye — two concentric outline rings plus a solid
+ * center dot — for "جمع حملات المجتمع" (gathering scattered campaigns onto
+ * one focused place). Same stroke-only, currentColor style as the rest of
+ * this file, sized/weighted to match the other circle-based icons here
+ * (AlertCircleIcon's r="9.25"/strokeWidth="1.4" convention). */
+export function TargetIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="1.6" />
+      <circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="1.6" />
+      <circle cx="12" cy="12" r="1.4" fill="currentColor" />
+    </svg>
+  );
+}
+
 /** Minimal balance scale (scales of justice) — post, base, beam, and two
  * hanging pans — for "rules/terms" contexts, clearer than a gavel or a
  * generic checkmark. */
@@ -81,6 +96,22 @@ export function LeafIcon({ className }: IconProps) {
   );
 }
 
+/** Small sprout growing from the ground — a short stem rising from a soil
+ * line, with two small leaves branching off (offset in height/size, not
+ * mirrored, for an organic feel) — for "تخليد الأثر بالصدقة": charity that
+ * keeps growing. Pure stroke outline, same convention as the rest of this
+ * file, distinct from LeafIcon (a single standalone leaf, no stem/ground). */
+export function SproutIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path d="M4.5 20h15" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M12 20v-8.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M12 13c-1.5 0-6-.5-6-6 5.5 0 6 3.5 6 6Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M12 11c1.3 0 5-.5 5-5-4.7 0-5 3-5 5Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function LeafParticleIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
@@ -102,26 +133,18 @@ export function ExternalLinkIcon({ className }: IconProps) {
   );
 }
 
-/** Chain-link mark for "copy/share this internal page's link" — distinct
- * from ExternalLinkIcon, which signals leaving Gharsah for another site. */
+/** Single shared chain-link mark for every "copy this link/URL" action
+ * sitewide (overlay URL boxes, campaign/Almost-There link copy, admin short
+ * links) — distinct from ExternalLinkIcon, which signals leaving Gharsah
+ * for another site. A straight HORIZONTAL two-link chain (two rounded
+ * capsule brackets joined by a middle bar), not the diagonal orientation —
+ * inherits the button's own currentColor, same as every icon in this file. */
 export function LinkIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
-      <path d="M10.5 13.5 13.5 10.5" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" />
-      <path
-        d="M8.5 15.5 6.5 17.5a3 3 0 0 1-4.24-4.24l3-3a3 3 0 0 1 4.24 0"
-        stroke="currentColor"
-        strokeWidth="2.1"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M15.5 8.5l2-2a3 3 0 0 1 4.24 4.24l-3 3a3 3 0 0 1-4.24 0"
-        stroke="currentColor"
-        strokeWidth="2.1"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <path d="M15 7h3a5 5 0 0 1 0 10h-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9 17H6a5 5 0 0 1 0-10h3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M8 12h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }
@@ -175,6 +198,14 @@ export function CloseIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
       <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function ChevronDownIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -291,6 +322,26 @@ export function DiceIcon({ className }: IconProps) {
   );
 }
 
+/** "غرسة تختار لك عشوائياً" glyph: a thin outlined circle with six radiating
+ * lines forming an interlocking pinwheel of overlapping slivers at its
+ * center — a small circular/geometric randomizer mark (not a shuffle arrow,
+ * not dice), sized/weighted to match this file's other circle-based icons
+ * (see AlertCircleIcon's r="9.25"/strokeWidth="1.4" convention) so it reads
+ * crisply at the same small button size. */
+export function RandomPickIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <circle cx="12" cy="12" r="9.25" stroke="currentColor" strokeWidth="1.4" />
+      <path
+        d="M14.14 8.3L19.45 17.49M9.86 8.3L20.48 8.3M7.73 12L13.04 2.81M9.86 15.7L4.55 6.51M14.14 15.7L3.52 15.7M16.27 12L10.96 21.19"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 /** Two raised open palms (dua gesture) with a small light/blessing mark above. */
 export function DuaIcon({ className }: IconProps) {
   return (
@@ -356,6 +407,40 @@ export function InstagramIcon({ className }: IconProps) {
       <rect x="3.5" y="3.5" width="17" height="17" rx="5" stroke="currentColor" strokeWidth="1.6" />
       <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.6" />
       <circle cx="17.2" cy="6.8" r="1" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** "صيانة" news card icon — a simple wrench, distinct from GearIcon (admin-only icon set). */
+export function WrenchIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path
+        d="M14.7 6.3a4 4 0 0 0-5.4 4.9L4 16.5l2.5 2.5 5.3-5.3a4 4 0 0 0 4.9-5.4l-2.6 2.6-2-2 2.6-2.6Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+/** "تحديث من المطور" news card icon — a code-bracket mark. */
+export function CodeIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path d="m9 7-5 5 5 5M15 7l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/** "تحديث" (general) news card icon — a plain announcement/megaphone mark. */
+export function MegaphoneIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path d="M3 10v4a1 1 0 0 0 1 1h2l7 4V5L6 9H4a1 1 0 0 0-1 1Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M17 9.5a3 3 0 0 1 0 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M19.5 7.5a6 6 0 0 1 0 9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
     </svg>
   );
 }

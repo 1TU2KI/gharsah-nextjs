@@ -1,5 +1,9 @@
-const MONTH_LABEL = new Intl.DateTimeFormat("ar-SA", { year: "numeric", month: "short" });
-const DAY_LABEL = new Intl.DateTimeFormat("ar-SA", { month: "numeric", day: "numeric" });
+import { AR_LATIN } from "../dateFormat";
+
+// `-u-nu-latn` forces Western digits (0-9) instead of ICU's default
+// Arabic-Indic numbering for "ar-SA" — see dateFormat.ts.
+const MONTH_LABEL = new Intl.DateTimeFormat(AR_LATIN, { year: "numeric", month: "short" });
+const DAY_LABEL = new Intl.DateTimeFormat(AR_LATIN, { month: "numeric", day: "numeric" });
 
 /**
  * Zero-fills a {day, count} series (as returned by e.g. `eventCountsByDay`/

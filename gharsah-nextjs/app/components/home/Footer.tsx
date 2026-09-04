@@ -25,11 +25,10 @@ export default function Footer() {
   // accent/on-accent tokens (which already invert green<->white per theme).
   const isCompletedPage = usePathname() === "/cases/completed";
 
-  // Translucent + blurred (not solid) so the site-wide flowing background
-  // stays visible through the footer instead of being fully covered.
-  const surfaceClass = isCompletedPage
-    ? "bg-[#0C787E]/90 text-white backdrop-blur-sm"
-    : "bg-accent/90 text-on-accent backdrop-blur-sm";
+  // Flat, fully OPAQUE surface, no blur/mask — a clean, hard-edged block
+  // against the page background, per the brief ("sharp, solid, no
+  // gradient/fade/blur transition"). Painted straight on `<footer>` itself.
+  const surfaceClass = isCompletedPage ? "bg-[#0C787E]" : "bg-accent";
   const textClass = isCompletedPage ? "text-white" : "text-on-accent";
   const mutedTextClass = isCompletedPage ? "text-white/70" : "text-on-accent/70";
   const faintTextClass = isCompletedPage ? "text-white/60" : "text-on-accent/60";
@@ -42,8 +41,14 @@ export default function Footer() {
       <div className="mx-auto grid max-w-6xl gap-x-8 gap-y-10 px-6 py-12 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-white">
-              <Image src="/logo.png" alt={t.nav.logoAlt} width={36} height={36} className="h-full w-full object-cover" />
+            {/* Footer-only: white circular backdrop behind the logo mark (per
+                brief — Header stays transparent, this is intentionally not a
+                shared class so it can never leak there). object-contain +
+                padding keeps the mark from touching the circle's edge; p-1
+                (vs. p-1.5) lets the icon fill more of the circle while still
+                keeping a comfortable gap from the edge. */}
+            <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-white p-1 shadow-[0_1px_3px_rgba(0,0,0,0.15)]">
+              <Image src="/logo.png" alt={t.nav.logoAlt} width={36} height={36} className="h-full w-full object-contain" />
             </span>
             <span className={`text-xl font-bold ${textClass}`}>غرسة</span>
           </div>

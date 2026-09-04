@@ -7,6 +7,7 @@ import type { CampaignRequestRow, RequestStatus } from "@/app/lib/db/requests";
 import { changeRequestStatusAction, updateRequestNotesAction, setRequestArchivedAction } from "@/app/(admin)/gh-control-7f2k9/(dashboard)/requests/actions";
 import { REQUEST_STATUS_LABEL } from "./RequestsTable";
 import { ADMIN_BASE_PATH } from "@/app/lib/auth/constants";
+import { formatAdminDateTime } from "@/app/lib/dateFormat";
 
 export default function RequestDetailPanel({ request }: { request: CampaignRequestRow }) {
   const router = useRouter();
@@ -76,7 +77,7 @@ export default function RequestDetailPanel({ request }: { request: CampaignReque
             </div>
             <div>
               <dt className="text-xs text-muted">تاريخ الإرسال</dt>
-              <dd className="text-sm text-foreground">{new Date(request.created_at).toLocaleString("ar-SA")}</dd>
+              <dd className="text-sm text-foreground">{formatAdminDateTime(request.created_at)}</dd>
             </div>
           </dl>
         </section>

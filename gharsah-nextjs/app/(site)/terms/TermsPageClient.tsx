@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { ScaleIcon, WarningIcon } from "@/app/components/home/icons";
-import SectionBackdrop from "@/app/components/decor/SectionBackdrop";
 import { useLanguage } from "@/app/lib/i18n/LanguageProvider";
 
 export default function TermsPageClient() {
@@ -13,8 +12,6 @@ export default function TermsPageClient() {
   return (
     <main className="flex-1">
       <section className="relative overflow-x-hidden py-16">
-        <SectionBackdrop tone="neutral" />
-
         <div className="relative z-10 mx-auto max-w-4xl px-6">
           <h1 className={`text-2xl font-extrabold text-foreground sm:text-3xl ${headingClass}`}>{t.terms.heading}</h1>
 

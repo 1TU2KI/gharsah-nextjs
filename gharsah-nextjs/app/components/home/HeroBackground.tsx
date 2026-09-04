@@ -1,6 +1,12 @@
 export default function HeroBackground() {
   return (
-    <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
+    // `section-fade-mask` (see globals.css) feathers this layer's own
+    // top/bottom edges to transparent — without it, the bottom-anchored
+    // glows below (`-bottom-36`/`-bottom-24`) get hard-clipped exactly at
+    // Hero's own box edge by this wrapper's `overflow-hidden`, which reads
+    // as a visible seam against the shared global background continuing
+    // underneath into the next section (2026 global-background rebuild).
+    <div className="section-fade-mask pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
       {/* soft canopy vignette — evokes dappled sunlight through trees */}
       <div
         className="absolute inset-0"

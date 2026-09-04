@@ -4,7 +4,6 @@ import CampaignCard from "@/app/components/home/CampaignCard";
 import OpeningVerse from "@/app/components/home/OpeningVerse";
 import EmptyState from "@/app/components/ui/EmptyState";
 import { CheckBadgeIcon } from "@/app/components/home/icons";
-import SectionBackdrop from "@/app/components/decor/SectionBackdrop";
 import { useLanguage } from "@/app/lib/i18n/LanguageProvider";
 import type { Campaign } from "@/app/lib/campaigns";
 
@@ -14,8 +13,6 @@ export default function CompletedCasesPageClient({ campaigns }: { campaigns: Cam
   return (
     <main className="flex-1">
       <section className="relative overflow-x-hidden py-16">
-        <SectionBackdrop tone="teal" />
-
         <div className="relative z-10 mx-auto max-w-6xl px-6">
           <OpeningVerse
             verse="﴿ وَمَا تُنْفِقُوا مِن شَيْءٍ فَإِنَّ اللَّهَ بِهِ عَلِيمٌ ﴾"

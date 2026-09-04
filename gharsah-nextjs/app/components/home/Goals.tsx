@@ -1,15 +1,22 @@
 "use client";
 
-import { CheckBadgeIcon, DuaIcon, HeartIcon, LeafIcon, UsersIcon } from "./icons";
+import { DuaIcon, HeartIcon, SproutIcon, TargetIcon, UsersIcon } from "./icons";
 import { useLanguage } from "../../lib/i18n/LanguageProvider";
 
-const goalIcons = [HeartIcon, CheckBadgeIcon, LeafIcon, UsersIcon, DuaIcon];
+// items[0]="تخليد الأثر بالصدقة", items[1]="جمع حملات المجتمع" (unchanged),
+// items[2]="اجعل نيتك أوسع", items[3]/[4] unchanged.
+const goalIcons = [SproutIcon, TargetIcon, HeartIcon, UsersIcon, DuaIcon];
 
 export default function Goals() {
   const { t, locale } = useLanguage();
 
   return (
-    <section id="goals" className="bg-accent/90 backdrop-blur-sm">
+    // Deliberately a flat, fully OPAQUE `bg-accent` with no mask/blur — a
+    // clean, hard-edged block against the surrounding page background, per
+    // the brief ("sharp, solid, no gradient/fade/blur transition"). This
+    // supersedes the previous feathered-backdrop treatment (see git history
+    // if that soft-blend version is ever wanted back).
+    <section id="goals" className="bg-accent">
       <div className="mx-auto max-w-6xl px-6 py-16">
         <h2
           className={`text-center text-2xl font-extrabold text-on-accent sm:text-3xl ${locale === "en" ? "tracking-tight" : ""}`}

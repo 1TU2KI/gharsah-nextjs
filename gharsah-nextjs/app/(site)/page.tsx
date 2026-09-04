@@ -4,6 +4,7 @@ import CompletedCasesSection from "@/app/components/home/CompletedCasesSection";
 import ContactSection from "@/app/components/home/ContactSection";
 import Goals from "@/app/components/home/Goals";
 import Hero from "@/app/components/home/Hero";
+import LatestNewsSection from "@/app/components/home/LatestNewsSection";
 
 export default function Home() {
   return (
@@ -13,6 +14,7 @@ export default function Home() {
       <AlmostThereSection />
       <ActiveCasesSection />
       <CompletedCasesSection />
+      <LatestNewsSection />
       <ContactSection />
     </main>
   );

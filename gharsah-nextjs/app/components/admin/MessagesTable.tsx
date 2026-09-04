@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { ContactMessageRow } from "@/app/lib/db/messages";
 import { ADMIN_BASE_PATH } from "@/app/lib/auth/constants";
+import { formatAdminDate } from "@/app/lib/dateFormat";
 
 export default function MessagesTable({ rows }: { rows: ContactMessageRow[] }) {
   const [search, setSearch] = useState("");
@@ -53,7 +54,7 @@ export default function MessagesTable({ rows }: { rows: ContactMessageRow[] }) {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <p className={`truncate text-sm ${row.is_read ? "font-medium text-foreground" : "font-bold text-foreground"}`}>{row.name}</p>
-                    <span className="shrink-0 text-xs text-muted">{new Date(row.created_at).toLocaleDateString("ar-SA")}</span>
+                    <span className="shrink-0 text-xs text-muted">{formatAdminDate(row.created_at)}</span>
                   </div>
                   <p className="mt-0.5 truncate text-xs text-muted">{row.message}</p>
                 </div>

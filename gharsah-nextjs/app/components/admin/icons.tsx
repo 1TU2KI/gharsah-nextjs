@@ -235,3 +235,29 @@ export function DiceIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+/** "الأخبار" sidebar icon — a simple megaphone, this admin set's own version (distinct from home/icons.tsx's public-facing one, per this file's own "separate, plainer admin icon family" convention). */
+export function MegaphoneIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path
+        d="M3.5 10v4a1 1 0 0 0 1 1h2l7.5 4V5L6.5 9h-2a1 1 0 0 0-1 1Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path d="M17.5 9.3a3 3 0 0 1 0 5.4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function BroadcastIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <rect x="3.5" y="6.5" width="17" height="12" rx="2" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M8 20.5h8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M9 15.2 12 12l3 3.2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M12 12V9.8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}

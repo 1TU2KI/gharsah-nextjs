@@ -68,6 +68,8 @@ export type Campaign = {
   platformHomepageUrl: string;
   /** Compact public redirect code for gharsah.sa/c/<code> (see app/c/[code]/route.ts) — never null in practice (backfilled for every campaign on startup), typed nullable only because the DB column technically allows it for the brief instant before that backfill runs. */
   shortCode: string | null;
+  /** ISO timestamp of the row's real DB `created_at` — i.e. when the campaign was actually added to Gharsah, not when it was last edited. Exposed only for the /cases/active sort-by-date-added control; not otherwise rendered anywhere. */
+  createdAt: string;
 };
 
 async function rowToCampaign(row: CampaignRow): Promise<Campaign> {
@@ -94,6 +96,7 @@ async function rowToCampaign(row: CampaignRow): Promise<Campaign> {
     platformLogo: platformConfig?.logo ?? null,
     platformHomepageUrl: platformConfig?.homepageUrl ?? row.platform,
     shortCode: row.short_code,
+    createdAt: row.created_at,
   };
 }
 

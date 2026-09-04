@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import type { AdminRow } from "@/app/lib/db/admins";
 import { createAdminAccountAction } from "@/app/(admin)/gh-control-7f2k9/(dashboard)/settings/actions";
+import { formatAdminDate } from "@/app/lib/dateFormat";
 
 const fieldClass =
   "mt-1.5 w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm outline-none focus:border-primary-light focus:ring-4 focus:ring-primary-light/15";
@@ -22,7 +23,7 @@ export default function AdminAccountsSection({ admins, currentAdminId }: { admin
               {admin.username}
               {admin.id === currentAdminId && <span className="ms-2 rounded-full bg-primary-50 px-2 py-0.5 text-[10px] font-semibold text-primary">أنت</span>}
             </span>
-            <span className="text-xs text-muted">{new Date(admin.created_at).toLocaleDateString("ar-SA")}</span>
+            <span className="text-xs text-muted">{formatAdminDate(admin.created_at)}</span>
           </li>
         ))}
       </ul>

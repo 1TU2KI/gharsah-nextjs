@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowIcon, CheckBadgeIcon, DonationBoxIcon, LeafIcon, PulseIcon } from "./icons";
+import { ArrowIcon, CheckBadgeIcon, LeafIcon, PulseIcon } from "./icons";
 import HeroBackground from "./HeroBackground";
 import OpeningVerse from "./OpeningVerse";
 import { useLanguage } from "../../lib/i18n/LanguageProvider";
@@ -69,7 +69,7 @@ export default function HeroClient({
           <div className="card-elevated rounded-[2rem] bg-background/70 p-8 ring-1 ring-background/60 backdrop-blur-md">
             <div className="flex items-center gap-3">
               <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-white">
-                <DonationBoxIcon className="h-8 w-8" />
+                <LeafIcon className="h-8 w-8" />
               </span>
               <div>
                 <p className="text-sm text-muted">{t.hero.totalCampaigns}</p>

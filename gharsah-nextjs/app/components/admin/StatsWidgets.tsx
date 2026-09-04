@@ -52,8 +52,8 @@ export function RankedList({
 
 export const RANGE_OPTIONS: { value: RangeValue; label: string }[] = [
   { value: "today", label: "اليوم" },
-  { value: "7", label: "٧ أيام" },
-  { value: "30", label: "٣٠ يومًا" },
+  { value: "7", label: "7 أيام" },
+  { value: "30", label: "30 يومًا" },
   { value: "all", label: "الكل" },
 ];
 

@@ -18,9 +18,26 @@ import { getActiveCampaignsLive } from "./campaignLiveSync";
  * never padded with placeholders.
  */
 export async function getAlmostThereCampaigns(limit = 3): Promise<Campaign[]> {
+  const rankable = await getRankableActiveCampaigns();
+  return rankable.sort((a, b) => (b.percent ?? 0) - (a.percent ?? 0)).slice(0, limit);
+}
+
+/**
+ * The inverse of getAlmostThereCampaigns — active campaigns with the
+ * LOWEST completion percentage first, for the overlay's "أقل 3 حالات
+ * اكتمالاً" mode (see app/lib/overlay/resolveCampaigns.ts). Same
+ * eligibility rule as "اقتربت..." (active status, known percent only) via
+ * the shared getRankableActiveCampaigns() below — only the sort direction
+ * differs, so the two rankings can never drift apart on what counts as
+ * "eligible."
+ */
+export async function getLowestProgressCampaigns(limit = 3): Promise<Campaign[]> {
+  const rankable = await getRankableActiveCampaigns();
+  return rankable.sort((a, b) => (a.percent ?? 0) - (b.percent ?? 0)).slice(0, limit);
+}
+
+/** Active campaigns with a known percent — the one shared eligibility filter both getAlmostThereCampaigns and getLowestProgressCampaigns sort in opposite directions. A missing percent is excluded rather than treated as 0 (unknown isn't "closest" or "furthest" from anything). */
+async function getRankableActiveCampaigns(): Promise<Campaign[]> {
   const active = await getActiveCampaignsLive();
-  return active
-    .filter((c) => c.percent !== undefined)
-    .sort((a, b) => (b.percent ?? 0) - (a.percent ?? 0))
-    .slice(0, limit);
+  return active.filter((c) => c.percent !== undefined);
 }

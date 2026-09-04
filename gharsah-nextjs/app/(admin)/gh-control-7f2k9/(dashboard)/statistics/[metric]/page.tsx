@@ -27,6 +27,7 @@ import { ChartCard, RankedList, RangeTabs, isRangeValue, NO_DATA_YET } from "@/a
 import { REQUEST_STATUS_LABEL, REQUEST_STATUS_CLASS } from "@/app/components/admin/RequestsTable";
 import { TrendingUpIcon, UsersIcon, EyeIcon, CursorClickIcon, LinkIcon, DiceIcon, InboxIcon, MailIcon } from "@/app/components/admin/icons";
 import { ADMIN_BASE_PATH } from "@/app/lib/auth/constants";
+import { formatAdminDate } from "@/app/lib/dateFormat";
 
 const STATS = `${ADMIN_BASE_PATH}/statistics`;
 
@@ -112,8 +113,8 @@ async function VisitsDetail({ sinceIso, toSeries }: { sinceIso: string | null; t
     <div className="space-y-6">
       <StatStrip>
         <MetricCard label="اليوم" value={visits.visitsToday} tone="emerald" icon={<TrendingUpIcon />} />
-        <MetricCard label="آخر ٧ أيام" value={visits.visitsLast7d} icon={<TrendingUpIcon />} />
-        <MetricCard label="آخر ٣٠ يومًا" value={visits.visitsLast30d} icon={<TrendingUpIcon />} />
+        <MetricCard label="آخر 7 أيام" value={visits.visitsLast7d} icon={<TrendingUpIcon />} />
+        <MetricCard label="آخر 30 يومًا" value={visits.visitsLast30d} icon={<TrendingUpIcon />} />
         <MetricCard label="كل الفترات" value={visits.totalVisits} icon={<TrendingUpIcon />} />
       </StatStrip>
 
@@ -151,8 +152,8 @@ async function UniqueVisitorsDetail({ sinceIso, toSeries }: { sinceIso: string |
       <StatStrip>
         <MetricCard label="الزوار الفريدون (كل الفترات)" value={visits.uniqueVisitors} icon={<UsersIcon />} />
         <MetricCard label="اليوم" value={visits.uniqueToday} tone="emerald" icon={<UsersIcon />} />
-        <MetricCard label="آخر ٧ أيام" value={visits.uniqueLast7d} icon={<UsersIcon />} />
-        <MetricCard label="آخر ٣٠ يومًا" value={visits.uniqueLast30d} icon={<UsersIcon />} />
+        <MetricCard label="آخر 7 أيام" value={visits.uniqueLast7d} icon={<UsersIcon />} />
+        <MetricCard label="آخر 30 يومًا" value={visits.uniqueLast30d} icon={<UsersIcon />} />
       </StatStrip>
 
       <ChartCard title="الزوار الفريدون عبر الوقت">
@@ -332,7 +333,7 @@ async function RequestsDetail({ toSeries, statusFilter }: { toSeries: SeriesFn; 
 
       <ChartCard
         title={validStatus ? `أحدث الطلبات — ${REQUEST_STATUS_LABEL[validStatus]}` : "أحدث الطلبات"}
-        hint="أحدث ١٠ طلبات فقط — لإدارة كل الطلبات والفلترة الكاملة استخدم صفحة الطلبات"
+        hint="أحدث 10 طلبات فقط — لإدارة كل الطلبات والفلترة الكاملة استخدم صفحة الطلبات"
       >
         <RequestsMiniTable rows={recent} />
         <Link href={`${ADMIN_BASE_PATH}/requests`} className="mt-4 inline-block text-xs font-semibold text-primary hover:underline">
@@ -368,7 +369,7 @@ function RequestsMiniTable({ rows }: { rows: Awaited<ReturnType<typeof listCampa
                   {REQUEST_STATUS_LABEL[r.status]}
                 </span>
               </td>
-              <td className="px-2 py-2.5 text-xs text-muted">{new Date(r.created_at).toLocaleDateString("ar-SA")}</td>
+              <td className="px-2 py-2.5 text-xs text-muted">{formatAdminDate(r.created_at)}</td>
             </tr>
           ))}
         </tbody>
@@ -415,7 +416,7 @@ async function MessagesDetail({ toSeries, readFilter }: { toSeries: SeriesFn; re
 
       <ChartCard
         title={readFilter === "unread" ? "أحدث الرسائل — غير مقروءة" : "أحدث الرسائل"}
-        hint="أحدث ١٠ رسائل فقط — لإدارة كل الرسائل استخدم صفحة الرسائل"
+        hint="أحدث 10 رسائل فقط — لإدارة كل الرسائل استخدم صفحة الرسائل"
       >
         <MessagesMiniTable rows={recent} />
         <Link href={`${ADMIN_BASE_PATH}/messages`} className="mt-4 inline-block text-xs font-semibold text-primary hover:underline">
@@ -455,7 +456,7 @@ function MessagesMiniTable({ rows }: { rows: Awaited<ReturnType<typeof listConta
                   {m.is_read ? "مقروءة" : "غير مقروءة"}
                 </span>
               </td>
-              <td className="px-2 py-2.5 text-xs text-muted">{new Date(m.created_at).toLocaleDateString("ar-SA")}</td>
+              <td className="px-2 py-2.5 text-xs text-muted">{formatAdminDate(m.created_at)}</td>
             </tr>
           ))}
         </tbody>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { listActivity } from "@/app/lib/db/activity";
 import { ACTIVITY_LABEL } from "@/app/components/admin/activityLabels";
+import { formatAdminDateTime } from "@/app/lib/dateFormat";
 
 export const metadata: Metadata = { title: "سجل النشاط | لوحة تحكم غرسة" };
 
@@ -48,7 +49,7 @@ export default async function ActivityLogPage() {
                     <td dir="ltr" className="px-4 py-3 text-start text-xs text-muted">
                       {entry.admin_username}
                     </td>
-                    <td className="px-4 py-3 text-xs text-muted">{new Date(entry.created_at).toLocaleString("ar-SA")}</td>
+                    <td className="px-4 py-3 text-xs text-muted">{formatAdminDateTime(entry.created_at)}</td>
                     <td className="px-4 py-3 text-xs text-muted">{entry.details ?? "—"}</td>
                   </tr>
                 ))}

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import type { ContactMessageRow } from "@/app/lib/db/messages";
 import { updateMessageNotesAction, setMessageArchivedAction } from "@/app/(admin)/gh-control-7f2k9/(dashboard)/messages/actions";
+import { formatAdminDateTime } from "@/app/lib/dateFormat";
 
 export default function MessageDetailPanel({ message }: { message: ContactMessageRow }) {
   const router = useRouter();
@@ -43,7 +44,7 @@ export default function MessageDetailPanel({ message }: { message: ContactMessag
             </div>
             <div>
               <dt className="text-xs text-muted">تاريخ الإرسال</dt>
-              <dd className="text-sm text-foreground">{new Date(message.created_at).toLocaleString("ar-SA")}</dd>
+              <dd className="text-sm text-foreground">{formatAdminDateTime(message.created_at)}</dd>
             </div>
           </dl>
           <div className="mt-4 border-t border-primary-100 pt-4">

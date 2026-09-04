@@ -294,6 +294,12 @@ export default function CampaignForm({
       // The preview card never renders a short-link affordance, so this is
       // never read — null keeps it honest rather than inventing one.
       shortCode: null,
+      // Same reasoning: this preview object isn't a real DB row, so there's
+      // no genuine created_at to reflect. Only /cases/active's sort control
+      // ever reads this field, and this preview card is never rendered
+      // there — "now" is a harmless placeholder to satisfy the Campaign
+      // type, never actually read.
+      createdAt: new Date().toISOString(),
     };
   }, [values, platforms, campaignId]);
 

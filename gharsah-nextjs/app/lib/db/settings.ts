@@ -90,3 +90,72 @@ export async function getDefaultCampaignSort(): Promise<"order" | "newest"> {
 export async function setDefaultCampaignSort(sort: "order" | "newest"): Promise<void> {
   await setRaw("default_campaign_sort", sort);
 }
+
+export type OverlayPosition = "top-right" | "top-left" | "bottom-right" | "bottom-left";
+export type OverlayTheme = "dark" | "light";
+
+/**
+ * Configuration for the OBS Browser Source overlay (`/overlay/near`, see
+ * app/api/overlay/near/route.ts and app/overlay/near/page.tsx). One JSON
+ * blob under a single `settings` key — same generic key/value table every
+ * other setting in this file already uses, no schema migration needed.
+ * These are DEFAULTS only: a streamer's own query-string overrides
+ * (`?position=...`, `?theme=...`, etc. — see app/lib/overlay/queryParams.ts)
+ * win over whatever's configured here for that specific Browser Source URL,
+ * but the base permanent URL (no query string) always reflects whatever is
+ * saved here — so changing a setting here updates every OBS instance still
+ * pointed at the plain `/overlay/near` URL, without the streamer ever
+ * needing to replace it.
+ */
+export type OverlaySettings = {
+  enabled: boolean;
+  /** How many near-completion campaigns feed the cycle — same ranking as the homepage, just a wider/narrower slice (see getAlmostThereCampaigns). */
+  campaignCount: number;
+  displayDurationMs: number;
+  transitionDurationMs: number;
+  /** How long the overlay hides itself between full cycles. */
+  restDurationMs: number;
+  showProgress: boolean;
+  showRemaining: boolean;
+  showShortLink: boolean;
+  showLogo: boolean;
+  position: OverlayPosition;
+  theme: OverlayTheme;
+  compact: boolean;
+  /** Overrides the "اقتربت..." heading shown above the campaign title, if ever needed — empty means use the default. */
+  titleText: string;
+};
+
+export const DEFAULT_OVERLAY_SETTINGS: OverlaySettings = {
+  enabled: true,
+  campaignCount: 3,
+  displayDurationMs: 8000,
+  transitionDurationMs: 500,
+  restDurationMs: 45000,
+  showProgress: true,
+  showRemaining: true,
+  showShortLink: true,
+  showLogo: true,
+  position: "top-right",
+  theme: "dark",
+  compact: false,
+  titleText: "",
+};
+
+export async function getOverlaySettings(): Promise<OverlaySettings> {
+  const raw = await getRaw("overlay_settings");
+  if (!raw) return DEFAULT_OVERLAY_SETTINGS;
+  try {
+    const parsed = JSON.parse(raw) as Partial<OverlaySettings>;
+    // Merge over the defaults rather than trusting the stored blob whole —
+    // safe if a future field is added to OverlaySettings after some settings
+    // were already saved (old rows simply fall back to that field's default).
+    return { ...DEFAULT_OVERLAY_SETTINGS, ...parsed };
+  } catch {
+    return DEFAULT_OVERLAY_SETTINGS;
+  }
+}
+
+export async function setOverlaySettings(settings: OverlaySettings): Promise<void> {
+  await setRaw("overlay_settings", JSON.stringify(settings));
+}

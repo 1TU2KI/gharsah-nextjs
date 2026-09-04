@@ -186,6 +186,36 @@ const SCHEMA_STATEMENTS = [
   `CREATE INDEX IF NOT EXISTS idx_analytics_events_campaign ON analytics_events (campaign_id)`,
   `CREATE INDEX IF NOT EXISTS idx_analytics_events_created ON analytics_events (created_at)`,
   `CREATE INDEX IF NOT EXISTS idx_analytics_events_visitor ON analytics_events (visitor_id)`,
+  // "الأخبار" — the public news/updates feed (see app/lib/db/newsRepo.ts).
+  // `source` = 'automatic' (campaign_added/campaign_completed, written only
+  // from the two admin campaign actions that actually know a transition
+  // just happened — never from a per-request read path) or 'manual'
+  // (urgent/maintenance/dev_update/general, admin-authored). `event_key` is
+  // the idempotency guard for automatic rows only — UNIQUE, e.g.
+  // 'campaign_added:<campaignId>' — so a redundant/retried/concurrent write
+  // for the same real-world event is a silent no-op (`ON CONFLICT DO
+  // NOTHING`) instead of a duplicate post; manual rows always have it NULL,
+  // and Postgres allows unlimited NULLs in a unique index/column, so manual
+  // rows never collide with each other. `campaign_id` is informational only
+  // (used to re-resolve a live link at read time, see newsRepo.ts) — never
+  // a hard foreign key, so deleting a campaign never fails or cascades.
+  `CREATE TABLE IF NOT EXISTS news_items (
+    id TEXT PRIMARY KEY,
+    type TEXT NOT NULL CHECK (type IN ('campaign_completed','campaign_added','urgent','maintenance','dev_update','general')),
+    source TEXT NOT NULL CHECK (source IN ('automatic','manual')),
+    title_ar TEXT,
+    title_en TEXT,
+    body_ar TEXT NOT NULL,
+    body_en TEXT,
+    campaign_id TEXT,
+    custom_url TEXT,
+    published INTEGER NOT NULL DEFAULT 1,
+    event_key TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_news_items_feed ON news_items (published, created_at DESC)`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_news_items_event_key ON news_items (event_key)`,
 ];
 
 /**

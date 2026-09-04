@@ -6,6 +6,7 @@ import { countMessages, countUnreadMessages } from "@/app/lib/db/messages";
 import { listActivity } from "@/app/lib/db/activity";
 import { getVisitTotals, countEventsByType } from "@/app/lib/db/analyticsRepo";
 import { ADMIN_BASE_PATH } from "@/app/lib/auth/constants";
+import { formatAdminDateTime } from "@/app/lib/dateFormat";
 import { ACTIVITY_LABEL } from "@/app/components/admin/activityLabels";
 import MetricCard from "@/app/components/admin/MetricCard";
 import {
@@ -148,7 +149,7 @@ export default async function AdminOverviewPage() {
                       {entry.target_label && <span className="text-muted"> — {entry.target_label}</span>}
                     </p>
                     <p className="text-xs text-muted">
-                      {entry.admin_username} · {new Date(entry.created_at).toLocaleString("ar-SA")}
+                      {entry.admin_username} · {formatAdminDateTime(entry.created_at)}
                     </p>
                   </div>
                 </li>

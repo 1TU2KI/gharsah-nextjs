@@ -4,7 +4,6 @@ import Link from "next/link";
 import CampaignCard from "./CampaignCard";
 import EmptyState from "../ui/EmptyState";
 import { HeartIcon } from "./icons";
-import SectionBackdrop from "../decor/SectionBackdrop";
 import { useLanguage } from "../../lib/i18n/LanguageProvider";
 import type { Campaign } from "../../lib/campaigns";
 
@@ -19,8 +18,6 @@ export default function ActiveCasesSectionClient({
 
   return (
     <section className="relative overflow-x-hidden py-20">
-      <SectionBackdrop tone="green" />
-
       <div className="relative z-10 mx-auto max-w-6xl px-6">
         <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
           <div className="text-center sm:text-start">

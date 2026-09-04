@@ -94,7 +94,7 @@ export default async function StatisticsPage({ searchParams }: { searchParams: P
 
       <p className="mb-6 rounded-xl bg-wash/70 px-4 py-3 text-xs leading-6 text-muted">
         بيانات حقيقية من زوار الموقع العام فقط — لا تشمل صفحات لوحة التحكم. الزيارة تُحتسب عبر معرّف جلسة عشوائي غير
-        معرِّف صالح لـ٣٠ دقيقة (وليس عنوان IP)، والزائر الفريد عبر معرّف عشوائي طويل الأمد في المتصفح — لا يُخزَّن أي
+        معرِّف صالح لـ30 دقيقة (وليس عنوان IP)، والزائر الفريد عبر معرّف عشوائي طويل الأمد في المتصفح — لا يُخزَّن أي
         بريد أو اسم أو محتوى نموذج ضمن هذه البيانات.
       </p>
 
@@ -110,13 +110,13 @@ export default async function StatisticsPage({ searchParams }: { searchParams: P
           href={`${STATS}/visits?range=today`}
         />
         <MetricCard
-          label="زيارات آخر ٧ أيام"
+          label="زيارات آخر 7 أيام"
           value={visits.visitsLast7d}
           icon={<TrendingUpIcon />}
           href={`${STATS}/visits?range=7`}
         />
         <MetricCard
-          label="زيارات آخر ٣٠ يومًا"
+          label="زيارات آخر 30 يومًا"
           value={visits.visitsLast30d}
           icon={<TrendingUpIcon />}
           href={`${STATS}/visits?range=30`}

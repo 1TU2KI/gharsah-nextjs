@@ -3,9 +3,10 @@
 import { redirect } from "next/navigation";
 import { requireAdminSession } from "@/app/lib/auth/guard";
 import { logActivity } from "@/app/lib/db/activity";
-import { revalidatePublicCampaignPages } from "@/app/lib/admin/revalidate";
+import { revalidatePublicCampaignPages, revalidatePublicNewsPages } from "@/app/lib/admin/revalidate";
 import { ADMIN_BASE_PATH } from "@/app/lib/auth/constants";
 import { markCampaignRequestConverted } from "@/app/lib/db/requests";
+import { recordCampaignAddedEvent, recordCampaignCompletedEvent } from "@/app/lib/db/newsRepo";
 import { translateCampaignFields } from "@/app/lib/translate";
 import { campaignFormSchema, type CampaignFormFieldErrors, type CampaignFormState } from "@/app/lib/admin/campaignSchema";
 import { MEMORIAL_PREFIX_EN } from "@/app/lib/admin/memorialPrefixOptions";
@@ -26,6 +27,25 @@ import {
   type CampaignInput,
   type CampaignRow,
 } from "@/app/lib/db/campaignsRepo";
+
+/**
+ * Wraps a single automatic news-event write (`recordCampaignAddedEvent`/
+ * `recordCampaignCompletedEvent`, both already idempotent via `event_key` —
+ * see newsRepo.ts) so a failure there can NEVER roll back or fail the
+ * actual campaign create/status-change action that triggered it — that
+ * action has already committed by the time this runs. Logged loudly to the
+ * server console (never surfaced to the admin as an error, since the real
+ * action they asked for did succeed) so a persistent failure is still
+ * visible to whoever's watching logs.
+ */
+async function recordNewsEventSafely(fn: () => Promise<void>, label: string): Promise<void> {
+  try {
+    await fn();
+    revalidatePublicNewsPages();
+  } catch (error) {
+    console.error(`[news] failed to record ${label} event`, error);
+  }
+}
 
 function parseForm(formData: FormData) {
   return campaignFormSchema.safeParse({
@@ -222,6 +242,27 @@ export async function createCampaignAction(
     adminUsername: session.username,
   });
 
+  // "الأخبار" — only a genuinely new, immediately-public campaign gets a
+  // green "حالة جديدة" post (never one created directly as
+  // completed/closed, and never a duplicate campaign — see
+  // duplicateCampaignAction below, which deliberately does NOT call this).
+  if (row.status === "active") {
+    await recordNewsEventSafely(
+      () =>
+        recordCampaignAddedEvent({
+          id: row.id,
+          titleAr: row.title_ar,
+          titleEn: row.title_en,
+          relationAr: row.relation_ar,
+          relationEn: row.relation_en,
+          username: row.username,
+          memorialPrefixAr: row.memorial_prefix_ar,
+          memorialPrefixEn: row.memorial_prefix_en,
+        }),
+      "campaign_added",
+    );
+  }
+
   revalidatePublicCampaignPages(row.slug);
   redirect(`${ADMIN_BASE_PATH}/campaigns/${row.id}?created=1`);
 }
@@ -265,6 +306,25 @@ export async function updateCampaignAction(
       adminUsername: session.username,
       details: `${existing.status} → ${parsed.data.status}`,
     });
+
+    // "الأخبار" — only a REAL active → completed transition gets a blue
+    // "اكتملت حالة" post (never closed → completed or any other pairing).
+    if (existing.status === "active" && parsed.data.status === "completed") {
+      await recordNewsEventSafely(
+        () =>
+          recordCampaignCompletedEvent({
+            id,
+            titleAr: input.titleAr,
+            titleEn: input.titleEn,
+            relationAr: input.relationAr,
+            relationEn: input.relationEn,
+            username: input.username ?? null,
+            memorialPrefixAr: input.memorialPrefixAr ?? null,
+            memorialPrefixEn: input.memorialPrefixEn ?? null,
+          }),
+        "campaign_completed",
+      );
+    }
   }
 
   revalidatePublicCampaignPages(existing.slug);
@@ -346,6 +406,7 @@ export async function setCampaignArchivedAction(id: string, archived: boolean): 
   revalidatePublicCampaignPages(existing.slug);
 }
 
+/** Deliberately does NOT record a "الأخبار" campaign_added event — a duplicate is a copy of existing content, not a genuine new campaign (see recordCampaignAddedEvent's own doc comment). */
 export async function duplicateCampaignAction(id: string): Promise<void> {
   const session = await requireAdminSession();
   const duplicate = await duplicateCampaignRow(id);
@@ -376,6 +437,24 @@ export async function quickChangeStatusAction(id: string, status: "active" | "co
     adminUsername: session.username,
     details: `${existing.status} → ${status}`,
   });
+
+  if (existing.status === "active" && status === "completed") {
+    await recordNewsEventSafely(
+      () =>
+        recordCampaignCompletedEvent({
+          id,
+          titleAr: existing.title_ar,
+          titleEn: existing.title_en,
+          relationAr: existing.relation_ar,
+          relationEn: existing.relation_en,
+          username: existing.username,
+          memorialPrefixAr: existing.memorial_prefix_ar,
+          memorialPrefixEn: existing.memorial_prefix_en,
+        }),
+      "campaign_completed",
+    );
+  }
+
   revalidatePublicCampaignPages(existing.slug);
 }
 

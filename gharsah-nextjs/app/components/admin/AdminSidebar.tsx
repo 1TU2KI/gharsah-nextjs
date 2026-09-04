@@ -14,6 +14,8 @@ import {
   HistoryIcon,
   GearIcon,
   TrendingUpIcon,
+  BroadcastIcon,
+  MegaphoneIcon,
 } from "./icons";
 
 const ICONS = {
@@ -21,6 +23,8 @@ const ICONS = {
   campaigns: ListIcon,
   addCampaign: PlusCircleIcon,
   almostThere: TrendingUpIcon,
+  overlay: BroadcastIcon,
+  news: MegaphoneIcon,
   requests: InboxIcon,
   messages: MailIcon,
   statistics: ChartIcon,
@@ -40,10 +44,10 @@ export default function AdminSidebar({
 
   return (
     <nav className="flex h-full flex-col gap-1 overflow-y-auto px-3 py-4">
-      {/* Same logo mark as Header.tsx/Footer.tsx (white circle + /logo.png)
-          — no separate admin logo, per the brief. */}
+      {/* Same logo mark as Header.tsx/Footer.tsx (/logo.png, transparent —
+          no white circle behind it) — no separate admin logo, per the brief. */}
       <div className="mb-4 flex items-center gap-2.5 px-2.5">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full">
           <Image src="/logo.png" alt="غرسة" width={36} height={36} className="h-full w-full object-cover" />
         </span>
         <div>

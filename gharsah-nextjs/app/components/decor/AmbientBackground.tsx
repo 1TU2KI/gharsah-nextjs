@@ -16,12 +16,25 @@ type Particle = {
 /* Light-mode particles use darker, more saturated rgb triplets (no white)
    at a higher alpha range — a faint pale dot is nearly invisible against
    this site's light pastel body gradient, unlike against the dark one,
-   where the current (unchanged) palette already reads clearly. Read live
-   via a MutationObserver on `data-theme` so toggling the theme updates
-   particle color/alpha on the very next frame, not just on next mount. */
-const DARK_PARTICLE_COLORS = ["34,197,94", "127,196,190", "255,255,255"];
-const LIGHT_PARTICLE_COLORS = ["21,128,61", "13,110,104", "51,92,122"];
-const DARK_ALPHA = { base: 0.12, variance: 0.22 };
+   where a brighter/paler palette reads clearly. Read live via a
+   MutationObserver on `data-theme` so toggling the theme updates particle
+   color/alpha on the very next frame, not just on next mount.
+   Light mode's triplet stays in the green/turquoise/mint family, matching
+   this page's own global-background atmosphere (its third stop was
+   previously a steel-blue outlier (51,92,122) that didn't belong to the
+   green family at all — replaced with a soft sage-green so all three read
+   as unmistakably Gharsah).
+   Dark mode's triplet (2026 "own dark identity" pass — supersedes the
+   previous, brighter green/teal/mint set, which read too close to Light
+   Mode's own palette) is deliberately muted and darker: forest green,
+   petroleum teal, and a dim sage — no bright cyan/aqua dot survives. These
+   particles float in the same carbon-black-and-forest night sky the
+   background rebuild uses, never the Champagne card/button accent (that
+   stays exactly as the earlier luxury pass left it; only the page's
+   ambient BACKGROUND is green here, never the foreground UI). */
+const DARK_PARTICLE_COLORS = ["45,140,95", "40,110,105", "120,160,135"];
+const LIGHT_PARTICLE_COLORS = ["21,128,61", "13,110,104", "42,132,96"];
+const DARK_ALPHA = { base: 0.09, variance: 0.16 };
 const LIGHT_ALPHA = { base: 0.24, variance: 0.32 };
 
 function readTheme(): "light" | "dark" {
@@ -173,7 +186,16 @@ export default function AmbientBackground() {
   }, []);
 
   return (
-    <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden" aria-hidden="true">
+    <div className="ambient-background-layer pointer-events-none fixed inset-0 -z-10 overflow-hidden" aria-hidden="true">
+      {/* The actual colored atmosphere (globals.css's `.gharsah-atmosphere-bg`
+          recipe) lives here — a real `position: fixed` layer, not `body`'s
+          `background-attachment: fixed` (which has a long-documented iOS
+          Safari bug where a fixed-attached background doesn't reliably stay
+          fixed during scroll). `body` itself only carries a flat fallback
+          color; this div is what actually paints the gradient behind
+          everything, on every platform including mobile. */}
+      <div className="gharsah-atmosphere-bg absolute inset-0" />
+
       <div className="animate-ambient-drift-a animate-ambient-breathe absolute -left-40 -top-40 h-[36rem] w-[36rem] rounded-full bg-ambient-orb-a blur-3xl" />
       <div
         className="animate-ambient-drift-b animate-ambient-breathe absolute -right-32 top-1/4 h-[30rem] w-[30rem] rounded-full bg-ambient-orb-b blur-3xl"

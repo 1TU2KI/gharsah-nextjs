@@ -23,8 +23,8 @@ export default async function AdminLoginPage() {
     <main className="flex min-h-screen items-center justify-center px-6 py-12">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          {/* Exact same logo mark as Header.tsx/Footer.tsx — no separate admin logo. */}
-          <span className="mx-auto flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-white shadow-[0_8px_20px_-6px_rgba(20,83,45,0.35)]">
+          {/* Exact same logo mark as Header.tsx/Footer.tsx — no separate admin logo, transparent background (no white circle). */}
+          <span className="mx-auto flex h-14 w-14 items-center justify-center overflow-hidden rounded-full">
             <Image src="/logo.png" alt="غرسة" width={56} height={56} className="h-full w-full object-cover" />
           </span>
           <h1 className="mt-4 text-xl font-bold text-foreground">غرسة</h1>

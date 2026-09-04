@@ -5,7 +5,6 @@ import Link from "next/link";
 import { MemorialLine, statusTheme } from "@/app/components/home/CampaignCard";
 import { CheckBadgeIcon, CheckIcon, ExternalLinkIcon, LinkIcon, PulseIcon } from "@/app/components/home/icons";
 import type { Campaign } from "@/app/lib/campaigns";
-import SectionBackdrop from "@/app/components/decor/SectionBackdrop";
 import DonationTransition from "@/app/components/cases/DonationTransition";
 import { useLanguage } from "@/app/lib/i18n/LanguageProvider";
 import { track } from "@/app/lib/analytics/track";
@@ -16,11 +15,10 @@ export default function CampaignDetailClient({ campaign }: { campaign: Campaign 
   const { t, locale } = useLanguage();
   const theme = statusTheme[campaign.status];
   const platformLogo = campaign.platformLogo;
-  // Same "completed" grouping already used for the backdrop tone below —
-  // kept as one condition so the back link stays consistent with it rather
-  // than introducing a second, differently-scoped status rule.
+  // Same "completed" grouping used by the colored classes below — kept as
+  // one condition so the back link stays consistent with them rather than
+  // introducing a second, differently-scoped status rule.
   const isCompleted = campaign.status === "completed";
-  const backdropTone = isCompleted ? "teal" : "green";
   const backLinkHref = isCompleted ? "/cases/completed" : "/cases/active";
   const backLinkLabel = isCompleted ? t.campaignDetail.backLinkCompleted : t.campaignDetail.backLinkActive;
   const backLinkColorClass = isCompleted ? "text-[#0C787E]" : "text-primary-dark";
@@ -111,8 +109,6 @@ export default function CampaignDetailClient({ campaign }: { campaign: Campaign 
   return (
     <main className="flex-1">
       <section className="relative overflow-x-hidden py-16">
-        <SectionBackdrop tone={backdropTone} />
-
         <div className="relative z-10 mx-auto max-w-3xl px-6">
           <div className="flex items-center justify-between gap-3">
             <Link

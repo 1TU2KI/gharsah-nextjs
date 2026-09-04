@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { CampaignRequestRow, RequestStatus } from "@/app/lib/db/requests";
 import { ADMIN_BASE_PATH } from "@/app/lib/auth/constants";
+import { formatAdminDate } from "@/app/lib/dateFormat";
 
 export const REQUEST_STATUS_LABEL: Record<RequestStatus, string> = {
   new: "جديد",
@@ -99,7 +100,7 @@ export default function RequestsTable({ rows }: { rows: CampaignRequestRow[] }) 
                   <td dir="ltr" className="px-4 py-3 text-start text-xs text-muted">
                     {row.email || "—"}
                   </td>
-                  <td className="px-4 py-3 text-xs text-muted">{new Date(row.created_at).toLocaleDateString("ar-SA")}</td>
+                  <td className="px-4 py-3 text-xs text-muted">{formatAdminDate(row.created_at)}</td>
                   <td className="px-4 py-3">
                     <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${REQUEST_STATUS_CLASS[row.status]}`}>
                       {REQUEST_STATUS_LABEL[row.status]}

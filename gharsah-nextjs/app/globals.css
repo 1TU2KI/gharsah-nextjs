@@ -48,83 +48,231 @@
      grid card, shallower than the header — a distinct shadow value, not a
      reuse of --card-shadow, so the two tiers are visibly different. */
   --tier2-shadow: 0 8px 20px rgba(18, 53, 36, 0.16), 0 42px 84px -20px rgba(18, 53, 36, 0.36);
-  /* The site-wide flowing background: large soft color fields that blend
-     into one another (moss → sage → turquoise → forest), fixed to the
-     viewport so the same atmosphere is present everywhere, at any scroll
-     position, on every page. Values are pale enough that body text placed
-     directly on it (sections with no card/surface of their own) stays high
-     contrast against --foreground. */
-  --flow-1: #e6f2df;
-  --flow-2: #b3dba0;
-  --flow-3: #8fd4c8;
-  --flow-4: #6fbf82;
-  --flow-5: #d3ecc9;
-  /* Decorative section-backdrop tokens (SectionBackdrop only —
-     never used for text/background contrast pairs beyond the wash-strength
-     tints below, which mirror --wash/--wash-completed's existing contrast
-     profile). Each has an explicit dark-mode value below so decorative blobs
-     read as soft glows rather than flat pastel patches on a dark surface. */
-  --blob-accent-tint: rgba(21, 128, 61, 0.72);
-  --blob-green-tint: rgba(163, 201, 140, 0.32);
-  --blob-teal-tint: rgba(127, 196, 190, 0.28);
-  --blob-neutral-tint: rgba(211, 236, 201, 0.22);
-  --blob-a: rgba(111, 139, 79, 0.45);
+  /* The site-wide flowing background (2026 "premium organic" rebuild):
+     THREE named layers, matching the brief exactly instead of 6+
+     overlapping blooms — a faint mint BASE (--flow-1, solid fill), one
+     large soft GREEN GLOW (--flow-2, upper-left), one subtle TURQUOISE
+     AREA (--flow-3, lower-right — same corner Dark Mode's own teal area
+     uses, for cross-theme spatial continuity), plus a very low, warm
+     CREAM highlight (--flow-glow, center) for the "subtle cream/light
+     areas" the brief also asks for. Fixed to the viewport (via the real
+     `position: fixed` AmbientBackground layer, not the CSS `background-
+     attachment: fixed` property — see that component for why) so the same
+     atmosphere is present everywhere, at any scroll position, on every
+     page. Every `*-fade` companion below is the SAME color at alpha 0, not
+     the bare `transparent` keyword — `transparent` is `rgba(0,0,0,0)`
+     (BLACK at zero alpha), so a gradient fading a color straight to
+     `transparent` interpolates its RGB toward black on the way down,
+     producing a dull gray/muddy halo partway through the fade even though
+     the endpoint itself is invisible. Fading to an explicit same-hue,
+     zero-alpha color keeps the hue constant throughout and removes that
+     artifact — this was the root cause of the "muddy/gray patch" seams in
+     the previous version of this background. Values are pale enough that
+     body text placed directly on this (sections with no card/surface of
+     their own) stays high contrast against --foreground. */
+  --flow-1: #eef6ea;
+  --flow-2: #a3d98f;
+  --flow-2-fade: rgba(163, 217, 143, 0);
+  --flow-3: #7dd3c4;
+  --flow-3-fade: rgba(125, 211, 196, 0);
+  --flow-glow: rgba(255, 251, 234, 0.55);
+  --flow-glow-fade: rgba(255, 251, 234, 0);
+  /* Decorative-only (never a text/background contrast pair) — one of
+     HeroBackground's drifting foliage blobs. Was a 7-token family shared
+     with SectionBackdrop (a per-section decorative tint+blob layer removed
+     during the 2026 global-background rebuild, see body/.gharsah-
+     atmosphere-bg below for why); the other 6 tokens went with it as dead
+     weight — this is the one survivor still actually referenced. */
   --blob-b: rgba(127, 196, 190, 0.4);
-  --blob-c: rgba(122, 106, 79, 0.3);
-  /* AmbientBackground tokens. Light mode intentionally uses darker, more
-     saturated stops at higher alpha than the dark-mode values below — a
-     faint pastel-green blob reads as almost invisible against this site's
-     light, similarly-pastel body gradient, so it needs more contrast/depth
-     to register as a distinct shape rather than more brightness. Dark mode
-     keeps the exact values the ambient system already shipped with
-     (unchanged) since it read fine against the dark body gradient. */
-  --ambient-orb-a: rgba(21, 128, 61, 0.42);
-  --ambient-orb-b: rgba(13, 110, 104, 0.36);
-  --ambient-orb-c: rgba(51, 92, 122, 0.32);
-  --ambient-ribbon-a: rgba(21, 128, 61, 0.4);
-  --ambient-ribbon-b: rgba(13, 110, 104, 0.38);
+  /* AmbientBackground tokens: 3 large soft drifting orbs + 2 light ribbons,
+     every one kept inside the green/turquoise/mint family (2026 pass — the
+     previous --ambient-orb-c was a steel-blue outlier, rgba(51,92,122,…),
+     the one real source of "accidental gray/blue patches" the brief flags;
+     replaced with a soft sage-green so all three stay unmistakably
+     Gharsah-green rather than one drifting into an unrelated hue). Light
+     mode intentionally uses darker, more saturated stops at higher alpha
+     than the dark-mode values below — a faint pastel-green blob reads as
+     almost invisible against this site's light, similarly-pastel body
+     gradient, so it needs more contrast/depth to register as a distinct
+     shape rather than more brightness. */
+  --ambient-orb-a: rgba(34, 160, 90, 0.32);
+  --ambient-orb-b: rgba(20, 150, 140, 0.28);
+  --ambient-orb-c: rgba(60, 168, 120, 0.26);
+  --ambient-ribbon-a: rgba(34, 160, 90, 0.35);
+  --ambient-ribbon-b: rgba(20, 150, 140, 0.32);
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --background: #15181a;
-  --foreground: #f3f5f3;
-  --wash: #1e2224;
-  --wash-completed: #1e2224;
-  --muted: #a3aca8;
-  --border: #2b2f31;
-  --sunlight: #26221a;
-  --accent: #f4f5f3;
-  --accent-strong: #d9dbd8;
-  --on-accent: #14181a;
-  --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 16px 32px -12px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  --card-shadow-hover: 0 2px 4px rgba(0, 0, 0, 0.35), 0 22px 40px -12px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  /* Dark-mode Tier 1/2 materials are deliberately tuned, not just the light
-     values with darker CSS vars swapped in: the highlight is a faint cool
-     line (not warm white) and the shadow carries a slight green-teal cast
-     from --primary-dark rather than flat black, so the "glass" reads as
-     dark-tinted Gharsah material instead of generic dark-mode chrome. */
-  --tier1-highlight: rgba(180, 220, 205, 0.3);
-  --tier1-shadow: 0 20px 50px -14px rgba(0, 0, 0, 0.7), 0 1px 0 rgba(21, 128, 61, 0.22);
+  /* Dark Mode (2026 luxury black/champagne rebuild) — REPLACES the previous
+     green/mint dark palette wholesale, not a patch on top of it. Same
+     5-level surface ladder the old system already used (kept deliberately,
+     per the brief: same STRUCTURE, new colors), re-lit with exactly 5
+     fixed brand colors instead of an inverted/derived green ramp:
+       Pure Black    #0E0E0E — deepest surfaces, page background floor
+       Rich Charcoal #2B2B2B — the main card/surface color (Level 2)
+       Warm Gray     #9A948B — secondary text, metadata, subtle borders
+       Champagne     #D8C49A — the ONE premium accent (badges, borders,
+                                 glow, focus rings, progress, links) — never
+                                 the base of a big fill (see --primary-dark)
+       Soft Ivory    #FFF8EA — primary text/headings, never harsh white
+       Level 0 — page background (--flow-*, the site-wide atmosphere, see
+                 its own token comment below): carbon-black-and-forest,
+                 with muted deep-emerald / petroleum-teal / olive glow —
+                 a 2026 follow-up pass deliberately carved this ONE level
+                 back out of the black/Champagne-only rule below, see that
+                 comment for why
+       Level 1 — section wash (--wash / --wash-completed): near-black,
+                 a hair lighter than Level 0
+       Level 2 — card surface (--background, consumed by bg-background/XX
+                 everywhere — header, cards, inputs, footer chrome): Rich
+                 Charcoal, deliberately lighter than Level 0/1 so cards read
+                 as genuinely elevated instead of same-tone-as-page
+       Level 3 — elevated/featured surface (--tier2-shadow, Almost-There
+                 #1): same Rich Charcoal fill, differentiated by a deeper
+                 shadow + Champagne glow, exactly like the old system
+                 differentiated Level 3 by shadow alone, not a new fill
+       Level 4 — selected/interactive state (--primary-100/-200 fills):
+                 a Champagne-tinted charcoal ramp
+     No green or teal survives anywhere in this block EXCEPT the Level 0
+     --flow-* / ambient family a few lines down (its own comment explains
+     the scoped exception) — every card/button/badge/surface token here stays
+     black/charcoal/Champagne. Semantic colors (completed-campaign teal,
+     news category red/blue/yellow/green) live entirely outside these
+     tokens as fixed hex, untouched by this file either way. */
+  --background: #2b2b2b;
+  --foreground: #fff8ea;
+  /* Level 1: both washes stay near-black, just off Level 0/2 by a step —
+     a faint warm vs. cool lean keeps them distinguishable from each other,
+     mirroring the old system's own green-lean/teal-lean split, without
+     either one reading as an actual color (both are still "black"). */
+  --wash: #161412;
+  --wash-completed: #141513;
+  --border: #3d372c;
+  /* Secondary/metadata text: Warm Gray, exactly the brief's token — still
+     legible against every surface level while clearly lower-contrast than
+     --foreground. */
+  --muted: #9a948b;
+  /* Pale-tint ramp (50→300, Level 4 territory): near-black→Champagne, same
+     structure as the old green ramp — a "selected" chip fill stays
+     unmistakably Champagne-family, never plain gray. */
+  --primary-50: #221e17;
+  --primary-100: #332c20;
+  --primary-200: #4f4530;
+  --primary-300: #7a6a47;
+  /* Solid/text-role Champagne ramp — the dark-mode accent identity: badges,
+     progress bars, active nav, usernames, focus rings, scrollbar thumb, the
+     Almost-There #1 card border all read --primary. --primary-dark/-darker
+     are DELIBERATELY deep bronze, not bright Champagne — a fill big enough
+     to carry Ivory text (badges, buttons) needs that much darker a base to
+     clear contrast (~5:1); raw Champagne under Ivory text would only hit
+     ~3:1. --primary itself stays the bright, highly-visible accent for
+     badges/links/borders/progress — never a big text-bearing fill. */
+  --primary-light: #e8d9b0;
+  --primary: #d8c49a;
+  --primary-dark: #7a6038;
+  --primary-darker: #5c4829;
+  --sunlight: #1e1a13;
+  /* --accent/--accent-strong reuse --primary-dark/-darker's exact value
+     (same family, no extra invented value, same pattern the old system
+     used) — they drive every primary-action button AND the two large
+     90%-opacity surfaces that reuse the same token (Footer, the Goals
+     band). Deep bronze, not raw Champagne, so buttons stay visually
+     distinct from a flat gold banner and keep Ivory text readable —
+     Champagne itself stays reserved for borders/glow/badges, never a big
+     button fill (see the brief: "do not turn every button into
+     Champagne"). --on-accent is Soft Ivory, not raw white, on this
+     deeper fill. */
+  --accent: #7a6038;
+  --accent-strong: #5c4829;
+  --on-accent: #fff8ea;
+  /* Decorative-only (never a text/background contrast pair) — the old
+     dark-mode teal is retired along with the rest of the green system; a
+     warm taupe keeps the SAME role (donation-plant gradient accent, teal
+     ambient/blob tokens below) without reintroducing a hue outside the
+     5-color palette. */
+  --turquoise-soft: #6b6152;
+  /* Card materials (Level 2/3): same two-layer shadow shape as before, the
+     inset highlight now tinted with --primary-light (Champagne) instead of
+     mint. */
+  --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 16px 32px -12px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(232, 217, 176, 0.05);
+  --card-shadow-hover: 0 2px 4px rgba(0, 0, 0, 0.35), 0 22px 40px -12px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(232, 217, 176, 0.06);
+  /* Tier 1 (header/mobile nav) / Tier 2 (detail card, form panels)
+     materials: the highlight is Champagne (not warm white), the shadow
+     carries a Champagne cast rather than flat black, so the "glass" reads
+     as Gharsah's own dark material, not generic dark-mode chrome. */
+  --tier1-highlight: rgba(232, 217, 176, 0.3);
+  --tier1-shadow: 0 20px 50px -14px rgba(0, 0, 0, 0.7), 0 1px 0 rgba(216, 196, 154, 0.22);
   --tier1-edge-fade: rgba(0, 0, 0, 0.55);
-  --tier2-shadow: 0 8px 20px rgba(0, 0, 0, 0.45), 0 42px 84px -20px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(180, 220, 205, 0.1);
-  --flow-1: #0c1712;
-  --flow-2: #204a2c;
-  --flow-3: #12403d;
-  --flow-4: #1c3820;
-  --flow-5: #17301d;
-  --blob-accent-tint: rgba(21, 128, 61, 0.55);
-  --blob-green-tint: rgba(32, 74, 44, 0.5);
-  --blob-teal-tint: rgba(18, 64, 61, 0.55);
-  --blob-neutral-tint: rgba(23, 48, 29, 0.42);
-  --blob-a: rgba(111, 139, 79, 0.28);
-  --blob-b: rgba(127, 196, 190, 0.22);
-  --blob-c: rgba(122, 106, 79, 0.2);
-  --ambient-orb-a: rgba(22, 163, 74, 0.2);
-  --ambient-orb-b: rgba(127, 196, 190, 0.16);
-  --ambient-orb-c: rgba(110, 139, 79, 0.14);
-  --ambient-ribbon-a: rgba(34, 197, 94, 0.22);
-  --ambient-ribbon-b: rgba(127, 196, 190, 0.2);
+  --tier2-shadow: 0 8px 20px rgba(0, 0, 0, 0.45), 0 42px 84px -20px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(232, 217, 176, 0.1);
+  /* Level 0 atmosphere (2026 "own dark identity" pass — supersedes the
+     previous "Gharsah at night" attempt below, which read too close to
+     Light Mode's own mint/turquoise palette; this is a full recolor of the
+     same sub-family, not a layer on top of it). Still the SAME deliberate,
+     SCOPED exception to the "no green/teal in Dark Mode" rule stated
+     above — that rule still governs every card/button/badge surface
+     (Level 2+, --background / --primary* / --accent, all untouched here,
+     still Champagne) — only the recolor direction changed: carbon-black-
+     and-forest instead of the brighter emerald/teal the previous pass used.
+     Base (--flow-1) is "Very Dark Forest" — the greenest-leaning of this
+     token's own suggested base directions (vs. the other two, which read
+     with a faint cool/blue cast that risks the exact "too close to Light
+     Mode's turquoise" complaint this pass exists to fix). The three glow
+     layers keep Light Mode's own spatial composition (center highlight,
+     upper-left primary glow, lower-right secondary area) for cross-theme
+     continuity, but each is now a genuinely low-opacity rgba (not a
+     near-opaque hex like before) so it reads as "soft light existing
+     underneath the page" rather than a visible colored patch: deep emerald
+     (primary), muted petroleum teal — deliberately darker/grayer than
+     teal-toward-cyan, never bright aqua — (secondary), and a faint muted
+     olive (the center highlight, replacing the previous mint). Every
+     `*-fade` companion is the same color at alpha 0, not bare `transparent`
+     — see Light Mode's own token comment above for why (the fix for the
+     muddy/gray-halo gradient bug, not a stylistic choice). */
+  --flow-1: #0d1a14;
+  --flow-2: rgba(18, 61, 42, 0.5);
+  --flow-2-fade: rgba(18, 61, 42, 0);
+  --flow-3: rgba(22, 58, 56, 0.42);
+  --flow-3-fade: rgba(22, 58, 56, 0);
+  --flow-glow: rgba(41, 53, 31, 0.28);
+  --flow-glow-fade: rgba(41, 53, 31, 0);
+  /* HeroBackground's one surviving decorative blob — same muted petroleum
+     teal as --flow-3, never the brighter teal the previous pass used. */
+  --blob-b: rgba(22, 58, 56, 0.34);
+  /* AmbientBackground's 3 large soft orbs + 2 ribbons: lowered brightness
+     and desaturated well past the previous pass's mint/turquoise — orb-b
+     in particular was the closest thing to "bright cyan/aqua" this pass
+     was asked to remove outright, now the same muted petroleum-teal family
+     as --flow-3/--blob-b instead of a saturated turquoise. */
+  --ambient-orb-a: rgba(24, 74, 50, 0.22);
+  --ambient-orb-b: rgba(24, 64, 62, 0.18);
+  --ambient-orb-c: rgba(41, 53, 31, 0.18);
+  --ambient-ribbon-a: rgba(24, 74, 50, 0.22);
+  --ambient-ribbon-b: rgba(24, 64, 62, 0.2);
+}
+
+/* Footer + Goals band (Footer.tsx / Goals.tsx) both use a flat, fully
+   opaque `bg-accent` as a full-bleed SECTION background (per the 2026
+   "sharp/solid/hard-edge" brief, no fade/blur), not just a button fill —
+   harmless for Light Mode's green accent, but spreading Dark Mode's
+   deep-bronze --accent across an entire section reads as a solid gold/
+   brown banner at that scale, exactly what the earlier dark-mode brief
+   prohibited. Every other `bg-accent` usage site-wide is a small button
+   fill and is left completely alone — deep bronze + Ivory text there is
+   intentional and reads fine at that size (see the --accent token comment
+   above). Only these two large surfaces get pulled back to Rich Charcoal
+   instead, matching that brief's own Footer guidance ("Pure Black / Rich
+   Charcoal base") — --on-accent (Soft Ivory) already reads even better
+   against Charcoal than it did against bronze, so no text-color change is
+   needed alongside this. Selectors are scoped narrowly: `#goals` (always
+   bg-accent) and `footer[class*="bg-accent"]` (the DEFAULT footer variant
+   only — the Completed-page footer swaps to the separate teal `#0C787E`
+   identity instead, which isn't part of this brown/gold concern and stays
+   untouched) — never a bare `bg-accent` selector, which would also catch
+   every accent button site-wide. */
+:root[data-theme="dark"] #goals,
+:root[data-theme="dark"] footer[class*="bg-accent"] {
+  background-color: #2b2b2b;
 }
 
 @theme inline {
@@ -149,38 +297,66 @@
   --color-moss: var(--moss);
   --color-earth: var(--earth);
   --color-turquoise-soft: var(--turquoise-soft);
-  --color-blob-accent-tint: var(--blob-accent-tint);
-  --color-blob-green-tint: var(--blob-green-tint);
-  --color-blob-teal-tint: var(--blob-teal-tint);
-  --color-blob-neutral-tint: var(--blob-neutral-tint);
-  --color-blob-a: var(--blob-a);
   --color-blob-b: var(--blob-b);
-  --color-blob-c: var(--blob-c);
   --color-ambient-orb-a: var(--ambient-orb-a);
   --color-ambient-orb-b: var(--ambient-orb-b);
   --color-ambient-orb-c: var(--ambient-orb-c);
   --font-sans: var(--font-cairo);
 }
 
-/* The single, site-wide organic background. `background-attachment: fixed`
-   pins it to the viewport (not the document), so it reads as one continuous
-   atmosphere behind every page and every section, regardless of scroll
-   position — this is the background, not a per-section decoration. Large
-   soft radial fields at different positions/sizes overlap to create broad
-   flowing color transitions (moss/sage top-left, turquoise center-right,
-   forest bottom-left) rather than a single flat tint. */
+/* The single, site-wide organic background (2026 rebuild, tuned again in a
+   later "premium organic" pass — see the --flow-* token comments above for
+   the color story). Sections never paint their own local backdrop (see the
+   removed SectionBackdrop component and Goals.tsx/HeroBackground.tsx's own
+   comments) — this is the ONLY place page atmosphere/color is painted.
+   Three named layers, not the previous 6+ overlapping blooms: a soft warm
+   highlight near center (--flow-glow), one large soft green glow upper-
+   left (--flow-2), one subtle turquoise/teal area lower-right (--flow-3),
+   over a flat base fill (--flow-1) — "large soft radial green glow /
+   subtle turquoise area / faint base," not a busier composition.
+
+   Deliberately NOT applied via `body { background-attachment: fixed }`
+   (the previous approach) — that CSS property has a long-documented iOS
+   Safari bug where a `fixed`-attached background does not reliably stay
+   fixed during scroll/momentum, which is exactly the "fixed backgrounds
+   causing mobile issues" class of bug. `.gharsah-atmosphere-bg` instead
+   carries the full recipe and is only ever applied to elements that are
+   ALREADY genuinely `position: fixed` in the layout (AmbientBackground's
+   own base layer, InitialLoadOverlay.tsx's hard-load cover) — real fixed
+   positioning has no such bug on any platform. `body` itself (below) just
+   gets the flat `--flow-1` fallback color: correct base tone from the very
+   first paint with zero attachment-quirk risk, while AmbientBackground's
+   fixed layer supplies the actual gradient detail on top of it. This also
+   means InitialLoadOverlay's fade-out is pixel-identical to what's already
+   behind it (AmbientBackground, mounted earlier in the same layout and
+   always covering the full viewport) — fading a SOLID color out to reveal
+   a multi-stop GRADIENT would pass through a visible mismatch moment
+   (the old "horizontal band near the top" during loading), fading the
+   exact same recipe over itself does not. */
+.gharsah-atmosphere-bg {
+  background-color: var(--flow-1);
+  background-image:
+    radial-gradient(65vw 65vh at 50% 32%, var(--flow-glow), var(--flow-glow-fade) 72%),
+    radial-gradient(78vw 78vh at 10% 6%, var(--flow-2), var(--flow-2-fade) 74%),
+    radial-gradient(72vw 76vh at 92% 68%, var(--flow-3), var(--flow-3-fade) 76%);
+  background-repeat: no-repeat;
+}
+
 body {
   color: var(--foreground);
   background-color: var(--flow-1);
-  background-image:
-    radial-gradient(60vw 68vh at 6% 4%, var(--flow-2), transparent 72%),
-    radial-gradient(65vw 72vh at 96% 20%, var(--flow-3), transparent 74%),
-    radial-gradient(66vw 66vh at 8% 98%, var(--flow-4), transparent 70%),
-    radial-gradient(52vw 60vh at 92% 102%, var(--flow-3), transparent 70%),
-    radial-gradient(78vw 78vh at 50% 46%, var(--flow-5), transparent 78%),
-    linear-gradient(135deg, var(--flow-1) 0%, var(--flow-5) 35%, var(--flow-2) 65%, var(--flow-1) 100%);
-  background-attachment: fixed;
-  background-repeat: no-repeat;
+}
+
+/* GPU-compositor-layer promotion for the fixed global particle/orb layer
+   (AmbientBackground.tsx) — same technique and reasoning as
+   `.header-material` below: a `position: fixed` element with no such hint
+   can occasionally get re-rasterized WITH the scrolling content instead of
+   independently of it on some browsers/devices (notably during fast/
+   momentum scroll), which reads as "the particles are dragging along with
+   the page" even though the computed position never actually changes. This
+   forces it onto its own always-independent layer so that can't happen. */
+.ambient-background-layer {
+  transform: translateZ(0);
 }
 
 /* Barely-there grain over the flowing background, for a "digital" layered
@@ -242,10 +418,28 @@ html {
 /* Tier 1 material — shared by the header and the mobile nav panel so both
    read as the same floating layer. Combines the soft top highlight with
    the ambient separation shadow; background opacity/blur/saturation are
-   still set per-component via Tailwind utilities alongside this class. */
+   still set per-component via Tailwind utilities alongside this class.
+   Deliberately no `position` here (previously `position: relative`) — this
+   is a plain, unlayered CSS class, which always wins the cascade over any
+   `@layer`'d Tailwind utility on the same element regardless of source
+   order. That silently overrode the `<header>`'s own `sticky` utility
+   (also just `position`) with `relative`, so the header never actually
+   stuck while scrolling despite the class being present. `position` is now
+   set per-element via a plain Tailwind utility instead — `sticky` on the
+   header (which also satisfies this rule's own `::after` pseudo-element
+   below, since `position: sticky` counts as "positioned" for that purpose)
+   and `relative` on the mobile nav panel that shares this class. */
 .header-material {
-  position: relative;
   box-shadow: inset 0 1.5px 0 var(--tier1-highlight), var(--tier1-shadow);
+  /* Promotes this element to its own GPU compositor layer. Purely a
+     rendering-stability hint — changes no visible size/spacing/position —
+     needed because a `backdrop-filter: blur()` element that's also
+     `position: sticky` can get re-rasterized mid-frame on mobile Safari/
+     Chrome while the browser's own address-bar toolbar auto-hides on
+     scroll, which briefly reads as the sticky header "shrinking/
+     compressing" even though its actual height never changes. Isolating it
+     onto its own layer keeps that repaint from touching the header at all. */
+  transform: translateZ(0);
 }
 
 /* Static (non-scroll-driven) bottom-edge fade — approximates the "content
@@ -317,9 +511,11 @@ textarea:focus-visible,
 
 /* prefers-reduced-transparency / prefers-contrast: conservative, targeted
    only to the app's actual translucent "material" surfaces (header, mobile
-   menu, campaign/content cards, the random-pick tooltip, footer, the empty
-   states and hero stat card) — matched by the exact utility classes those
-   components already use, not a blanket rewrite of every faded element. */
+   menu, campaign/content cards, the random-pick tooltip, the empty states
+   and hero stat card) — matched by the exact utility classes those
+   components already use, not a blanket rewrite of every faded element.
+   Footer/Goals used to be in this list too; both are unconditionally
+   opaque now (see below), so neither needs a rule here anymore. */
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
   [class*="backdrop-blur"] {
     backdrop-filter: none !important;
@@ -338,16 +534,10 @@ textarea:focus-visible,
     background-color: var(--sunlight) !important;
   }
 
-  /* Accent-colored translucent surfaces (footer, Goals section) become
-     fully opaque in their own brand color — never swapped to a neutral
-     background, so the identity stays intact under these preferences. */
-  [class*="bg-accent/90"] {
-    background-color: var(--accent) !important;
-  }
-
-  [class*="bg-[#0C787E]/90"] {
-    background-color: #0c787e !important;
-  }
+  /* Footer/Goals no longer have a translucent variant to normalize here —
+     both are unconditionally opaque flat colors now (2026 "sharp/solid/
+     hard-edge" rebuild), so there's nothing left for these preferences to
+     do to them. */
 
   /* The header/mobile-nav "material" illusion (saturation boost + glass
      highlight) is exactly what these two preferences ask to back off from
@@ -504,6 +694,31 @@ textarea:focus-visible,
   animation: dice-roll 700ms ease-in-out;
 }
 
+/* Random-case-picker button's hover spin (RandomCaseButton.tsx): ONLY the
+   icon (`.random-pick-icon`) rotates a full 360° on hover and smoothly
+   unwinds back to 0° on mouse-leave, once, never a continuous/looping spin.
+   The circular background/border/shadow/glow live on the `<button>` itself
+   (`.random-pick-btn`) and never receive a `transform` here — rotating the
+   button/its box-shadow together previously spun the (directional) shadow
+   around with it, reading as a smeared artifact behind the circle. A
+   dedicated transition (not Tailwind's `transition-all duration-200` on the
+   button) so this 600ms icon spin never collides with the button's own
+   faster `active:scale-90` press feedback, which animates `transform` too
+   but on the separate outer element. */
+.random-pick-icon {
+  transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.random-pick-btn:hover .random-pick-icon {
+  transform: rotate(360deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .random-pick-btn:hover .random-pick-icon {
+    transform: none;
+  }
+}
+
 @keyframes ambient-ribbon {
   0%,
   100% {
@@ -551,172 +766,79 @@ textarea:focus-visible,
   }
 }
 
-/* Gharsah loading animation: a seed pops in, a stem grows upward from it,
-   then the mark's five leaves unfurl bottom-to-top in sequence. Once fully
-   bloomed, the hand-drawn SVG crossfades into the real /logo.png file so the
-   animation's resting frame is exact brand artwork, not an approximation.
-   Only transform/opacity are animated (no layout properties) to keep this
-   cheap and avoid layout shift. */
+/* Gharsah loading visual: the complete, real logo shown immediately and
+   fully static — no construction/growth animation. (This used to build
+   itself petal-by-petal via a hand-drawn SVG that crossfaded into the real
+   /logo.png once "bloomed"; removed entirely — see git history if that
+   choreography is ever wanted back — because the loading signal now lives
+   in the 3 dots below it, not in the logo itself.) Single shared source of
+   truth for every place `GharsahLoader` appears: InitialLoadOverlay (the
+   initial hard-load overlay) and GharsahLoadingState (every route-level
+   `loading.tsx` fallback) both use this exact component/CSS, never a
+   per-page reimplementation. */
 .gharsah-loader {
   position: relative;
   display: inline-block;
 }
 
-.gharsah-loader__svg,
 .gharsah-loader__logo {
-  position: absolute;
-  inset: 0;
   width: 100%;
   height: 100%;
-}
-
-.gharsah-loader__logo {
   object-fit: contain;
-  opacity: 0;
-  animation:
-    gharsah-logo-in 0.5s ease-out 1.55s forwards,
-    gharsah-breathe 3.6s ease-in-out 2.05s infinite;
 }
 
-.gharsah-loader__svg {
-  animation: gharsah-svg-out 0.5s ease-in 1.55s forwards;
+/* Three small dots below the logo — now the MAIN loading indicator (the
+   logo itself is static, see GharsahLoader above) — still understated in
+   visual weight by design: one uniform brand-green color, tiny size, only
+   opacity + a very small scale change animating a left-to-right "wave"
+   (each dot brightens in turn via a staggered animation-delay on the same
+   keyframe) rather than three different colors or any bounce/spinner. */
+.site-loading-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
 }
 
-.gharsah-loader__stop-a {
-  stop-color: var(--primary-dark);
+.site-loading-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background-color: var(--primary);
+  opacity: 0.35;
+  transform: scale(0.85);
+  animation: site-loading-dot-pulse 1.1s ease-in-out infinite;
 }
 
-.gharsah-loader__stop-b {
-  stop-color: var(--turquoise-soft);
+.site-loading-dot--1 {
+  animation-delay: 0s;
 }
 
-.gharsah-loader__stop-c {
-  stop-color: #0c787e;
+.site-loading-dot--2 {
+  animation-delay: 0.2s;
 }
 
-.gharsah-loader__seed {
-  fill: var(--primary-dark);
-  transform-box: view-box;
-  transform-origin: 100px 190px;
-  opacity: 0;
-  transform: scale(0);
-  animation: gharsah-seed-pop 0.35s ease-out 0.05s forwards;
+.site-loading-dot--3 {
+  animation-delay: 0.4s;
 }
 
-.gharsah-loader__stem {
-  stroke: var(--primary);
-  transform-box: view-box;
-  transform-origin: 100px 190px;
-  opacity: 0;
-  transform: scaleY(0);
-  animation: gharsah-stem-grow 0.4s ease-out 0.25s forwards;
-}
-
-.gharsah-loader__petal {
-  transform-box: view-box;
-  transform-origin: 100px 170px;
-  opacity: 0;
-  transform: scale(0);
-  /* Critically damped — no overshoot — per "avoid artificial bounce" for
-     passive loading motion; the curve below decelerates smoothly into
-     place instead of the previous `cubic-bezier(0.34, 1.2, 0.4, 1)`, whose
-     >1 control point produced a small bounce past full size. */
-  animation: gharsah-petal-grow 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.gharsah-loader__petal--bottom-left,
-.gharsah-loader__petal--bottom-right {
-  animation-delay: 0.55s;
-}
-
-.gharsah-loader__petal--mid-left,
-.gharsah-loader__petal--mid-right {
-  animation-delay: 0.8s;
-}
-
-.gharsah-loader__petal--top {
-  animation-delay: 1.05s;
-}
-
-@keyframes gharsah-seed-pop {
-  0% {
-    transform: scale(0);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-@keyframes gharsah-stem-grow {
-  0% {
-    transform: scaleY(0);
-    opacity: 0;
-  }
-  25% {
-    opacity: 1;
-  }
-  100% {
-    transform: scaleY(1);
-    opacity: 1;
-  }
-}
-
-@keyframes gharsah-petal-grow {
-  0% {
-    transform: scale(0);
-    opacity: 0;
-  }
-  60% {
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-@keyframes gharsah-svg-out {
-  to {
-    opacity: 0;
-  }
-}
-
-@keyframes gharsah-logo-in {
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes gharsah-breathe {
+@keyframes site-loading-dot-pulse {
   0%,
   100% {
-    transform: scale(1);
-    opacity: 1;
+    opacity: 0.35;
+    transform: scale(0.85);
   }
   50% {
-    transform: scale(1.02);
-    opacity: 0.94;
-  }
-}
-
-@keyframes gharsah-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
     opacity: 1;
+    transform: scale(1);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .gharsah-loader__svg {
+  /* Same treatment as the logo's own petal-growth SVG right above: no
+     motion at all, not even the small dot pulse. */
+  .site-loading-dots {
     display: none;
-  }
-
-  .gharsah-loader__logo {
-    animation: gharsah-fade-in 0.6s ease-out forwards;
   }
 }
 
@@ -794,78 +916,935 @@ textarea:focus-visible,
   }
 }
 
-/* Donation transition's own growth visual: the real Gharsah lotus mark
-   (same seed/stem/five-petal choreography and petal paths as
-   GharsahLoader — ui/GharsahLoader.tsx — reused deliberately so this reads
-   as "the Gharsah logo growing," not a lookalike). Its own classes/timing
-   here, NOT GharsahLoader's: that one is tuned for an initial-page-load
-   overlay (~2s total incl. its infinite idle breathe), while this needs
-   the entire sequence — including the crossfade into the real /logo.png —
-   done in ~1.1s so the same-tab redirect never waits on top of it. All six
-   keyframes (gharsah-seed-pop/stem-grow/petal-grow/svg-out/logo-in/
-   fade-in) are the exact ones GharsahLoader already defines above; only
-   the durations/delays differ. Scale factor vs. GharsahLoader's own
-   timing is ~0.55 throughout. */
-.donation-logo-seed {
-  fill: var(--primary-dark);
+/* Donation transition's own growth visual: a small, elegant, ASYMMETRIC
+   sapling growing from a seed — completely independent from the main site
+   loader (GharsahLoader, `.gharsah-loader__*` above) and from its
+   lotus-mark shape. Own classes, own keyframes, own timing (see
+   DonationTransition.tsx's own doc comment for the full bottom-to-top
+   choreography). Real SVG path-drawing via `pathLength` +
+   stroke-dasharray/dashoffset for the stem/branches/twigs — the only
+   technique that grows a curved line without visibly warping it, unlike a
+   Y-axis scale trick — and a non-uniform-scale + rotation "unfold" for
+   every leaf, never a plain fade/pop. Nothing here is mirrored or
+   symmetric by design. Total growth ~4s (see TRANSITION_MS in
+   DonationTransition.tsx, set just past it) — "اجعل نيتك أوسع" is meant
+   to be a real, unhurried pause, not a quick decorative flourish. Every
+   color below comes from the one `donation-plant-gradient` (see
+   DonationTransition.tsx) — never a hardcoded color here. */
+.donation-plant-seed {
   transform-box: view-box;
-  transform-origin: 100px 190px;
+  transform-origin: 70px 290px;
   opacity: 0;
   transform: scale(0);
-  animation: gharsah-seed-pop 0.19s ease-out 0.03s forwards;
+  animation: donation-plant-seed-pop 0.3s ease-out 0.05s forwards;
 }
 
-.donation-logo-stem {
-  stroke: var(--primary);
+.donation-plant-stem {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.donation-plant-stem--lower {
+  animation: donation-plant-stem-grow 0.85s ease-in-out 0.3s forwards;
+}
+
+/* Starts right as the lower branches are underway, so the upper section
+   reads as the SAME stem continuing to rise, not a second, separate plant
+   part appearing out of nowhere. */
+.donation-plant-stem--upper {
+  animation: donation-plant-stem-grow 0.8s ease-in-out 1.5s forwards;
+}
+
+.donation-plant-branch {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+/* Lower branches (with their own small twigs), then middle branches, then
+   upper branches — each group waits for the previous one to actually
+   finish before it starts, so the growth visibly travels bottom to top
+   rather than sprouting everywhere at once. */
+.donation-plant-branch--l1 {
+  animation: donation-plant-branch-grow 0.45s ease-in-out 0.95s forwards;
+}
+
+.donation-plant-branch--l2 {
+  animation: donation-plant-branch-grow 0.45s ease-in-out 1.15s forwards;
+}
+
+.donation-plant-branch--twig1 {
+  animation: donation-plant-branch-grow 0.3s ease-in-out 1.45s forwards;
+}
+
+.donation-plant-branch--twig2 {
+  animation: donation-plant-branch-grow 0.3s ease-in-out 1.65s forwards;
+}
+
+.donation-plant-branch--l3-left {
+  animation: donation-plant-branch-grow 0.45s ease-in-out 2.35s forwards;
+}
+
+.donation-plant-branch--l3-right {
+  animation: donation-plant-branch-grow 0.45s ease-in-out 2.5s forwards;
+}
+
+.donation-plant-branch--l4 {
+  animation: donation-plant-branch-grow 0.45s ease-in-out 2.9s forwards;
+}
+
+.donation-plant-branch--l4-right {
+  animation: donation-plant-branch-grow 0.45s ease-in-out 3s forwards;
+}
+
+/* The two branches that fork from the stem's own tip, replacing what
+   would otherwise be an isolated top leaf. */
+.donation-plant-branch--top-left {
+  animation: donation-plant-branch-grow 0.45s ease-in-out 3.05s forwards;
+}
+
+.donation-plant-branch--top-right {
+  animation: donation-plant-branch-grow 0.45s ease-in-out 3.2s forwards;
+}
+
+/* Each leaf's own transform-origin (set inline per-element in
+   DonationTransition.tsx, matching its own `d` attribute's attachment
+   point) is what makes it visibly unfurl from exactly where it meets its
+   branch/twig, rather than from one shared point. The non-uniform starting
+   scale (thin on one axis, shorter on the other) plus a slight starting
+   rotation is what reads as "closed/folded/tilted" before it settles open,
+   instead of a flat pop. Every leaf's delay is set to (or just after) the
+   moment its own branch/twig finishes drawing — never before. */
+.donation-plant-leaf {
   transform-box: view-box;
-  transform-origin: 100px 190px;
   opacity: 0;
-  transform: scaleY(0);
-  animation: gharsah-stem-grow 0.22s ease-out 0.14s forwards;
+  transform: scale(0.2, 0.45) rotate(-14deg);
 }
 
-.donation-logo-petal {
-  transform-box: view-box;
-  transform-origin: 100px 170px;
-  opacity: 0;
-  transform: scale(0);
-  animation: gharsah-petal-grow 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+.donation-plant-leaf--1 {
+  animation: donation-plant-leaf-unfold 0.4s ease-out 1.4s forwards;
 }
 
-.donation-logo-petal--bottom-left,
-.donation-logo-petal--bottom-right {
-  animation-delay: 0.3s;
+.donation-plant-leaf--1b {
+  animation: donation-plant-leaf-unfold 0.4s ease-out 1.5s forwards;
 }
 
-.donation-logo-petal--mid-left,
-.donation-logo-petal--mid-right {
-  animation-delay: 0.44s;
+.donation-plant-leaf--twig1 {
+  animation: donation-plant-leaf-unfold 0.35s ease-out 1.75s forwards;
 }
 
-.donation-logo-petal--top {
-  animation-delay: 0.58s;
+.donation-plant-leaf--2 {
+  animation: donation-plant-leaf-unfold 0.4s ease-out 1.6s forwards;
 }
 
-/* Crossfade from the hand-drawn SVG bloom to the real logo asset — starts
-   the instant the top petal finishes (0.58s delay + 0.28s duration =
-   0.86s), ends at 1.14s: the visual's true completion point, which
-   TRANSITION_MS in DonationTransition.tsx is set just past. */
-.donation-logo-svg {
-  animation: gharsah-svg-out 0.28s ease-in 0.86s forwards;
+.donation-plant-leaf--2b {
+  animation: donation-plant-leaf-unfold 0.4s ease-out 1.7s forwards;
 }
 
-.donation-logo-image {
-  opacity: 0;
-  animation: gharsah-logo-in 0.28s ease-out 0.86s forwards;
+.donation-plant-leaf--2c {
+  animation: donation-plant-leaf-unfold 0.35s ease-out 1.8s forwards;
+}
+
+.donation-plant-leaf--twig2 {
+  animation: donation-plant-leaf-unfold 0.35s ease-out 1.95s forwards;
+}
+
+.donation-plant-leaf--l3left {
+  animation: donation-plant-leaf-unfold 0.4s ease-out 2.8s forwards;
+}
+
+.donation-plant-leaf--l3leftb {
+  animation: donation-plant-leaf-unfold 0.4s ease-out 2.9s forwards;
+}
+
+.donation-plant-leaf--l3right {
+  animation: donation-plant-leaf-unfold 0.4s ease-out 2.95s forwards;
+}
+
+.donation-plant-leaf--l3rightb {
+  animation: donation-plant-leaf-unfold 0.4s ease-out 3.05s forwards;
+}
+
+.donation-plant-leaf--l3rightc {
+  animation: donation-plant-leaf-unfold 0.35s ease-out 3.15s forwards;
+}
+
+.donation-plant-leaf--l4 {
+  animation: donation-plant-leaf-unfold 0.4s ease-out 3.35s forwards;
+}
+
+.donation-plant-leaf--l4b {
+  animation: donation-plant-leaf-unfold 0.4s ease-out 3.45s forwards;
+}
+
+.donation-plant-leaf--l4right {
+  animation: donation-plant-leaf-unfold 0.4s ease-out 3.45s forwards;
+}
+
+.donation-plant-leaf--l4rightb {
+  animation: donation-plant-leaf-unfold 0.4s ease-out 3.55s forwards;
+}
+
+.donation-plant-leaf--topleft {
+  animation: donation-plant-leaf-unfold 0.4s ease-out 3.5s forwards;
+}
+
+.donation-plant-leaf--topleftb {
+  animation: donation-plant-leaf-unfold 0.4s ease-out 3.6s forwards;
+}
+
+.donation-plant-leaf--topright {
+  animation: donation-plant-leaf-unfold 0.4s ease-out 3.65s forwards;
+}
+
+.donation-plant-leaf--toprightb {
+  animation: donation-plant-leaf-unfold 0.4s ease-out 3.75s forwards;
+}
+
+@keyframes donation-plant-seed-pop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes donation-plant-stem-grow {
+  0% {
+    stroke-dashoffset: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes donation-plant-branch-grow {
+  0% {
+    stroke-dashoffset: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes donation-plant-leaf-unfold {
+  0% {
+    transform: scale(0.2, 0.45) rotate(-14deg);
+    opacity: 0;
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1, 1) rotate(0deg);
+    opacity: 1;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* Skip the growth entirely — show the finished logo with one short fade. */
-  .donation-logo-svg {
-    display: none;
+  /* Skip the growth entirely — show the fully-grown plant with one short fade. */
+  .donation-plant-seed,
+  .donation-plant-stem,
+  .donation-plant-branch,
+  .donation-plant-leaf {
+    animation: donation-plant-fade-in 0.65s ease-out forwards;
+    transform: none;
+    stroke-dashoffset: 0;
   }
+}
 
-  .donation-logo-image {
-    animation: gharsah-fade-in 0.6s ease-out forwards;
+@keyframes donation-plant-fade-in {
+  from {
+    opacity: 0;
   }
+  to {
+    opacity: 1;
+  }
+}
+
+/* AlmostThereGrid's podium row (app/components/home/AlmostThereGrid.tsx):
+   plain named class instead of a `md:items-*` Tailwind utility — see that
+   component's own doc comment for why (a brand-new utility/breakpoint
+   combination this project's Tailwind build wasn't reliably picking up on
+   save). `center` (not `stretch`) is deliberate: #1 is physically larger
+   again via `md:scale-110` (see AlmostThereCard.tsx), so centering
+   distributes that extra size evenly above AND below #2/#3 on the row's
+   cross axis, rather than `stretch`'s effect of anchoring every card to
+   the same top edge (which would read as #1's extra size as pure downward
+   overflow). */
+@media (min-width: 768px) {
+  .almost-there-grid {
+    align-items: center;
+  }
+}
+
+/* AlmostThereCard "premium/rare" treatment (app/components/home/
+   AlmostThereCard.tsx) — the visual-only redesign brief: these cards should
+   read as important/valuable, not flat white containers, while staying
+   Gharsah-clean (no gaming/neon look). Everything below is `background-
+   image` + `box-shadow` ONLY, never touching Tailwind's own `bg-background/
+   95` `background-color` already on the card (so the existing glass
+   opacity/backdrop-blur survives untouched) and never touching border-width
+   (that's still plain `border-2 border-white`/`border-2 border-primary` on
+   the element itself, in AlmostThereCard.tsx — unchanged in weight).
+
+   Two full standalone classes per tier (`.almost-there-card` for #2/#3,
+   `.almost-there-card-rank1` for #1), never combined on one element, same
+   reasoning as before: combining two rules that both set `background-image`
+   or `box-shadow` would make the result depend on this file's own cascade
+   order rather than being an intentional override. This is also now the
+   SOLE source of these cards' box-shadow — AlmostThereCard.tsx no longer
+   pulls in CampaignCard's shared `theme.cardShadowClass`/`detailShadowClass`
+   or any Tailwind `ring-*` utility for this, so there's nothing else on the
+   element competing to set the same properties.
+
+   Each class layers, back to front:
+   1. `background-image`, two layers: a soft radial white/highlight sheen
+      near one corner (the "light reflection" — barely-there, never full
+      glassmorphism) OVER a four-stop diagonal wash (transparent → faint
+      green → soft mint/turquoise → a whisper of warm cream) — "multiple
+      soft layers" rather than a flat white→green blend, per the brief.
+   2. `box-shadow`, four layers: an inset top highlight (polished edge
+      bevel) + a solid-ish contact ring just outside the border (the
+      "separation" that makes the white border on #2/#3 actually read
+      against the page, and doubles as #1's colored edge) + a tight green
+      glow + a wider, softer diffused green/turquoise glow that fades into
+      the page — "strongest close to the card, fading smoothly outward" per
+      the brief, without ever using a hard/neon-edged glow.
+   `:hover` bumps every layer slightly (replaces the old per-card hover
+   shadow that only #1 used to have).
+
+   Built from the same fixed --primary-light/--turquoise-soft/--primary-dark
+   accent tokens as `.overlay-mode-featured--selected` above — but UNLIKE
+   that pattern (and unlike the previous version of this comment), this one
+   DOES need an explicit `:root[data-theme="dark"]` override below: the
+   contact ring's whole job is separating the white border from whatever is
+   behind it by being a DARK green ring against a BRIGHT page in light mode —
+   the exact opposite relationship holds once the page and card both go dark,
+   so the ring (and the corner sheen, and the gradient's warm-cream stop)
+   need dark-mode-appropriate values, not just automatic alpha-over-var()
+   inheritance. #1 stays visually strongest in both themes; #2/#3 stay
+   clearly outlined in both. */
+/* LIGHT-MODE alphas below were deliberately raised a second pass (2026):
+   the first version (radial sheen ~0.5, gradient stops 0.05–0.11, glow
+   0.1–0.12) read as "almost unchanged" against white on a real screen —
+   correct in principle (transparent-over-white math), wrong in practice.
+   These are tuned to be obviously visible at a glance while the stops
+   still start fully transparent and never exceed ~0.24 on a single color
+   stop, so the card still reads as light/white with a clear tint, not a
+   saturated green panel. Dark-mode overrides below are UNCHANGED — this
+   pass is light-mode only, per the brief. */
+.almost-there-card {
+  /* Playing-card proportions — taller than wide but compact (4:5, not a
+     full 2.5:3.5 playing-card ratio, which left too much empty breathing
+     room in the middle for this card's actual content). Same value on
+     #2/#3 and #1 alike (see AlmostThereCard.tsx's doc comment) — #1 reads
+     larger purely via its own `md:scale-110` transform, not a different
+     ratio, so the two tiers' shape can't drift apart. Not a hard clip — a
+     card with an unusually long title/description can still grow past
+     this if it truly needs to, so content never overflows or gets cut
+     off. */
+  aspect-ratio: 4 / 5;
+  background-image:
+    radial-gradient(135% 90% at 12% 0%, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0) 46%),
+    linear-gradient(
+      135deg,
+      rgba(34, 197, 94, 0) 0%,
+      rgba(34, 197, 94, 0.13) 28%,
+      rgba(127, 196, 190, 0.16) 62%,
+      rgba(255, 244, 224, 0.08) 100%
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 0 0 2px rgba(20, 83, 45, 0.22),
+    0 10px 24px -14px rgba(20, 83, 45, 0.2),
+    0 0 26px 3px rgba(34, 197, 94, 0.2),
+    0 0 56px 14px rgba(127, 196, 190, 0.18);
+}
+
+.almost-there-card:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    0 0 0 2px rgba(20, 83, 45, 0.26),
+    0 14px 30px -14px rgba(20, 83, 45, 0.24),
+    0 0 32px 4px rgba(34, 197, 94, 0.25),
+    0 0 68px 16px rgba(127, 196, 190, 0.22);
+}
+
+/* #1 — the same recipe, deliberately richer at every layer (stronger
+   sheen, stronger wash, a brighter/thicker-reading contact ring using
+   --primary-dark's rgb instead of the neutral dark-green #2/#3 use, wider
+   glow) so it immediately reads as the most important card, without tipping
+   into "excessively bright" per the brief. */
+.almost-there-card-rank1 {
+  /* Same aspect-ratio as .almost-there-card above — the shape stays
+     identical between tiers; #1's larger footprint comes only from its own
+     `md:scale-110` transform in AlmostThereCard.tsx. */
+  aspect-ratio: 4 / 5;
+  background-image:
+    radial-gradient(135% 90% at 12% 0%, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0) 48%),
+    linear-gradient(
+      135deg,
+      rgba(34, 197, 94, 0) 0%,
+      rgba(34, 197, 94, 0.22) 28%,
+      rgba(127, 196, 190, 0.2) 62%,
+      rgba(255, 244, 224, 0.1) 100%
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 0 0 2px rgba(21, 128, 61, 0.4),
+    0 14px 32px -14px rgba(20, 83, 45, 0.3),
+    0 0 36px 4px rgba(34, 197, 94, 0.32),
+    0 0 76px 20px rgba(127, 196, 190, 0.26);
+}
+
+.almost-there-card-rank1:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    0 0 0 2px rgba(21, 128, 61, 0.46),
+    0 18px 38px -14px rgba(20, 83, 45, 0.34),
+    0 0 42px 5px rgba(34, 197, 94, 0.38),
+    0 0 90px 24px rgba(127, 196, 190, 0.3);
+}
+
+/* Dark-mode override (Level 3, Almost-There) — luxury black/Champagne
+   rebuild, ONE block per tier (no second layer stacked on top, unlike the
+   previous "force #2/#3 white" patch this replaces). Card surface itself
+   needs no override at all here: Tailwind's own `bg-background/95` already
+   resolves to Rich Charcoal via the token change above, and title/
+   description text already resolves to Soft Ivory via --foreground — both
+   tiers' "Soft Ivory content" requirement is satisfied for free. What DOES
+   need its own rule is everything Tailwind's utilities can't reach:
+     - the tinted background-image + box-shadow glow recipe (this file's
+       own layered "premium" treatment, background-image/box-shadow only,
+       same as Light Mode's own base .almost-there-card/-rank1 rules)
+     - #2/#3's border (AlmostThereCard.tsx hardcodes `border-white`, a
+       fixed Tailwind color with no theme awareness — needs an explicit
+       swap to Warm Gray here; #1 needs no such override since its border
+       is `border-primary`, which already resolves to Champagne via the
+       token)
+     - the two accent numbers (rank badge digit, percent-complete) that use
+       `text-primary-dark` — now a deliberately DARK bronze (for text-on-
+       fill contrast elsewhere), too dark to read as an accent sitting
+       directly on a charcoal card, so both are pointed at the brighter
+       `--primary` (Champagne) instead
+   Same layer count/alpha shape as the old green recipe throughout — only
+   the hues changed: the old mint sheen (184,216,196) → Champagne-light
+   (232,217,176); the old primary-green ring/glow (50,197,107) → Champagne
+   (216,196,154); the old teal secondary glow (57,174,176) → the warm taupe
+   --turquoise-soft now uses (107,97,82). #1 keeps the strongest treatment
+   (brighter Champagne ring/glow); #2/#3 get a quieter version plus a Warm
+   Gray contact ring instead of Champagne, per the brief's own "#1 Champagne
+   border / #2-#3 Warm Gray border" split. */
+:root[data-theme="dark"] .almost-there-card {
+  border-color: rgba(154, 148, 139, 0.55);
+  background-image:
+    radial-gradient(135% 90% at 12% 0%, rgba(232, 217, 176, 0.16) 0%, rgba(232, 217, 176, 0) 42%),
+    linear-gradient(
+      135deg,
+      rgba(216, 196, 154, 0) 0%,
+      rgba(216, 196, 154, 0.08) 32%,
+      rgba(107, 97, 82, 0.11) 66%,
+      rgba(255, 248, 234, 0.03) 100%
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(232, 217, 176, 0.14),
+    0 0 0 2px rgba(154, 148, 139, 0.28),
+    0 10px 26px -14px rgba(0, 0, 0, 0.55),
+    0 0 22px 2px rgba(216, 196, 154, 0.16),
+    0 0 46px 13px rgba(107, 97, 82, 0.18);
+}
+
+:root[data-theme="dark"] .almost-there-card:hover {
+  border-color: rgba(154, 148, 139, 0.7);
+  box-shadow:
+    inset 0 1px 0 rgba(232, 217, 176, 0.18),
+    0 0 0 2px rgba(154, 148, 139, 0.34),
+    0 14px 32px -14px rgba(0, 0, 0, 0.6),
+    0 0 28px 3px rgba(216, 196, 154, 0.22),
+    0 0 56px 15px rgba(107, 97, 82, 0.22);
+}
+
+:root[data-theme="dark"] .almost-there-card-rank1 {
+  background-image:
+    radial-gradient(135% 90% at 12% 0%, rgba(232, 217, 176, 0.2) 0%, rgba(232, 217, 176, 0) 44%),
+    linear-gradient(
+      135deg,
+      rgba(216, 196, 154, 0) 0%,
+      rgba(216, 196, 154, 0.16) 32%,
+      rgba(107, 97, 82, 0.15) 66%,
+      rgba(255, 248, 234, 0.05) 100%
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(232, 217, 176, 0.18),
+    0 0 0 2px rgba(216, 196, 154, 0.42),
+    0 16px 34px -14px rgba(0, 0, 0, 0.6),
+    0 0 30px 3px rgba(216, 196, 154, 0.32),
+    0 0 62px 17px rgba(107, 97, 82, 0.22);
+}
+
+:root[data-theme="dark"] .almost-there-card-rank1:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(232, 217, 176, 0.22),
+    0 0 0 2px rgba(216, 196, 154, 0.48),
+    0 20px 40px -14px rgba(0, 0, 0, 0.65),
+    0 0 38px 4px rgba(216, 196, 154, 0.38),
+    0 0 76px 20px rgba(107, 97, 82, 0.28);
+}
+
+/* The two accent NUMBERS (not general content — title/description already
+   resolve to Soft Ivory automatically via --foreground, no override
+   needed): percent-complete and the #2/#3 rank badge digit both carry
+   `text-primary-dark`, which is now a deliberately dark bronze (see the
+   token comment above) — right for text sitting ON a fill, wrong for text
+   sitting on the charcoal card itself, so both are pointed at the
+   brighter --primary instead. `text-primary-dark` is ALSO used by the
+   ACTIVE-status platform pill inside this same card (CampaignCard's shared
+   statusTheme.active.platformPillClass) — that pill must keep its own look
+   (badges preserve their existing identity), so the selector is
+   tag-qualified (`p.` for the percent line, `span.` for the rank badge)
+   to reach only those two; the platform pill is an `<a>`, never matched.
+   The #2/#3 badge's ring also moves from its old white outline to the same
+   Warm Gray as the card's own border, so it visibly belongs to its card. */
+:root[data-theme="dark"] .almost-there-card p.text-primary-dark {
+  color: var(--primary);
+}
+
+:root[data-theme="dark"] .almost-there-card span.text-primary-dark {
+  color: var(--primary);
+}
+
+:root[data-theme="dark"] .almost-there-card span.border-white {
+  border-color: rgba(154, 148, 139, 0.6);
+}
+
+/* #1's rank badge (`bg-primary text-white` in AlmostThereCard.tsx) is the
+   one spot where a big Champagne fill carries text directly on top —
+   Champagne is bright, so plain white reads nearly illegible on it (unlike
+   the old, notably darker green `--primary`). Rich Charcoal digit on the
+   Champagne circle instead: high contrast, and doubles as a deliberate
+   charcoal-on-Champagne / Champagne-on-charcoal pairing that echoes the
+   rest of the card. HeroClient.tsx's icon tile uses this exact same
+   `bg-primary text-white` combination for the same reason (a solid
+   Champagne fill, not a status color) — one shared, tag-qualified rule
+   covers both rather than two near-duplicate one-offs. */
+:root[data-theme="dark"] .bg-primary.text-white {
+  color: #2b2b2b;
+}
+
+/* OBS overlay card (OverlayCard.tsx, shared by /overlay/near and the admin
+   live preview) — a broadcast-safe entry/exit: fade + a small slide-in from
+   whichever screen edge the card is anchored toward + a slight scale
+   settle, no bounce/overshoot. Duration is admin-configurable
+   (transitionDurationMs), set inline per-instance; only the transform/
+   opacity VALUES live here. `prefers-reduced-motion` collapses this to a
+   plain opacity fade, same convention as every other animated piece of this
+   project (donation-plant-*, gharsah-loader, site-loading-dot*). */
+.overlay-card {
+  opacity: 0;
+  transform: scale(0.97);
+  transition-property: opacity, transform;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.overlay-card--from-right {
+  transform: translateX(14px) scale(0.97);
+}
+
+.overlay-card--from-left {
+  transform: translateX(-14px) scale(0.97);
+}
+
+.overlay-card--visible {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay-card,
+  .overlay-card--from-right,
+  .overlay-card--from-left,
+  .overlay-card--visible {
+    transform: none !important;
+  }
+}
+
+/* Admin overlay live preview (OverlaySettingsPanel.tsx) — a checkerboard
+   "transparency" pattern behind the scaled-down 1920x1080 canvas, the same
+   visual convention design tools use to represent an alpha-transparent
+   area, so the admin can see at a glance that this is exactly what OBS will
+   composite over the stream. Plain named class (not Tailwind arbitrary-value
+   utilities) per this project's own established preference — arbitrary
+   bracket values have proven unreliable to pick up reliably in this
+   project's Tailwind build (see the scale-[]/items-center history
+   elsewhere in this file). 16:9 via aspect-ratio, not Tailwind's
+   `aspect-video` combined with a custom background, again to keep this one
+   rule self-contained and dependency-free. */
+.overlay-preview-canvas {
+  aspect-ratio: 16 / 9;
+  background-color: #1a1a1a;
+  background-image:
+    linear-gradient(45deg, #2a2a2a 25%, transparent 25%),
+    linear-gradient(-45deg, #2a2a2a 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #2a2a2a 75%),
+    linear-gradient(-45deg, transparent 75%, #2a2a2a 75%);
+  background-size: 20px 20px;
+  background-position:
+    0 0,
+    0 10px,
+    10px -10px,
+    -10px 0;
+}
+
+/* Overlay mode selector (OverlayPromoSection.tsx) — "حالات اقتربت" is
+   Gharsah's featured/recommended overlay mode. Selecting it gets a
+   distinctly stronger "premium" highlight than the other three plain-
+   selected cards: a brighter green border, a soft green/turquoise glow
+   around the card, a very faint green tint on the background, and a
+   slightly deeper shadow — so it visibly reads as the primary choice
+   rather than "just another selected radio option". Plain named class
+   (not a Tailwind arbitrary box-shadow utility) because the glow is a
+   multi-layer custom shadow, matching this file's existing convention for
+   anything beyond a flat one-layer shadow (see --card-shadow/--tier2-shadow
+   above). `border-color` here is already var(--primary-light) — token-
+   driven, needs no override — but the rgba() literals below are fixed
+   green/teal, which (unlike --primary-light itself) do NOT track the
+   theme; a dedicated dark-mode block further down swaps them to
+   Champagne/taupe so this "featured state" still reads as premium once
+   green leaves the dark palette entirely. */
+.overlay-mode-featured--selected {
+  border-color: var(--primary-light);
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(127, 196, 190, 0.08));
+  box-shadow:
+    0 0 0 1px rgba(34, 197, 94, 0.4),
+    0 0 20px 2px rgba(34, 197, 94, 0.22),
+    0 0 36px 10px rgba(127, 196, 190, 0.14),
+    var(--card-shadow-hover);
+}
+
+/* The "موصى به" badge beside "حالات اقتربت" — a faint outline pill at rest
+   (present even while a different mode is selected, per the brief: the
+   recommendation itself is a constant, quiet signal, not tied to
+   selection) that turns into a solid brand-green pill only while its own
+   card is actually selected, echoing the stronger glow above instead of
+   competing with it. */
+.overlay-mode-featured-badge {
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  background: rgba(34, 197, 94, 0.08);
+  color: var(--primary-dark);
+  opacity: 0.75;
+}
+
+.overlay-mode-featured-badge--selected {
+  border-color: rgba(34, 197, 94, 0.5);
+  background: var(--primary-100);
+  opacity: 1;
+}
+
+/* Interval slider's own 25-minute recommended marker (#overlay-interval,
+   OverlayPromoSection.tsx) — the top "موصى به" pill next to the value
+   badge isn't enough on its own, so the track itself carries a permanent
+   marker at the exact recommended position: a thin vertical line + a very
+   soft ambient glow, always present regardless of the slider's current
+   value (never forced back to 25 — a streamer can freely pick another
+   value and this marker just quietly stays put). Both the line and the
+   glow switch to a visibly stronger look via the `--active` modifiers
+   ONLY while the slider is actually sitting on 25, added alongside a
+   floating "٢٥ دقيقة" value tag above the (reused) `.overlay-mode-
+   featured-badge--selected` "موصى به" pill — echoing the same escalation
+   pattern as the mode-selector card above instead of a new visual
+   language. Left offset is computed in JS from the slider's own
+   MIN/MAX/DEFAULT constants (see OverlayPromoSection.tsx), never a
+   hardcoded pixel guess, and lines up with the native thumb because both
+   read the same physical `left` percentage. */
+.overlay-interval-recommended-line {
+  width: 1px;
+  background: rgba(34, 197, 94, 0.35);
+  transition: background-color 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.overlay-interval-recommended-line--active {
+  background: var(--primary-light);
+  box-shadow: 0 0 6px 1px rgba(34, 197, 94, 0.55);
+}
+
+.overlay-interval-recommended-glow {
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(34, 197, 94, 0.22), rgba(127, 196, 190, 0.12) 55%, transparent 76%);
+  transition: all 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.overlay-interval-recommended-glow--active {
+  width: 44px;
+  height: 44px;
+  background: radial-gradient(circle, rgba(34, 197, 94, 0.4), rgba(127, 196, 190, 0.22) 55%, transparent 78%);
+}
+
+/* The floating "٢٥ دقيقة" value tag — only rendered while the slider is
+   actually at 25, sitting just above the reused "موصى به" pill (see
+   .overlay-mode-featured-badge--selected). Solid brand fill (`--primary`)
+   with a plain label on top — in Light Mode that fill is a mid-dark green,
+   dark enough for plain white text; in Dark Mode `--primary` is bright
+   Champagne, which white/Ivory text would barely read against, so the
+   dark-mode block below repoints the label to Rich Charcoal instead (the
+   same fix as the Almost-There #1 rank badge and HeroClient's icon tile —
+   see `.bg-primary.text-white` above). */
+.overlay-interval-recommended-value {
+  background: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 3px 10px -2px rgba(34, 197, 94, 0.45);
+}
+
+/* Dark-mode recolor for the featured/recommended highlights above — the
+   rgba() literals in those rules are fixed green/teal and don't track the
+   theme the way var(--primary-light)/var(--primary-100) already do, so
+   this block swaps just those literals to Champagne/taupe, same alpha
+   shape as each light-mode rule, nothing else. */
+:root[data-theme="dark"] .overlay-mode-featured--selected {
+  background: linear-gradient(135deg, rgba(216, 196, 154, 0.14), rgba(107, 97, 82, 0.1));
+  box-shadow:
+    0 0 0 1px rgba(216, 196, 154, 0.45),
+    0 0 20px 2px rgba(216, 196, 154, 0.28),
+    0 0 36px 10px rgba(107, 97, 82, 0.18),
+    var(--card-shadow-hover);
+}
+
+:root[data-theme="dark"] .overlay-mode-featured-badge {
+  border-color: rgba(216, 196, 154, 0.35);
+  background: rgba(216, 196, 154, 0.12);
+}
+
+:root[data-theme="dark"] .overlay-mode-featured-badge--selected {
+  border-color: rgba(216, 196, 154, 0.6);
+}
+
+:root[data-theme="dark"] .overlay-interval-recommended-line {
+  background: rgba(216, 196, 154, 0.4);
+}
+
+:root[data-theme="dark"] .overlay-interval-recommended-line--active {
+  box-shadow: 0 0 6px 1px rgba(216, 196, 154, 0.6);
+}
+
+:root[data-theme="dark"] .overlay-interval-recommended-glow {
+  background: radial-gradient(circle, rgba(216, 196, 154, 0.26), rgba(107, 97, 82, 0.14) 55%, transparent 76%);
+}
+
+:root[data-theme="dark"] .overlay-interval-recommended-glow--active {
+  background: radial-gradient(circle, rgba(216, 196, 154, 0.45), rgba(107, 97, 82, 0.26) 55%, transparent 78%);
+}
+
+:root[data-theme="dark"] .overlay-interval-recommended-value {
+  color: #2b2b2b;
+  box-shadow: 0 3px 10px -2px rgba(216, 196, 154, 0.5);
+}
+
+/* "الأخبار" news/updates feed cards (NewsItemCard.tsx, shared by /updates
+   and the homepage "آخر التحديثات" preview) — one visual family per post
+   type, mirroring CampaignCard.tsx's own `statusTheme` lookup-object
+   pattern (see app/lib/news/presentation.ts) rather than scattered per-type
+   conditionals. Every color below is a plain literal, not a brand CSS var —
+   blue/red/yellow aren't part of Gharsah's green/turquoise palette, so each
+   is hand-picked to read correctly on both the light AND dark surface as a
+   low-alpha tint layered over the card's own theme-aware `--background`
+   base, the same technique `.overlay-mode-featured--selected` above uses,
+   rather than a solid color that would need a separate dark-mode block. */
+.news-card {
+  background-color: var(--background);
+  box-shadow: var(--card-shadow);
+}
+
+/* Thicker, more visible colored borders + a soft matching glow per type —
+   each variant's box-shadow REPLACES the base `.news-card`'s plain
+   `--card-shadow` (a colored glow already reads as "elevated," doesn't
+   need the neutral ambient shadow layered underneath too), a tight 1px
+   contact ring plus a soft blurred glow beneath, same two-layer shape as
+   `--card-shadow` itself just tinted. Strength intentionally escalates:
+   completed/added are moderate, urgent is the strongest (per the brief:
+   "the most visually attention-grabbing category"), general stays plain. */
+.news-card--completed {
+  border-width: 2px;
+  border-color: rgba(37, 99, 235, 0.5);
+  background-image: linear-gradient(180deg, rgba(37, 99, 235, 0.08), transparent 60%);
+  box-shadow:
+    0 0 0 1px rgba(37, 99, 235, 0.14),
+    0 10px 24px -16px rgba(37, 99, 235, 0.4);
+}
+
+.news-card--added {
+  border-width: 2px;
+  border-color: rgba(34, 197, 94, 0.5);
+  background-image: linear-gradient(180deg, rgba(34, 197, 94, 0.08), transparent 60%);
+  box-shadow:
+    0 0 0 1px rgba(34, 197, 94, 0.14),
+    0 10px 24px -16px rgba(34, 197, 94, 0.4);
+}
+
+/* Deliberately the strongest/most distinct treatment of the five — the
+   thickest border plus the deepest contact+ambient glow, per the brief's
+   "clearly more prominent than normal updates". */
+.news-card--urgent {
+  border-width: 3px;
+  border-color: rgba(220, 38, 38, 0.65);
+  background-image: linear-gradient(180deg, rgba(220, 38, 38, 0.09), transparent 60%);
+  box-shadow:
+    0 0 0 1px rgba(220, 38, 38, 0.18),
+    0 16px 32px -16px rgba(220, 38, 38, 0.5);
+}
+
+/* Caution-tape frame: a classic two-layer-background "gradient border"
+   trick, not a border-image or a pseudo-element — `border-color:
+   transparent` makes the border ring itself paintable, then TWO
+   background-image layers are clipped separately: an opaque solid
+   `var(--background)` fill clipped to `padding-box` (i.e. the interior
+   ONLY, stopping exactly at the border's inner edge) painted on top, and
+   the diagonal yellow/black stripes clipped to `border-box` (the full box,
+   border ring included) painted beneath it. Since the top layer is fully
+   OPAQUE (no alpha, so nothing can bleed through) and only covers the
+   interior, the stripes end up visible ONLY in the border ring itself —
+   the interior stays a plain, clean, fully readable card in either theme,
+   exactly per the brief ("pattern ONLY around the frame... interior must
+   remain clean"). Applies to BOTH صيانة and تحديث من المطور (shared
+   family, see presentation.ts). */
+.news-card--maintenance {
+  border-width: 4px;
+  border-style: solid;
+  border-color: transparent;
+  background-image:
+    linear-gradient(var(--background), var(--background)),
+    repeating-linear-gradient(135deg, #eab308 0 7px, #171308 7px 14px);
+  background-clip: padding-box, border-box;
+  box-shadow:
+    0 0 0 1px rgba(234, 179, 8, 0.22),
+    0 12px 26px -16px rgba(234, 179, 8, 0.45);
+}
+
+/* Still no colored glow (that stays exclusive to the other categories —
+   general is deliberately the quiet one), but a genuinely visible border
+   now: the plain `border` Tailwind utility on the `<article>` (globals.css
+   NewsItemCard.tsx) is 1px, and pairing that with the barely-there
+   `--border` token (designed for faint dividers, not a category frame)
+   made this card read as borderless next to the other four's 2–4px
+   colored rings. Same border-width as "حالة جديدة"/"اكتملت حالة" (2px)
+   and the same border-radius every news card already shares (plain
+   `rounded-2xl` on the article, untouched) — just a neutral gray-green
+   instead of a brand color, matching this category's own already-neutral
+   badge/watermark tint (`--muted`) rather than inventing a new hue. Fixed
+   rgba (not a var()) so it reads the same way against both a pale Light
+   Mode card and a dark Rich Charcoal one, same convention the other four
+   categories already use for their own border colors. */
+.news-card--general {
+  border-width: 2px;
+  border-color: rgba(120, 130, 110, 0.45);
+}
+
+.news-badge {
+  border: none;
+}
+
+.news-badge--completed {
+  background-color: rgba(37, 99, 235, 0.14);
+  color: #2563eb;
+}
+
+:root[data-theme="dark"] .news-badge--completed {
+  background-color: rgba(96, 165, 250, 0.18);
+  color: #93c5fd;
+}
+
+.news-badge--added {
+  background-color: rgba(34, 197, 94, 0.16);
+  color: var(--primary-dark);
+}
+
+/* Solid fills (not tinted-on-surface like the others) so "عاجل"/maintenance
+   stay unmistakably distinct at a glance and never rely on the surface
+   color for contrast — both text colors are fixed against their own fixed
+   background, correct in either theme without an override. */
+.news-badge--urgent {
+  background-color: #dc2626;
+  color: #ffffff;
+}
+
+.news-badge--maintenance {
+  background-color: #eab308;
+  color: #1a1400;
+}
+
+.news-badge--general {
+  background-color: var(--wash);
+  color: var(--muted);
+}
+
+/* Large decorative category-color watermark icon, centered behind a news
+   card's real content (see NewsItemCard.tsx's `.news-watermark` wrapper +
+   `-z-10`) — negative z-index so it paints behind the card's own in-flow
+   text/links without needing to wrap that content in its own stacking
+   layer (static in-flow boxes already paint above a negative-z-index
+   positioned sibling per normal CSS stacking order). Absolutely positioned
+   + `pointer-events-none`, so it never affects layout/height/spacing and
+   never intercepts clicks — purely decorative, never a second category
+   label. Opacity intentionally low (0.04–0.09, per the brief) so the
+   actual title/body text stays the clear visual priority; dark mode gets a
+   small opacity boost since the same low-alpha color reads slightly dimmer
+   against the darker card background. Maintenance/dev update use a plain
+   transparent yellow — never the striped pattern, which stays confined to
+   the card's border. */
+.news-watermark-icon {
+  width: 9rem;
+  height: 9rem;
+}
+
+.news-watermark-icon--completed {
+  color: #2563eb;
+  opacity: 0.07;
+}
+
+.news-watermark-icon--added {
+  color: #22c55e;
+  opacity: 0.07;
+}
+
+.news-watermark-icon--urgent {
+  color: #dc2626;
+  opacity: 0.07;
+}
+
+.news-watermark-icon--maintenance {
+  color: #eab308;
+  opacity: 0.08;
+}
+
+.news-watermark-icon--general {
+  color: var(--muted);
+  opacity: 0.05;
+}
+
+:root[data-theme="dark"] .news-watermark-icon--completed,
+:root[data-theme="dark"] .news-watermark-icon--added,
+:root[data-theme="dark"] .news-watermark-icon--urgent {
+  opacity: 0.1;
+}
+
+:root[data-theme="dark"] .news-watermark-icon--maintenance {
+  opacity: 0.11;
+}
+
+:root[data-theme="dark"] .news-watermark-icon--general {
+  opacity: 0.07;
+}
+
+/* Public /near page's streamer section (OverlayPromoSection.tsx) — the mini
+   OBS-canvas preview background. Deliberately NOT the admin preview's
+   transparency checkerboard (a design-tool convention a general visitor
+   wouldn't necessarily read as "transparent") — a soft on-brand dark
+   green-to-teal gradient instead, evoking "this is where your stream video
+   sits," with good contrast for the overlay card in either theme. */
+.overlay-public-preview {
+  aspect-ratio: 16 / 9;
+  background: linear-gradient(135deg, #0d2818 0%, #143323 45%, #0c787e 100%);
 }

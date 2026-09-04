@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { Amiri } from "next/font/google";
 import { AlertCircleIcon } from "@/app/components/home/icons";
-import SectionBackdrop from "@/app/components/decor/SectionBackdrop";
 import { useLanguage } from "@/app/lib/i18n/LanguageProvider";
 
 const amiri = Amiri({ subsets: ["arabic"], weight: ["700"] });
@@ -14,8 +13,6 @@ export default function AboutPageClient() {
   return (
     <main className="flex-1">
       <section className="relative overflow-x-hidden py-16">
-        <SectionBackdrop tone="neutral" />
-
         <div className="relative z-10 mx-auto max-w-4xl px-6">
           <div className="card-elevated rounded-2xl border border-border bg-background/80 p-8 backdrop-blur-md">
             <div className="flex items-center gap-3">

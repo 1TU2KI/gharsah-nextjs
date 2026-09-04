@@ -5,6 +5,7 @@ import InitialLoadOverlay from "@/app/components/ui/InitialLoadOverlay";
 import PageViewTracker from "@/app/components/analytics/PageViewTracker";
 import { LanguageProvider } from "@/app/lib/i18n/LanguageProvider";
 import { getDevBadgeVisible, getMaintenanceMessage } from "@/app/lib/db/settings";
+import { getActiveCampaignsLive } from "@/app/lib/campaignLiveSync";
 
 /**
  * Public Gharsah chrome — everything that used to live directly in the root
@@ -16,6 +17,11 @@ import { getDevBadgeVisible, getMaintenanceMessage } from "@/app/lib/db/settings
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
   const devBadgeVisible = await getDevBadgeVisible();
   const maintenanceMessage = await getMaintenanceMessage();
+  // For the Header's global random-campaign button (see Header.tsx) — same
+  // source /cases/active itself uses, so every page shares one identical,
+  // hourly-revalidated fetch (see campaignLiveSync.ts) rather than each
+  // page re-deriving its own campaign list for this.
+  const activeCampaigns = await getActiveCampaignsLive();
 
   return (
     <LanguageProvider>
@@ -30,7 +36,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
           {maintenanceMessage}
         </div>
       )}
-      <Header devBadgeVisible={devBadgeVisible} />
+      <Header devBadgeVisible={devBadgeVisible} activeCampaigns={activeCampaigns} />
       {children}
       <Footer />
     </LanguageProvider>

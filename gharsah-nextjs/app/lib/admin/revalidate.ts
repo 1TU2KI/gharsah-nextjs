@@ -12,6 +12,7 @@ import { revalidatePath } from "next/cache";
  */
 export function revalidatePublicCampaignPages(slug?: string): void {
   revalidatePath("/");
+  revalidatePath("/near");
   revalidatePath("/cases/active");
   revalidatePath("/cases/completed");
   if (slug) {
@@ -19,4 +20,10 @@ export function revalidatePublicCampaignPages(slug?: string): void {
   } else {
     revalidatePath("/cases/active/[slug]", "page");
   }
+}
+
+/** Called after any news mutation (manual CRUD/publish, or an automatic campaign_added/campaign_completed event) that changes what the public feed shows — same explicit-revalidation reasoning as revalidatePublicCampaignPages above, since news_items is read via a plain DB call, not `fetch()`. */
+export function revalidatePublicNewsPages(): void {
+  revalidatePath("/");
+  revalidatePath("/updates");
 }
