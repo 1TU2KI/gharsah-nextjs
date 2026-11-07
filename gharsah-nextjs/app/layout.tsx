@@ -9,7 +9,11 @@ const cairo = Cairo({
 });
 
 export const metadata: Metadata = {
-  title: "غرسة | دليل الحملات الخيرية الموثوقة",
+  // Default browser-tab title, inherited by every page that doesn't set its
+  // own `metadata.title` (currently just the homepage — see app/(site)/page.tsx;
+  // every other public page and the whole admin area already override this
+  // with their own title). description/icons/openGraph below are untouched.
+  title: "غرسة | نافذتك لحملات البثوث",
   description:
     "غرسة دليل يعرض حملات تبرع موثوقة من جهات رسمية مثل إحسان ودعوة القصبة، والتبرع يتم مباشرة عبر منصة الجهة الرسمية.",
 };

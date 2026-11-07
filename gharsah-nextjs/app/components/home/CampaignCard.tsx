@@ -5,11 +5,14 @@ import type { Campaign } from "../../lib/campaigns";
 import { CheckBadgeIcon, ExternalLinkIcon, PulseIcon } from "./icons";
 import { useLanguage } from "../../lib/i18n/LanguageProvider";
 import DonationTransition from "../cases/DonationTransition";
+import CampaignStoryShare from "../cases/CampaignStoryShare";
 import { track } from "../../lib/analytics/track";
 
 /**
  * All status-dependent visual styling in one place. Completed campaigns use
- * a dedicated blue-green palette built from one exact brand color, #0C787E
+ * a dedicated blue-green palette (the `completed-*` tokens in globals.css —
+ * Dusk Indigo / River Indigo / Midnight Lapis / Young Willow / Willow Mist;
+ * originally built from #0C787E)
  * (badge, progress bar, platform pill, donate button, and card hover
  * accents all derive from it) so the whole card/detail page reads as
  * "completed" at a glance, while active campaigns keep the existing green
@@ -30,6 +33,8 @@ export const statusTheme: Record<
      * status, so the detail view visibly sits "higher" than a list card. */
     detailShadowClass: string;
     usernameClass: string;
+    /** Tint modifier for the shared `.glass-surface` (globals.css). */
+    glassClass: string;
   }
 > = {
   active: {
@@ -43,30 +48,35 @@ export const statusTheme: Record<
     cardShadowClass:
       "shadow-[0_1px_2px_rgba(20,83,45,0.05),0_16px_32px_-12px_rgba(20,83,45,0.16)] hover:shadow-[0_2px_4px_rgba(20,83,45,0.07),0_22px_40px_-12px_rgba(20,83,45,0.22)]",
     detailShadowClass: "shadow-[0_4px_10px_rgba(20,83,45,0.10),0_32px_64px_-20px_rgba(20,83,45,0.30)]",
-    usernameClass: "text-primary",
+    usernameClass: "text-primary username-mention",
+    glassClass: "",
   },
   completed: {
-    badgeClass: "bg-[#0C787E] text-white",
-    platformPillClass: "bg-[#E7F2F2] text-[#0C787E] hover:bg-[#DBEBEC]",
-    progressTrackClass: "bg-[#DBEBEC]",
-    progressFillClass: "bg-gradient-to-l from-[#0C787E] to-[#308C91]",
+    badgeClass: "bg-completed text-white",
+    platformPillClass: "bg-completed-surface text-completed hover:bg-completed-tint hover:text-completed-strong",
+    progressTrackClass: "bg-completed-tint",
+    progressFillClass: "bg-gradient-to-l from-completed to-completed-soft",
     buttonClass:
-      "bg-[#0C787E] text-white shadow-[0_6px_16px_-6px_rgba(12,120,126,0.45)] hover:bg-[#0A666B] hover:shadow-[0_8px_20px_-6px_rgba(12,120,126,0.55)]",
-    cardBorderHoverClass: "hover:border-[#0C787E]/30",
+      "bg-completed text-white shadow-[0_6px_16px_-6px_rgba(32,118,129,0.45)] hover:bg-completed-hover hover:shadow-[0_8px_20px_-6px_rgba(32,118,129,0.55)]",
+    cardBorderHoverClass: "hover:border-completed/30",
     cardShadowClass:
-      "shadow-[0_1px_2px_rgba(12,120,126,0.06),0_16px_32px_-12px_rgba(12,120,126,0.18)] hover:shadow-[0_2px_4px_rgba(12,120,126,0.08),0_22px_40px_-12px_rgba(12,120,126,0.24)]",
-    detailShadowClass: "shadow-[0_4px_10px_rgba(12,120,126,0.12),0_32px_64px_-20px_rgba(12,120,126,0.32)]",
-    usernameClass: "text-[#0C787E]",
+      "shadow-[0_1px_2px_rgba(32,118,129,0.06),0_16px_32px_-12px_rgba(32,118,129,0.18)] hover:shadow-[0_2px_4px_rgba(32,118,129,0.08),0_22px_40px_-12px_rgba(32,118,129,0.24)]",
+    detailShadowClass: "shadow-[0_4px_10px_rgba(32,118,129,0.12),0_32px_64px_-20px_rgba(32,118,129,0.32)]",
+    usernameClass: "text-completed-text username-mention username-mention--completed",
+    glassClass: "glass-surface--completed",
   },
   closed: {
-    badgeClass: "bg-border text-muted",
+    // Light Mode: Inked Willow text — muted gray on the Moss Silk --border
+    // fill is only 3.7:1; Dark Mode keeps text-muted exactly as before.
+    badgeClass: "bg-border text-muted [html:not([data-theme=dark])_&]:text-foreground",
     platformPillClass: "bg-primary-50 text-primary-dark hover:bg-primary-100",
     progressTrackClass: "bg-primary-100",
     progressFillClass: "bg-gradient-to-l from-primary to-primary-light",
     buttonClass:
       "bg-accent text-on-accent shadow-[0_6px_16px_-6px_rgba(20,83,45,0.4)] hover:bg-accent-strong hover:shadow-[0_8px_20px_-6px_rgba(20,83,45,0.5)]",
     cardBorderHoverClass: "hover:border-primary/30",
-    usernameClass: "text-primary",
+    usernameClass: "text-primary username-mention",
+    glassClass: "",
     cardShadowClass:
       "shadow-[0_1px_2px_rgba(20,83,45,0.05),0_16px_32px_-12px_rgba(20,83,45,0.16)] hover:shadow-[0_2px_4px_rgba(20,83,45,0.07),0_22px_40px_-12px_rgba(20,83,45,0.22)]",
     detailShadowClass: "shadow-[0_4px_10px_rgba(20,83,45,0.10),0_32px_64px_-20px_rgba(20,83,45,0.30)]",
@@ -106,7 +116,7 @@ export function MemorialLine({ campaign }: { campaign: Campaign }) {
   );
 }
 
-export default function CampaignCard({ campaign }: { campaign: Campaign }) {
+export default function CampaignCard({ campaign, storyPreview = false }: { campaign: Campaign; storyPreview?: boolean }) {
   const { t, locale } = useLanguage();
   const theme = statusTheme[campaign.status];
   const platformLogo = campaign.platformLogo;
@@ -115,7 +125,14 @@ export default function CampaignCard({ campaign }: { campaign: Campaign }) {
 
   return (
     <article
-      className={`relative flex h-full flex-col rounded-2xl border border-border bg-background/90 p-6 backdrop-blur-sm transition-all duration-200 hover:-translate-y-2 has-[a:active]:translate-y-0 ${theme.cardShadowClass} ${theme.cardBorderHoverClass}`}
+      // `bg-background/85 backdrop-blur-md` (was `/90` + `blur-sm`): the
+      // approved frosted "White Glass" surface from /design-preview, a
+      // moderate step up from this card's own pre-existing light touch of
+      // the same technique — never the sheen (`.liquid-sheen`), which is
+      // deliberately only on the header/primary buttons, not card
+      // surfaces, per the brief. Everything else here — shadow, hover
+      // lift, border, the stretched link — is unchanged.
+      className={`campaign-card glass-surface glass-clear ${theme.glassClass} relative flex h-full flex-col rounded-2xl border border-border bg-background/85 p-6 backdrop-blur-md transition-all duration-200 hover:-translate-y-2 has-[a:active]:translate-y-0 ${theme.cardShadowClass} ${theme.cardBorderHoverClass}`}
     >
       {/* Stretched link: makes the entire card clickable to the detail page.
           Sits below the platform pill and donate button in stacking order
@@ -191,12 +208,16 @@ export default function CampaignCard({ campaign }: { campaign: Campaign }) {
             target="_blank"
             rel="noopener noreferrer"
             onClick={onDonateClick}
-            className={`relative mt-4 flex w-full items-center justify-center gap-2 rounded-full py-2.5 text-sm font-semibold transition-all active:scale-95 active:brightness-95 ${theme.buttonClass}`}
+            // `liquid-sheen`: the approved edge-highlight sweep (see
+            // globals.css), same as the Header/Hero's own primary buttons
+            // — already `relative`, so no extra utility needed here.
+            className={`relative liquid-sheen mt-4 flex w-full items-center justify-center gap-2 rounded-full py-2.5 text-sm font-semibold transition-all active:scale-95 active:brightness-95 ${theme.buttonClass}`}
           >
             {t.campaignCard.donateButton}
           </a>
         )}
       </DonationTransition>
+      {storyPreview && <CampaignStoryShare campaign={campaign} />}
     </article>
   );
 }

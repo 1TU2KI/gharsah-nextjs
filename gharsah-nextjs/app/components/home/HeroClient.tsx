@@ -23,7 +23,7 @@ export default function HeroClient({
     <section className="relative overflow-x-hidden">
       <HeroBackground />
 
-      <div className="relative z-10 px-6 pt-14 sm:pt-20">
+      <div className="on-slat-bg relative z-10 px-6 pt-14 sm:pt-20">
         <OpeningVerse />
       </div>
 
@@ -35,7 +35,7 @@ export default function HeroClient({
           </span>
 
           <h1
-            className={`mt-6 text-center text-4xl font-extrabold text-foreground sm:text-5xl ${
+            className={`on-slat-bg mt-6 text-center text-4xl font-extrabold text-foreground sm:text-5xl ${
               locale === "en" ? "leading-[1.08] tracking-tight" : "leading-snug"
             }`}
           >
@@ -44,21 +44,26 @@ export default function HeroClient({
             <span className="text-[clamp(1.5rem,6vw,42px)]">{t.hero.titleLine2}</span>
           </h1>
 
-          <p className="mx-auto mt-5 max-w-md text-balance text-lg leading-8 text-muted md:mx-0 md:max-w-xl">
+          <p className="on-slat-bg mx-auto mt-5 max-w-md text-balance text-lg leading-8 text-muted md:mx-0 md:max-w-xl">
             {t.hero.description}
           </p>
 
           <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-center md:justify-start">
+            {/* `relative liquid-sheen`: the approved "Liquid Glass" edge
+                highlight (see globals.css) — the site's one other primary
+                CTA besides the Header's own donate button to get it; the
+                secondary "الحالات المكتملة" button below is deliberately
+                left alone (not the main action). */}
             <Link
               href="/cases/active"
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-accent px-7 py-3.5 text-base font-semibold text-on-accent shadow-[0_10px_24px_-8px_rgba(20,83,45,0.45)] transition-all hover:bg-accent-strong hover:shadow-[0_14px_28px_-8px_rgba(20,83,45,0.55)]"
+              className="relative liquid-sheen inline-flex items-center justify-center gap-2 rounded-full bg-accent px-7 py-3.5 text-base font-semibold text-on-accent shadow-[0_10px_24px_-8px_rgba(20,83,45,0.45)] transition-all hover:bg-accent-strong hover:shadow-[0_14px_28px_-8px_rgba(20,83,45,0.55)]"
             >
               {t.hero.browseCases}
               <ArrowIcon className="h-4 w-4 rotate-180" />
             </Link>
             <Link
               href="/cases/completed"
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-[#0C787E]/30 bg-background px-7 py-3.5 text-base font-semibold text-[#0C787E] transition-colors hover:bg-[#E7F2F2]"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-completed/30 bg-background px-7 py-3.5 text-base font-semibold text-completed-link transition-colors hover:bg-completed-surface hover:text-completed"
             >
               {t.hero.completedCases}
             </Link>
@@ -66,7 +71,7 @@ export default function HeroClient({
         </div>
 
         <div className="relative mx-auto w-full max-w-sm">
-          <div className="card-elevated rounded-[2rem] bg-background/70 p-8 ring-1 ring-background/60 backdrop-blur-md">
+          <div className="card-elevated glass-surface glass-clear relative rounded-[2rem] bg-background/70 p-8 ring-1 ring-background/60 backdrop-blur-md">
             <div className="flex items-center gap-3">
               <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-white">
                 <LeafIcon className="h-8 w-8" />
@@ -94,7 +99,7 @@ export default function HeroClient({
                 right, as required. */}
             <div className="mt-6 grid grid-cols-1 gap-4 border-t border-border pt-6 sm:grid-cols-2">
               <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#DBEBEC] text-[#0C787E]">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-completed-tint text-completed-strong">
                   <CheckBadgeIcon className="h-5 w-5" />
                 </span>
                 <div>

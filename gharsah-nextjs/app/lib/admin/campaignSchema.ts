@@ -25,8 +25,9 @@ import { z } from "zod";
  * `memorialPrefixAr` is a controlled selection in the UI (a `<select>`,
  * not free text — see `MEMORIAL_PREFIX_OPTIONS` in memorialPrefixOptions.ts)
  * but validated loosely here (not a strict zod enum): editing an older
- * campaign whose stored phrase predates the controlled list (e.g.
- * "رحمها الله", used by most of the original seed data) must still be
+ * campaign whose stored phrase isn't in the controlled list (e.g. the
+ * "ي"-prefixed "يرحمها الله", which the list itself used to offer before the
+ * wording was corrected to the direct form) must still be
  * submittable unchanged — CampaignForm.tsx injects that legacy value as an
  * extra option so it stays selected by default rather than silently
  * reverting to "no phrase" and wiping it on save. The `<select>` itself is

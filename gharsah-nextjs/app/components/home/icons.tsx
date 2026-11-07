@@ -15,8 +15,9 @@ export function DonationBoxIcon({ className }: IconProps) {
       {/* Lid — solid bar sitting on top of the box */}
       <rect x="3.5" y="7" width="17" height="3" rx="1.3" fill="currentColor" />
       {/* Slot cut into the lid, punched through in the container's own
-          green (#16a34a is --primary, unchanged between light/dark) */}
-      <rect x="9.5" y="7.8" width="5" height="1.4" rx="0.7" fill="#16a34a" />
+          green (--icon-slot: Deep Moss in Light Mode, the previous
+          #16a34a in Dark Mode — see globals.css) */}
+      <rect x="9.5" y="7.8" width="5" height="1.4" rx="0.7" fill="var(--icon-slot)" />
       {/* Box body — bold outline only, so the heart reads clearly against
           the green interior showing through */}
       <rect
@@ -39,7 +40,7 @@ export function DonationBoxIcon({ className }: IconProps) {
 }
 
 /** Simple target/bullseye — two concentric outline rings plus a solid
- * center dot — for "جمع حملات المجتمع" (gathering scattered campaigns onto
+ * center dot — for "جمع حملات البثوث" (gathering scattered campaigns onto
  * one focused place). Same stroke-only, currentColor style as the rest of
  * this file, sized/weighted to match the other circle-based icons here
  * (AlertCircleIcon's r="9.25"/strokeWidth="1.4" convention). */
@@ -119,6 +120,21 @@ export function LeafParticleIcon({ className }: IconProps) {
         d="M4 18c7 0 12-5 12-12 0 0-11-.8-12 7-.5 3.9 0 5 0 5Z"
         fill="currentColor"
       />
+    </svg>
+  );
+}
+
+/** Simple eye ("view") mark — the «عرض الحالة» link on Updates cards. */
+export function EyeIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path
+        d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8" />
     </svg>
   );
 }

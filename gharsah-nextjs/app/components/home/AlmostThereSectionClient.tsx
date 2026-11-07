@@ -21,7 +21,7 @@ export default function AlmostThereSectionClient({ campaigns }: { campaigns: Cam
     <section className="relative overflow-x-hidden py-20">
       <div className="relative z-10 mx-auto max-w-6xl px-6">
         <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-          <div className="text-center sm:text-start">
+          <div className="on-slat-bg text-center sm:text-start">
             <h2
               className={`text-3xl font-extrabold text-foreground sm:text-4xl ${locale === "en" ? "tracking-tight" : ""}`}
             >
@@ -45,7 +45,7 @@ export default function AlmostThereSectionClient({ campaigns }: { campaigns: Cam
             link/wording NearPageClient.tsx uses at the end of the full
             /near page, just placed here too since it fits cleanly below
             this compact homepage version. */}
-        <p className="mt-8 text-center text-sm">
+        <p className="on-slat-bg mt-8 text-center text-sm">
           <Link href="/overlay" className="font-semibold text-primary-dark transition-colors hover:underline active:opacity-70">
             {t.almostThere.overlayCta}
           </Link>

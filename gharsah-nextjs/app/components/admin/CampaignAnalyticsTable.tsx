@@ -8,7 +8,7 @@ import { ADMIN_BASE_PATH } from "@/app/lib/auth/constants";
 const STATUS_LABEL: Record<string, string> = { active: "نشطة", completed: "مكتملة", closed: "مغلقة" };
 const STATUS_CLASS: Record<string, string> = {
   active: "bg-primary-dark text-white",
-  completed: "bg-[#0C787E] text-white",
+  completed: "bg-completed text-white",
   closed: "bg-border text-muted",
 };
 

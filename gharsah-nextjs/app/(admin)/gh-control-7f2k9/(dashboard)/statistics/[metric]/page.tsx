@@ -127,7 +127,7 @@ async function VisitsDetail({ sinceIso, toSeries }: { sinceIso: string | null; t
           <AdminBarChart data={pageViews.map((p) => ({ label: ROUTE_LABEL[p.route] ?? p.route, value: p.count, color: "#16a34a" }))} />
         </ChartCard>
         <ChartCard title="مصادر الزيارات" hint="إجمالي كل الفترات">
-          <AdminBarChart data={referrers.map((r) => ({ label: REFERRER_LABEL[r.source] ?? r.source, value: r.count, color: "#0C787E" }))} />
+          <AdminBarChart data={referrers.map((r) => ({ label: REFERRER_LABEL[r.source] ?? r.source, value: r.count, color: "#207681" }))} />
         </ChartCard>
       </div>
 
@@ -164,7 +164,7 @@ async function UniqueVisitorsDetail({ sinceIso, toSeries }: { sinceIso: string |
         <AdminBarChart
           data={[
             { label: "زوار جدد", value: totalNew, color: "#16a34a" },
-            { label: "زوار عائدون", value: totalReturning, color: "#0C787E" },
+            { label: "زوار عائدون", value: totalReturning, color: "#207681" },
           ]}
         />
       </ChartCard>
@@ -174,7 +174,7 @@ async function UniqueVisitorsDetail({ sinceIso, toSeries }: { sinceIso: string |
           <AdminBarChart data={devices.map((d) => ({ label: DEVICE_LABEL[d.label] ?? d.label, value: d.count, color: "#2563eb" }))} />
         </ChartCard>
         <ChartCard title="مصادر الزيارات" hint="إجمالي كل الفترات">
-          <AdminBarChart data={referrers.map((r) => ({ label: REFERRER_LABEL[r.source] ?? r.source, value: r.count, color: "#0C787E" }))} />
+          <AdminBarChart data={referrers.map((r) => ({ label: REFERRER_LABEL[r.source] ?? r.source, value: r.count, color: "#207681" }))} />
         </ChartCard>
       </div>
     </div>
@@ -322,7 +322,7 @@ async function RequestsDetail({ toSeries, statusFilter }: { toSeries: SeriesFn; 
             data={(Object.keys(REQUEST_STATUS_LABEL) as RequestStatus[]).map((s) => ({
               label: REQUEST_STATUS_LABEL[s],
               value: counts[s],
-              color: s === "accepted" || s === "completed" ? "#16a34a" : s === "rejected" ? "#dc2626" : "#0C787E",
+              color: s === "accepted" || s === "completed" ? "#16a34a" : s === "rejected" ? "#dc2626" : "#207681",
             }))}
           />
         </ChartCard>

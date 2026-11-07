@@ -1,16 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import GharsahOverlayCard from "./GharsahOverlayCard";
 import type { GharsahOverlayApiResponse } from "@/app/lib/overlay/gharsah/types";
 import type { OverlayPosition } from "@/app/lib/db/settings";
 
 const POLL_INTERVAL_MS = 20000;
-
-// Fixed, short demo cadence for `previewMode` only — never used by the real
-// OBS overlay. Same value as Campaign Overlay's own preview cadence
-// (OverlayClient.tsx), for a consistent demo feel between the two types.
-const PREVIEW_DISPLAY_DURATION_MS = 6500;
 
 const POSITION_WRAPPER_CLASS: Record<OverlayPosition, string> = {
   "top-right": "top-6 right-6",
@@ -20,41 +15,56 @@ const POSITION_WRAPPER_CLASS: Record<OverlayPosition, string> = {
 };
 
 /**
- * Gharsah Overlay's own poll+cycle engine — deliberately NOT sharing
+ * Gharsah Overlay's own poll engine — deliberately NOT sharing
  * OverlayClient.tsx's implementation (see the approved plan: campaign-
- * specific and Gharsah-specific rendering logic stay separated, so the
- * working campaign engine is never touched or put at risk). Much simpler
- * than OverlayClient because there's only ever ONE thing to show (the
- * Gharsah brand card, never a rotating array) — so the loop is just:
- * show → wait `displayDurationMs` → hide (exit animation) → wait the
- * configured interval (or the short fixed `previewMode` gap) → show again.
- * Same `previewMode`/`center` contract and the same polling cadence as
- * OverlayClient, for a consistent feel between the two overlay types.
+ * specific and Gharsah-specific rendering logic stay separated).
  *
- * `previewMode` never waits the real 1–60 minute interval — it loops with
- * zero gap between hide and reappear, so the public previews stay visually
- * active continuously, exactly like the campaign overlay's own previews.
+ * Continuously visible: there's only ever ONE thing to show (the Gharsah
+ * brand/logo card, never a rotating array like Campaign Overlay), and
+ * `hostUrl`/`message`/`style`/`theme`/`compact`/`position` are all derived
+ * purely from this page's own URL (never the database, never time-varying)
+ * — so, unlike Campaign Overlay, there is nothing here that can ever
+ * actually change while a given Browser Source URL stays loaded. `visible`
+ * is therefore simply `true` from mount onward and never toggled again:
+ * no hide/reappear cycle, no blink, no blank period, ever. Polling still
+ * runs exactly as before (preserved, per the brief) and its result is
+ * applied directly — there's no "safe point to adopt it" concern left to
+ * manage, since a changed response can only ever mean identical content
+ * re-fetched, never a mid-display swap to protect against. `style`/
+ * `theme`/`compact`/`position`/`transitionDurationMs` are still read from
+ * the polled data and passed straight through to GharsahOverlayCard
+ * (its own `.overlay-card`/`.overlay-card--visible` CSS transition stays
+ * fully wired up, exactly as Campaign Overlay's does) — simply inert in
+ * practice today, since nothing ever triggers it for this overlay type.
+ * `intervalMinutes` is no longer read at all: there is no more
+ * appearance-to-appearance gap for it to pace (see
+ * GharsahOverlayPromoSection.tsx's own comment on why its interval slider
+ * was removed) — "where applicable" per the brief, it simply isn't here.
+ * `previewMode` is gone for the same reason — it used to swap in a short
+ * fixed demo cadence for the two live previews instead of the real
+ * hide/reappear cycle; with no cycle left at all, there is nothing left for
+ * it to override, so both previews now just mount this exactly like the
+ * real `/overlay/gharsah` route does. `center` is unaffected and still
+ * accepted, same as before.
  */
 export default function GharsahOverlayClient({
   initialData,
   queryString,
-  previewMode = false,
   center = false,
 }: {
   initialData: GharsahOverlayApiResponse;
   /** Query string used for every poll — defaults to this page's own `window.location.search`, which is what the real `/overlay/gharsah` route relies on. */
   queryString?: string;
-  /** Public-preview-only: ignores the real interval entirely, reappearing with zero gap so the preview stays visually active. Never set by the real `/overlay/gharsah` route. */
-  previewMode?: boolean;
   /** "معاينة مصغرة"-only: renders the card flex-centered instead of corner-anchored. */
   center?: boolean;
 }) {
-  const latestRef = useRef<GharsahOverlayApiResponse>(initialData);
   const [displayed, setDisplayed] = useState<GharsahOverlayApiResponse>(initialData);
-  const [visible, setVisible] = useState(true);
 
-  // Polling loop — identical shape to OverlayClient's own: only ever
-  // updates `latestRef`, adopted at the next safe "reappear" point below.
+  // Always visible once mounted — see the doc comment above.
+  const visible = true;
+
+  // Polling loop — unchanged cadence/shape; applies each fresh response
+  // directly (no deferred "safe point" needed, see the doc comment above).
   useEffect(() => {
     let cancelled = false;
 
@@ -64,9 +74,9 @@ export default function GharsahOverlayClient({
         const res = await fetch(`/api/overlay/gharsah${qs}`, { cache: "no-store" });
         if (!res.ok || cancelled) return;
         const data = (await res.json()) as GharsahOverlayApiResponse;
-        if (!cancelled) latestRef.current = data;
+        if (!cancelled) setDisplayed(data);
       } catch {
-        // Network hiccup — latestRef keeps its last-known-good value; retry next tick.
+        // Network hiccup — keep showing the last-known-good data; retry next tick.
       }
     }
 
@@ -76,46 +86,6 @@ export default function GharsahOverlayClient({
       window.clearInterval(id);
     };
   }, [queryString]);
-
-  // Show/hide cycle — one self-scheduling timer chain, set up exactly once.
-  useEffect(() => {
-    let cancelled = false;
-    let timeoutId: number | undefined;
-
-    function schedule(fn: () => void, ms: number) {
-      timeoutId = window.setTimeout(() => {
-        if (!cancelled) fn();
-      }, ms);
-    }
-
-    function showThenWait() {
-      setVisible(true);
-      schedule(hide, previewMode ? PREVIEW_DISPLAY_DURATION_MS : latestRef.current.settings.displayDurationMs);
-    }
-
-    function hide() {
-      setVisible(false);
-      schedule(reappear, latestRef.current.settings.transitionDurationMs);
-    }
-
-    function reappear() {
-      const fresh = latestRef.current;
-      setDisplayed(fresh);
-      const gapMs = previewMode ? 0 : fresh.settings.intervalMinutes * 60000;
-      schedule(showThenWait, gapMs);
-    }
-
-    showThenWait();
-
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timeoutId);
-    };
-    // Deliberately empty deps — same reasoning as OverlayClient: this timer
-    // chain must run exactly once for this overlay instance's whole
-    // lifetime, never restart on a state change.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   return (
     <div className={center ? "fixed inset-0 flex items-center justify-center" : `fixed flex ${POSITION_WRAPPER_CLASS[displayed.settings.position]}`}>

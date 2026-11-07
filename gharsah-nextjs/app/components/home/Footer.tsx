@@ -15,12 +15,17 @@ const quickLinks = [
   { href: "/contact", key: "contact" as const },
 ];
 
-const whyIcons = [LeafIcon, CheckBadgeIcon, LeafIcon, CheckBadgeIcon];
+// One entry per `footer.whyItems` row (see translations.ts) — same
+// alternating Leaf/CheckBadge pattern this list always used, sized for its
+// current 5 statements. Deliberately NOT `goalIcons` from Goals.tsx: this
+// list keeps its own existing icon treatment, not the Goals section's
+// bespoke per-item icons.
+const whyIcons = [LeafIcon, CheckBadgeIcon, LeafIcon, CheckBadgeIcon, LeafIcon];
 
 export default function Footer() {
   const { t } = useLanguage();
   // Scoped override: only the Completed Campaigns page swaps the footer's
-  // green identity for the same exact blue-green (#0C787E) used throughout
+  // green identity for the same exact blue-green (`--completed`, Dusk Indigo) used throughout
   // that page's completed-campaign UI. Every other page keeps the normal
   // accent/on-accent tokens (which already invert green<->white per theme).
   const isCompletedPage = usePathname() === "/cases/completed";
@@ -28,16 +33,18 @@ export default function Footer() {
   // Flat, fully OPAQUE surface, no blur/mask — a clean, hard-edged block
   // against the page background, per the brief ("sharp, solid, no
   // gradient/fade/blur transition"). Painted straight on `<footer>` itself.
-  const surfaceClass = isCompletedPage ? "bg-[#0C787E]" : "bg-accent";
+  const surfaceClass = isCompletedPage ? "bg-completed" : "bg-accent";
   const textClass = isCompletedPage ? "text-white" : "text-on-accent";
-  const mutedTextClass = isCompletedPage ? "text-white/70" : "text-on-accent/70";
-  const faintTextClass = isCompletedPage ? "text-white/60" : "text-on-accent/60";
+  // Completed footer: Willow Mist (#EDF4D9) for secondary text — white/70
+  // and white/60 on Dusk Indigo were only 3.5:1 / 3.0:1; Willow Mist is 4.7:1.
+  const mutedTextClass = isCompletedPage ? "text-completed-surface" : "text-on-accent/70";
+  const faintTextClass = isCompletedPage ? "text-completed-surface" : "text-on-accent/60";
   const iconChipClass = isCompletedPage ? "bg-white/10" : "bg-on-accent/10";
   const dividerClass = isCompletedPage ? "border-white/10" : "border-on-accent/10";
   const linkHoverClass = isCompletedPage ? "hover:text-white" : "hover:text-on-accent";
 
   return (
-    <footer className={`border-t border-border ${surfaceClass}`}>
+    <footer className={`section-edge-glow border-t border-border ${surfaceClass}`}>
       <div className="mx-auto grid max-w-6xl gap-x-8 gap-y-10 px-6 py-12 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <div className="flex items-center gap-2">
@@ -70,6 +77,10 @@ export default function Footer() {
 
         <div>
           <h3 className={`text-sm font-semibold ${textClass}`}>{t.footer.whyHeading}</h3>
+          {/* Short reason statements (see the `whyItems` comment in
+              translations.ts for how each one is grounded in "أهداف
+              غرسة") — no question lines, single-line items/icon-chip
+              pairing restored exactly as this list always rendered. */}
           <ul className="mt-4 space-y-3">
             {t.footer.whyItems.map((label, index) => {
               const Icon = whyIcons[index];

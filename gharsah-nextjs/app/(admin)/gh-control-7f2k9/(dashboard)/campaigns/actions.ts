@@ -102,11 +102,13 @@ type ParsedCampaignValues = {
  * - `memorialPrefix` is a controlled selection (MEMORIAL_PREFIX_OPTIONS),
  *   not free text, so its English is resolved from a fixed lookup
  *   (MEMORIAL_PREFIX_EN) instead of an API call — see that file's comment
- *   for why a static map beats AI translation for a closed 3-value set. A
- *   pre-existing phrase that predates the controlled list (e.g. "رحمها الله",
- *   used by most of the original seed data) isn't in that map; if it's
+ *   for why a static map beats AI translation for a closed 3-value set.
+ *   Some phrases that are no longer offered as choices are still in that
+ *   map on purpose (the "ي"-prefixed forms the list used to carry, see
+ *   memorialPrefixOptions.ts), so campaigns still holding one keep
+ *   resolving properly. Anything genuinely absent from the map, if it's
  *   resubmitted unchanged (the edit form injects it as a selectable legacy
- *   option specifically so this can happen), its existing English is kept
+ *   option specifically so this can happen), keeps its existing English
  *   as-is rather than being blanked.
  *
  * Never throws: a translation failure still lets the Arabic content save

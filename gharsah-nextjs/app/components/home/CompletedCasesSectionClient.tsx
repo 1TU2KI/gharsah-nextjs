@@ -20,7 +20,7 @@ export default function CompletedCasesSectionClient({
     <section className="relative overflow-x-hidden py-20">
       <div className="relative z-10 mx-auto max-w-6xl px-6">
         <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-          <div className="text-center sm:text-start">
+          <div className="on-slat-bg text-center sm:text-start">
             <h2
               className={`text-3xl font-extrabold text-foreground sm:text-4xl ${locale === "en" ? "tracking-tight" : ""}`}
             >
@@ -31,7 +31,7 @@ export default function CompletedCasesSectionClient({
           </div>
           <Link
             href="/cases/completed"
-            className="rounded-full border border-[#0C787E]/30 bg-background px-6 py-2.5 text-sm font-semibold text-[#0C787E] transition-colors hover:bg-[#E7F2F2]"
+            className="rounded-full border border-completed/30 bg-background px-6 py-2.5 text-sm font-semibold text-completed-link transition-colors hover:bg-completed-surface hover:text-completed"
           >
             {t.cases.viewAllCompleted}
           </Link>

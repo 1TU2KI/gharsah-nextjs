@@ -64,14 +64,17 @@ export default function ActiveCasesPageClient({ campaigns }: { campaigns: Campai
       <section className="relative overflow-x-hidden py-16">
         <div className="relative z-10 mx-auto max-w-6xl px-6">
           <div>
-            <OpeningVerse
-              verse="﴿ لَنْ تَنَالُوا الْبِرَّ حَتَّى تُنْفِقُوا مِمَّا تُحِبُّونَ ۚ وَمَا تُنْفِقُوا مِن شَيْءٍ فَإِنَّ اللَّهَ بِهِ عَلِيمٌ ﴾"
-              reference="سورة آل عمران، الآية 92"
-              translation="Never will you attain the good [reward] until you spend [in the way of Allah] from that which you love. And whatever you spend - indeed, Allah is Knowing of it."
-              referenceEn="Aal-Imran, Verse 92"
-            />
+            {/* `on-slat-bg`: see globals.css (text directly on the slat background). */}
+            <div className="on-slat-bg">
+              <OpeningVerse
+                verse="﴿ لَنْ تَنَالُوا الْبِرَّ حَتَّى تُنْفِقُوا مِمَّا تُحِبُّونَ ۚ وَمَا تُنْفِقُوا مِن شَيْءٍ فَإِنَّ اللَّهَ بِهِ عَلِيمٌ ﴾"
+                reference="سورة آل عمران، الآية 92"
+                translation="Never will you attain the good [reward] until you spend [in the way of Allah] from that which you love. And whatever you spend - indeed, Allah is Knowing of it."
+                referenceEn="Aal-Imran, Verse 92"
+              />
+            </div>
 
-            <div className="mt-12 text-center">
+            <div className="on-slat-bg mt-12 text-center">
               <h1
                 className={`text-3xl font-extrabold text-foreground sm:text-4xl ${locale === "en" ? "tracking-tight" : ""}`}
               >
@@ -105,7 +108,7 @@ export default function ActiveCasesPageClient({ campaigns }: { campaigns: Campai
           {campaigns.length > 0 ? (
             <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {sortedCampaigns.map((campaign) => (
-                <CampaignCard key={campaign.slug} campaign={campaign} />
+                <CampaignCard key={campaign.slug} campaign={campaign} storyPreview={campaign.id === campaigns[0]?.id} />
               ))}
             </div>
           ) : (

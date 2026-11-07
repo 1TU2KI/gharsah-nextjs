@@ -6,7 +6,9 @@ export default function HeroBackground() {
     // Hero's own box edge by this wrapper's `overflow-hidden`, which reads
     // as a visible seam against the shared global background continuing
     // underneath into the next section (2026 global-background rebuild).
-    <div className="section-fade-mask pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
+    // `hero-decor`: hidden in Light Mode (globals.css) — Light Mode shows only
+    // the Mint Tonic page background.
+    <div className="hero-decor section-fade-mask pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
       {/* soft canopy vignette — evokes dappled sunlight through trees */}
       <div
         className="absolute inset-0"

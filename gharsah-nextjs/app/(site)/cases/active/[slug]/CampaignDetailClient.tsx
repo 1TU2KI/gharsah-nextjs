@@ -21,16 +21,16 @@ export default function CampaignDetailClient({ campaign }: { campaign: Campaign 
   const isCompleted = campaign.status === "completed";
   const backLinkHref = isCompleted ? "/cases/completed" : "/cases/active";
   const backLinkLabel = isCompleted ? t.campaignDetail.backLinkCompleted : t.campaignDetail.backLinkActive;
-  const backLinkColorClass = isCompleted ? "text-[#0C787E]" : "text-primary-dark";
+  const backLinkColorClass = isCompleted ? "text-completed-link" : "text-primary-dark";
   // Reuses the exact same status-colored tokens the rest of this page/the
-  // cards already use (`#0C787E`/`#E7F2F2`/`#DBEBEC` for completed, the
+  // cards already use (the `completed-*` tokens for completed, the
   // `primary`/`primary-50`/`primary-100`/`primary-dark` scale for active) —
   // no new colors, just applied to this one secondary button too.
   const copyLinkButtonClass = isCompleted
-    ? "border-[#0C787E]/30 bg-[#E7F2F2]/70 text-[#0C787E] hover:border-[#0C787E]/60 hover:bg-[#DBEBEC] active:bg-[#DBEBEC]"
+    ? "border-completed/30 bg-completed-surface/70 text-completed-strong hover:border-completed/60 hover:bg-completed-tint active:bg-completed-tint"
     : "border-primary/30 bg-primary-50/70 text-primary-dark hover:border-primary/60 hover:bg-primary-100 active:bg-primary-100";
   const copyLinkCopiedClass = isCompleted
-    ? "border-[#0C787E]/60 bg-[#DBEBEC] text-[#0C787E]"
+    ? "border-completed/60 bg-completed-tint text-completed-strong"
     : "border-primary/60 bg-primary-100 text-primary-dark";
   const title = campaign.title[locale];
   const description = campaign.description[locale];
@@ -113,7 +113,7 @@ export default function CampaignDetailClient({ campaign }: { campaign: Campaign 
           <div className="flex items-center justify-between gap-3">
             <Link
               href={backLinkHref}
-              className={`text-sm font-semibold transition-colors hover:underline active:opacity-70 ${backLinkColorClass}`}
+              className={`on-slat-bg text-sm font-semibold transition-colors hover:underline active:opacity-70 ${backLinkColorClass}`}
             >
               {backLinkLabel}
             </Link>
@@ -143,7 +143,7 @@ export default function CampaignDetailClient({ campaign }: { campaign: Campaign 
               than the grid card's own Tier 3 shadow, so the focused detail
               view visibly sits "higher" than a list card. */}
           <div
-            className={`mt-6 overflow-hidden rounded-2xl border border-border bg-background/88 p-8 backdrop-blur-md transition-shadow ${theme.detailShadowClass}`}
+            className={`glass-surface glass-clear ${theme.glassClass} relative mt-6 overflow-hidden rounded-2xl border border-border bg-background/88 p-8 backdrop-blur-md transition-shadow ${theme.detailShadowClass}`}
           >
             <MemorialLine campaign={campaign} />
 
@@ -176,16 +176,21 @@ export default function CampaignDetailClient({ campaign }: { campaign: Campaign 
 
             {description && <p className="mt-4 leading-8 text-foreground/80">{description}</p>}
 
+            {/* Completion percentage only (no progress box or bar), straight
+                on the main card, in locale digits ("١٪" / "1%"). Hidden when
+                there's no value; screen readers get the full label. */}
             {campaign.percent !== undefined && (
-              <div className="mt-6 rounded-2xl bg-wash/60 p-5">
-                <div className={`h-2.5 w-full overflow-hidden rounded-full ${theme.progressTrackClass}`}>
-                  <div
-                    className={`h-full rounded-full ${theme.progressFillClass}`}
-                    style={{ width: `${campaign.percent}%` }}
-                  />
-                </div>
-                <p className="mt-2 text-sm text-muted">{t.campaignCard.progressLabel(campaign.percent)}</p>
-              </div>
+              <p
+                className={`mt-6 text-2xl font-extrabold leading-none ${
+                  campaign.status === "completed" ? "text-completed-text" : "text-primary-dark"
+                }`}
+              >
+                <span aria-hidden="true">
+                  {new Intl.NumberFormat(locale === "ar" ? "ar-u-nu-arab" : "en").format(campaign.percent)}
+                  {locale === "ar" ? "٪" : "%"}
+                </span>
+                <span className="sr-only">{t.campaignCard.progressLabel(campaign.percent)}</span>
+              </p>
             )}
 
             {/* The donate link itself — href, target, rel, classes, and

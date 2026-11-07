@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { Campaign } from "../../lib/campaigns";
 import { pickRandom } from "../../lib/random";
 import { RandomPickIcon } from "../home/icons";
@@ -58,6 +58,7 @@ export default function RandomCaseButton({
   variant?: "fab" | "compact" | "header";
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { t } = useLanguage();
   const [isRolling, setIsRolling] = useState(false);
   const [isCardOpen, setIsCardOpen] = useState(false);
@@ -106,8 +107,40 @@ export default function RandomCaseButton({
 
     setIsCardOpen(false);
     setIsRolling(true);
+    const target = `/cases/active/${picked.slug}`;
     timeoutRef.current = window.setTimeout(() => {
-      router.push(`/cases/active/${picked.slug}`);
+      timeoutRef.current = undefined;
+      // `isRolling` drives both the dice animation and `disabled`, and the
+      // animation has just finished its single 700ms run — so this is the
+      // moment to clear it, unconditionally, before deciding where (or
+      // whether) to navigate. Nothing else ever will: the primary instance
+      // of this button lives in the site Header, which the shared `(site)`
+      // layout mounts once and keeps mounted across every client-side
+      // navigation and the browser back button, so there's no unmount to
+      // reset it. Leaving it set was what disabled the button permanently
+      // after one pick (and kept the dice from re-animating) until a full
+      // page reload.
+      setIsRolling(false);
+
+      const current = window.location.pathname;
+      if (current !== pathname) {
+        // The visitor navigated somewhere else during the roll — their own
+        // navigation wins over a pick they've already moved on from.
+        return;
+      }
+      if (current === target) {
+        // The pick landed on the campaign whose page we're already on, where
+        // `router.push` would render no new page and look like nothing
+        // happened. Scroll back to the top instead — the same response the
+        // Header's nav links already give for the page you're on. (The
+        // reduced-motion check is repeated from Header.tsx's own
+        // `scrollToTop` rather than imported: Header imports *this*
+        // component, so reaching back into it would make the two circular.)
+        const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        window.scrollTo({ top: 0, behavior: prefersReducedMotion ? "auto" : "smooth" });
+        return;
+      }
+      router.push(target);
     }, ROLL_ANIMATION_MS);
   }
 

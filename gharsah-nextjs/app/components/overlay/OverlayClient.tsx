@@ -33,19 +33,26 @@ const POSITION_WRAPPER_CLASS: Record<ResolvedOverlayDisplay["position"], string>
  *    A failed fetch just leaves `latestRef` untouched (last-known-good data
  *    keeps being shown) and tries again next tick — never a visible error
  *    on stream.
- * 2. The display cycle — show a campaign, wait `displayDurationMs`, exit
- *    (`transitionDurationMs`), advance, enter, repeat. The gap before the
- *    next campaign appears is normally 0 between campaigns within a cycle
- *    and `restDurationMs` only after the last one (existing default
- *    behavior, untouched) — UNLESS `settings.intervalMinutes` is set (only
- *    ever via a streamer's own `?interval=` override, never an admin
- *    default — see queryParams.ts), in which case that same interval
- *    applies uniformly between every campaign, wrap included, replacing
- *    both. The latest polled data is only adopted at a cycle-wrap boundary
- *    (a genuinely safe moment — nothing is on screen) or immediately if the
- *    campaign currently showing has actually dropped out of the fresh data
- *    entirely (no longer worth protecting) — never an ordinary mid-display
- *    swap.
+ * 2. The display cycle — CONTINUOUSLY visible, never a blank/hidden period:
+ *    show a campaign, wait `settings.intervalMinutes` minutes (a streamer's
+ *    own `?interval=` override, or Gharsah's recommended 25-minute default
+ *    when absent — see queryParams.ts; `resolveOverlayDisplay()` never
+ *    actually leaves it `null` in practice, `displayDurationMs` is only a
+ *    defensive fallback for the type's nullable edge case), THEN the
+ *    existing brief exit/enter transition (`transitionDurationMs`, the same
+ *    `.overlay-card`/`.overlay-card--visible` CSS this always used) swaps
+ *    in the next campaign immediately after — no additional wait is ever
+ *    scheduled between the exit and the re-entry. `restDurationMs` (an
+ *    admin-configurable `OverlaySettings` field) is no longer read by this
+ *    cycle at all: it governed the old "blank gap after a full lap," which
+ *    no longer exists now that there IS no gap, ever. It stays in the
+ *    settings type/admin panel untouched (removing a DB-backed field is a
+ *    separate, unrelated concern) — simply inert here. The latest polled
+ *    data is still only adopted at the same safe boundary as before (right
+ *    as a campaign is about to be swapped for the next one) or immediately
+ *    if the campaign currently showing has actually dropped out of the
+ *    fresh data entirely (no longer worth protecting) — never an ordinary
+ *    mid-display swap.
  *
  * Renders nothing if the overlay is administratively disabled, the branded
  * static fallback (no cycling, periodically re-checking for real data) if
@@ -54,11 +61,12 @@ const POSITION_WRAPPER_CLASS: Record<ResolvedOverlayDisplay["position"], string>
  * `previewMode` (see prop doc below) is the one deliberate exception to all
  * of the above: it's for the public `/near` page's demo previews only,
  * which must stay visually active and keep looping regardless of whatever
- * `displayDurationMs`/`restDurationMs`/`intervalMinutes` the fetched
- * settings actually contain — real campaign data and real visual settings
- * (theme/position/progress/etc.) still come through untouched; only the
- * PACING is overridden. The real OBS overlay never passes this prop, so its
- * timing is completely unaffected.
+ * `intervalMinutes` the fetched settings actually contain — real campaign
+ * data and real visual settings (theme/position/progress/etc.) still come
+ * through untouched; only the PACING is overridden (a short fixed
+ * cadence instead of the real interval — the zero-gap, continuously-visible
+ * SHAPE of the cycle is now identical either way). The real OBS overlay
+ * never passes this prop, so its timing is completely unaffected.
  */
 export default function OverlayClient({
   initialData,
@@ -74,11 +82,11 @@ export default function OverlayClient({
    */
   queryString?: string;
   /**
-   * Public-preview-only: ignores `displayDurationMs`, `restDurationMs`, and
-   * `intervalMinutes` entirely, showing each campaign for a fixed ~6.5s with
-   * zero gap before the next — a short, continuous demo loop that never
-   * enters the real overlay's long rest/interval period. Never set by the
-   * real `/overlay/near` route.
+   * Public-preview-only: ignores `intervalMinutes` entirely, showing each
+   * campaign for a fixed ~6.5s instead — a short demo cadence so the
+   * preview visibly cycles through campaigns at a watchable pace rather
+   * than the real (often 25-minute) interval. Never set by the real
+   * `/overlay/near` route.
    */
   previewMode?: boolean;
   /**
@@ -151,7 +159,15 @@ export default function OverlayClient({
         schedule(adoptLatestAndShow, POLL_INTERVAL_MS);
         return;
       }
-      schedule(afterDisplay, previewMode ? PREVIEW_DISPLAY_DURATION_MS : settings.displayDurationMs);
+      // How long THIS campaign stays on screen before swapping to the next
+      // — `intervalMinutes` (the existing "الوقت بين كل حالة وحالة" control)
+      // is still exactly what paces the rotation, just now as the ON-SCREEN
+      // duration instead of a gap duration; `displayDurationMs` is only a
+      // defensive fallback for `intervalMinutes`'s nullable edge case (see
+      // the doc comment above this component — the real resolver never
+      // actually produces that case).
+      const displayMs = previewMode ? PREVIEW_DISPLAY_DURATION_MS : (settings.intervalMinutes ? settings.intervalMinutes * 60000 : settings.displayDurationMs);
+      schedule(afterDisplay, displayMs);
     }
 
     function afterDisplay() {
@@ -167,39 +183,21 @@ export default function OverlayClient({
     }
 
     function advance() {
+      // No gap/wait here anymore — `exit()` already held the card hidden
+      // for exactly `transitionDurationMs` (the brief existing CSS
+      // transition) before calling this, and `showCurrentThenWait()`/
+      // `adoptLatestAndShow()` immediately set `visible` back to true with
+      // the next campaign. The result: continuously visible, with the only
+      // interruption being that same short transition exactly at the
+      // moment content actually changes — never a sustained blank period.
       const wrapping = i + 1 >= campaigns.length;
-      let gapMs: number;
-      if (previewMode) {
-        // Demo mode: never the long rest/interval period — loop straight
-        // into the next campaign (or back to the first) with no gap at all,
-        // so the preview stays visually active continuously.
-        gapMs = 0;
+      if (wrapping) {
+        adoptLatestAndShow();
       } else {
-        // `settings.intervalMinutes` is either a streamer's own `?interval=`
-        // override or, when a URL has none at all, Gharsah's own
-        // recommended 25-minute default (see queryParams.ts +
-        // overlay/defaults.ts) — resolveOverlayDisplay() never actually
-        // leaves it `null` anymore, so this now IS the normal path for
-        // every URL, not just an opt-in override. It replaces BOTH the old
-        // "no gap within a cycle" and "restDurationMs gap after the cycle"
-        // behavior with one uniform wait between every single campaign,
-        // wrap included, exactly as described in the "إعداد الأوفرلاي"
-        // slider's own spec. The `restDurationMs` fallback below only still
-        // matters if `intervalMinutes` were ever missing some other way —
-        // never through the normal resolver.
-        const intervalMs = settings.intervalMinutes ? settings.intervalMinutes * 60000 : null;
-        gapMs = intervalMs ?? (wrapping ? settings.restDurationMs : 0);
+        i += 1;
+        setIndex(i);
+        showCurrentThenWait();
       }
-
-      schedule(() => {
-        if (wrapping) {
-          adoptLatestAndShow();
-        } else {
-          i += 1;
-          setIndex(i);
-          showCurrentThenWait();
-        }
-      }, gapMs);
     }
 
     function adoptLatestAndShow() {

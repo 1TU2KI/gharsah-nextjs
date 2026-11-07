@@ -172,7 +172,7 @@ export default function OverlayPromoSection({
   }, [pickableCampaigns, campaignSearch]);
 
   return (
-    <div className="mt-16 rounded-2xl border border-primary/20 bg-background/95 p-6 shadow-[0_4px_10px_rgba(20,83,45,0.10),0_32px_64px_-20px_rgba(20,83,45,0.30)] backdrop-blur-sm sm:p-8">
+    <div className="glass-surface glass-clear relative mt-16 rounded-2xl border border-primary/20 bg-background/95 p-6 shadow-[0_4px_10px_rgba(20,83,45,0.10),0_32px_64px_-20px_rgba(20,83,45,0.30)] backdrop-blur-sm sm:p-8">
       <div className="text-center">
         <h2 className="text-xl font-bold text-foreground sm:text-2xl">للبث المباشر</h2>
         <p className="mx-auto mt-2 max-w-xl text-sm text-muted">

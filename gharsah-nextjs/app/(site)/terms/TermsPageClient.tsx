@@ -13,11 +13,11 @@ export default function TermsPageClient() {
     <main className="flex-1">
       <section className="relative overflow-x-hidden py-16">
         <div className="relative z-10 mx-auto max-w-4xl px-6">
-          <h1 className={`text-2xl font-extrabold text-foreground sm:text-3xl ${headingClass}`}>{t.terms.heading}</h1>
+          <h1 className={`on-slat-bg text-2xl font-extrabold text-foreground sm:text-3xl ${headingClass}`}>{t.terms.heading}</h1>
 
           <div className="mt-8 space-y-8">
             {/* Requirements for adding a case */}
-            <div className="card-elevated rounded-2xl border border-border bg-background/80 p-8 backdrop-blur-md">
+            <div className="card-elevated glass-surface glass-clear relative rounded-2xl border border-border bg-background/80 p-8 backdrop-blur-md">
               <div className="flex items-center gap-3">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary">
                   <ScaleIcon className="h-5 w-5" />
@@ -35,7 +35,7 @@ export default function TermsPageClient() {
                     key={item}
                     className={`flex items-center gap-3 text-base font-semibold text-foreground/80 ${bodyLeadingClass}`}
                   >
-                    <span className="shrink-0 translate-y-2 text-[3em] font-bold leading-none text-primary" aria-hidden="true">
+                    <span className="accent-mark shrink-0 translate-y-2 text-[3em] font-bold leading-none text-primary" aria-hidden="true">
                       *
                     </span>
                     <span>{item}</span>
@@ -45,7 +45,7 @@ export default function TermsPageClient() {
             </div>
 
             {/* Notice */}
-            <div className="card-elevated flex items-start gap-4 rounded-2xl border border-border bg-sunlight/85 p-6 backdrop-blur-md">
+            <div className="card-elevated glass-surface glass-clear glass-surface--sun relative flex items-start gap-4 rounded-2xl border border-border bg-sunlight/85 p-6 backdrop-blur-md">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-background/60 text-foreground">
                 <WarningIcon className="h-5 w-5" />
               </span>
@@ -53,10 +53,10 @@ export default function TermsPageClient() {
             </div>
           </div>
 
-          <p className="mt-6 text-sm">
+          <p className="on-slat-bg mt-6 text-sm">
             <Link
               href="/about"
-              className="font-semibold text-primary-dark transition-colors hover:underline active:opacity-70"
+              className="accent-link font-semibold text-primary-dark transition-colors hover:underline active:opacity-70"
             >
               {t.terms.backLinkLabel}
             </Link>

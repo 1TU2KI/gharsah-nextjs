@@ -188,7 +188,7 @@ export default async function StatisticsPage({ searchParams }: { searchParams: P
 
         <ChartCard title="التنقّل في القائمة العلوية">
           <AdminBarChart
-            data={navClicks.map((n) => ({ label: NAV_LABEL[n.key] ?? n.key, value: n.count, color: "#0C787E" }))}
+            data={navClicks.map((n) => ({ label: NAV_LABEL[n.key] ?? n.key, value: n.count, color: "#207681" }))}
           />
         </ChartCard>
 
@@ -234,7 +234,7 @@ export default async function StatisticsPage({ searchParams }: { searchParams: P
           />
         </ChartCard>
         <ChartCard title="نوع الجهاز" hint="إجمالي كل الفترات">
-          <AdminBarChart data={devices.map((d) => ({ label: DEVICE_LABEL[d.label] ?? d.label, value: d.count, color: "#0C787E" }))} />
+          <AdminBarChart data={devices.map((d) => ({ label: DEVICE_LABEL[d.label] ?? d.label, value: d.count, color: "#207681" }))} />
         </ChartCard>
         <ChartCard title="المتصفح" hint="إجمالي كل الفترات">
           <AdminBarChart data={browsers.map((b) => ({ label: b.label, value: b.count, color: "#d97706" }))} />
@@ -250,7 +250,7 @@ export default async function StatisticsPage({ searchParams }: { searchParams: P
           <AdminBarChart
             data={[
               { label: "نشطة", value: statusCounts.active, color: "#16a34a" },
-              { label: "مكتملة", value: statusCounts.completed, color: "#0C787E" },
+              { label: "مكتملة", value: statusCounts.completed, color: "#207681" },
             ]}
           />
         </ChartCard>
@@ -284,7 +284,7 @@ export default async function StatisticsPage({ searchParams }: { searchParams: P
                   cy="18"
                   r="15.5"
                   fill="none"
-                  stroke="#0C787E"
+                  stroke="#207681"
                   strokeWidth="4"
                   strokeLinecap="round"
                   strokeDasharray={`${completionRate * 0.974} 1000`}

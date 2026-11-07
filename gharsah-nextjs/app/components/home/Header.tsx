@@ -70,16 +70,23 @@ export default function Header({
   }
   // Always the same primary Gharsah green, on every page including
   // Completed Campaigns — this used to swap to that page's blue-green
-  // (#0C787E) identity here too, but the Header's own "تبرع الآن" CTA is
+  // (`--completed`) identity here too, but the Header's own "تبرع الآن" CTA is
   // meant to stay unmistakably the site's green regardless of page; that
   // completed-campaign teal identity still applies everywhere else on the
   // page itself (cards, badges, the nav's own active-state color), just
   // never this one Header button.
+  // `relative liquid-sheen` adds the approved "Liquid Glass" edge-highlight
+  // sweep (see globals.css) on top of the existing fill/shadow above —
+  // nothing about the color/shape/shadow changes. One shared constant used
+  // by both the desktop button below and the mobile-menu one further down,
+  // so the sheen applies identically to both without a second edit.
   const donateButtonClass =
-    "bg-accent text-on-accent shadow-[0_8px_20px_-8px_rgba(20,83,45,0.45)] hover:bg-accent-strong hover:shadow-[0_10px_24px_-8px_rgba(20,83,45,0.55)]";
+    "relative liquid-sheen bg-accent text-on-accent shadow-[0_8px_20px_-8px_rgba(20,83,45,0.45)] hover:bg-accent-strong hover:shadow-[0_10px_24px_-8px_rgba(20,83,45,0.55)]";
 
   return (
-    <header className="header-material sticky top-0 z-50 border-b border-border bg-background/72 backdrop-blur-xl backdrop-saturate-[1.4]">
+    // `glass-surface glass-surface--bar` (globals.css): the whole strip,
+    // mobile menu panel included, is ONE shared Liquid Glass surface.
+    <header className="header-material glass-surface glass-surface--bar liquid-sheen section-edge-glow sticky top-0 z-50 border-b border-border bg-background/72 backdrop-blur-xl backdrop-saturate-[1.4]">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-6 py-4">
         {/* Brand cluster: the logo link plus the "in development" status,
             grouped as a single flex item so the header keeps exactly three
@@ -151,9 +158,9 @@ export default function Header({
                 className={`group inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-[13px] transition-colors active:opacity-70 ${
                   active
                     ? isCompletedLink
-                      ? "font-semibold text-[#0C787E]"
+                      ? "font-semibold text-completed-text"
                       : "font-semibold text-primary-dark"
-                    : `font-medium text-foreground/80 ${isCompletedLink ? "hover:text-[#0C787E]" : "hover:text-primary"}`
+                    : `font-medium text-foreground/80 ${isCompletedLink ? "hover:text-completed-text" : "hover:text-primary"}`
                 }`}
               >
                 {t.nav[link.key]}
@@ -217,17 +224,18 @@ export default function Header({
           than the previous hard mount/unmount with no exit motion at all.
           Anchored to the hamburger button above it (same edge, same xl:hidden
           breakpoint), so it opens from the control that triggered it.
-          Tier 1 material (same `.header-material` recipe as the header
-          itself, so the panel reads as the same floating layer continuing
-          downward) with its own soft shadow for separation from the page
-          content it now floats above. The nav's own opacity/translate-y
-          transition (separate from the grid-rows one on its wrapper) is
-          what makes the links fade/slide in with the panel instead of
-          popping in the instant there's any height. */}
+          No fill/blur of its own: it sits inside the header, so the header's
+          single glass surface covers it (one surface, blur applied once).
+          The nav's own opacity/translate-y transition (separate from the
+          grid-rows one on its wrapper) is what makes the links fade/slide in
+          with the panel instead of popping in the instant there's any
+          height. The separator line and the nav's vertical padding only
+          exist while open — a closed panel used to leave a 32px empty band
+          under the header on every width below xl. */}
       <div
         aria-hidden={!open}
-        className={`header-material relative grid overflow-hidden border-t border-border bg-background/72 backdrop-blur-xl backdrop-saturate-[1.4] transition-[grid-template-rows] duration-300 ease-in-out xl:hidden ${
-          open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+        className={`relative grid overflow-hidden border-border transition-[grid-template-rows] duration-300 ease-in-out xl:hidden ${
+          open ? "grid-rows-[1fr] border-t" : "grid-rows-[0fr] border-t-0"
         }`}
       >
         {/* Own opacity/translate-y transition, separate from the outer
@@ -235,8 +243,8 @@ export default function Header({
             grows instead of appearing at full opacity the instant there's
             any height — the "materialize with the container" effect. */}
         <nav
-          className={`flex min-h-0 flex-col gap-1 px-6 py-4 transition-all duration-300 ${
-            open ? "translate-y-0 opacity-100" : "-translate-y-4 opacity-0"
+          className={`flex min-h-0 flex-col gap-1 px-6 transition-all duration-300 ${
+            open ? "translate-y-0 py-4 opacity-100" : "-translate-y-4 py-0 opacity-0"
           }`}
         >
           {navLinks.map((link) => {
@@ -255,10 +263,10 @@ export default function Header({
                 className={`group flex items-center gap-1 rounded-lg px-2 py-2.5 text-sm transition-colors ${
                   active
                     ? isCompletedLink
-                      ? "bg-[#E7F2F2] font-semibold text-[#0C787E]"
+                      ? "bg-completed-tint font-semibold text-completed-strong"
                       : "bg-primary-50 font-semibold text-primary-dark"
                     : isCompletedLink
-                      ? "font-medium text-foreground/80 hover:bg-[#E7F2F2] active:bg-[#E7F2F2] hover:text-[#0C787E]"
+                      ? "font-medium text-foreground/80 hover:bg-completed-surface active:bg-completed-surface hover:text-completed-strong"
                       : "font-medium text-foreground/80 hover:bg-primary-50 active:bg-primary-50 hover:text-primary"
                 }`}
               >

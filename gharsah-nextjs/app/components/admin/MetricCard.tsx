@@ -22,7 +22,7 @@ export type MetricCardTone = "default" | "emerald" | "teal" | "amber" | "red";
 const TONE_VALUE_CLASS: Record<MetricCardTone, string> = {
   default: "text-foreground",
   emerald: "text-primary",
-  teal: "text-[#0C787E]",
+  teal: "text-completed-link",
   amber: "text-amber-600",
   red: "text-red-600",
 };
@@ -30,7 +30,7 @@ const TONE_VALUE_CLASS: Record<MetricCardTone, string> = {
 const TONE_ICON_CLASS: Record<MetricCardTone, string> = {
   default: "bg-wash text-muted",
   emerald: "bg-primary-50 text-primary-dark",
-  teal: "bg-[#E7F2F2] text-[#0C787E]",
+  teal: "bg-completed-surface text-completed",
   amber: "bg-amber-50 text-amber-600",
   red: "bg-red-50 text-red-600",
 };

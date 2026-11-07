@@ -66,11 +66,11 @@ export default function NearPageClient({ campaigns }: { campaigns: Campaign[] })
         <div className="relative z-10 mx-auto max-w-6xl px-6">
           <div className="text-center">
             <h1
-              className={`text-3xl font-extrabold text-foreground sm:text-4xl ${locale === "en" ? "tracking-tight" : ""}`}
+              className={`on-slat-bg text-3xl font-extrabold text-foreground sm:text-4xl ${locale === "en" ? "tracking-tight" : ""}`}
             >
               {t.almostThere.heading}
             </h1>
-            <p className="mx-auto mt-3 max-w-xl text-muted">{t.almostThere.description}</p>
+            <p className="on-slat-bg mx-auto mt-3 max-w-xl text-muted">{t.almostThere.description}</p>
 
             {/* The random-campaign pick moved into the shared site Header
                 (see Header.tsx) — this is now just the page's own copy-link
@@ -105,7 +105,7 @@ export default function NearPageClient({ campaigns }: { campaigns: Campaign[] })
           {/* Subtle CTA to the dedicated OBS/streamer overlay page — this
               page never embeds that UI itself (see the module doc comment
               above), just points to it. */}
-          <p className="mt-12 text-center text-sm">
+          <p className="on-slat-bg mt-12 text-center text-sm">
             <Link href="/overlay" className="font-semibold text-primary-dark transition-colors hover:underline active:opacity-70">
               {t.almostThere.overlayCta}
             </Link>

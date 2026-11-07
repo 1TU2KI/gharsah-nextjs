@@ -39,7 +39,7 @@ export default function OverlayPageClient({
     <main className="flex-1">
       <section className="relative overflow-x-hidden py-16">
         <div className="relative z-10 mx-auto max-w-6xl px-6">
-          <div className="text-center">
+          <div className="on-slat-bg text-center">
             <h1 className="text-3xl font-extrabold text-foreground sm:text-4xl">الأوفرلاي</h1>
             <p className="mx-auto mt-3 max-w-xl text-muted">أدوات البث المباشر الخاصة بغرسة — اختر نوع الأوفرلاي الذي تريد استخدامه في بثك.</p>
           </div>
@@ -48,7 +48,7 @@ export default function OverlayPageClient({
               selection (pre-existing behavior, unchanged). Switching tabs
               is purely local UI state, never a navigation/reload. */}
           <div className="mt-8">
-            <p className="text-center text-sm font-bold text-foreground">اختر نوع الأوفرلاي</p>
+            <p className="on-slat-bg text-center text-sm font-bold text-foreground">اختر نوع الأوفرلاي</p>
             <div className="mx-auto mt-3 grid max-w-md grid-cols-2 gap-2">
               <button
                 type="button"
@@ -57,7 +57,7 @@ export default function OverlayPageClient({
                 className={`rounded-xl border px-4 py-3 text-sm font-semibold transition-all ${
                   category === "campaign"
                     ? "border-primary/50 bg-primary-50/70 text-primary-dark"
-                    : "border-primary/15 text-muted hover:border-primary/30 hover:text-foreground"
+                    : "on-slat-bg border-primary/15 text-muted hover:border-primary/30 hover:text-foreground"
                 }`}
               >
                 أوفرلاي الحملات
@@ -69,7 +69,7 @@ export default function OverlayPageClient({
                 className={`rounded-xl border px-4 py-3 text-sm font-semibold transition-all ${
                   category === "gharsah"
                     ? "border-primary/50 bg-primary-50/70 text-primary-dark"
-                    : "border-primary/15 text-muted hover:border-primary/30 hover:text-foreground"
+                    : "on-slat-bg border-primary/15 text-muted hover:border-primary/30 hover:text-foreground"
                 }`}
               >
                 أوفرلاي غرسة

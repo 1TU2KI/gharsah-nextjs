@@ -3,7 +3,7 @@
 import { DuaIcon, HeartIcon, SproutIcon, TargetIcon, UsersIcon } from "./icons";
 import { useLanguage } from "../../lib/i18n/LanguageProvider";
 
-// items[0]="تخليد الأثر بالصدقة", items[1]="جمع حملات المجتمع" (unchanged),
+// items[0]="تخليد الأثر بالصدقة", items[1]="جمع حملات البثوث" (unchanged),
 // items[2]="اجعل نيتك أوسع", items[3]/[4] unchanged.
 const goalIcons = [SproutIcon, TargetIcon, HeartIcon, UsersIcon, DuaIcon];
 
@@ -16,7 +16,7 @@ export default function Goals() {
     // the brief ("sharp, solid, no gradient/fade/blur transition"). This
     // supersedes the previous feathered-backdrop treatment (see git history
     // if that soft-blend version is ever wanted back).
-    <section id="goals" className="bg-accent">
+    <section id="goals" className="section-edge-glow section-edge-glow--text bg-accent">
       <div className="mx-auto max-w-6xl px-6 py-16">
         <h2
           className={`text-center text-2xl font-extrabold text-on-accent sm:text-3xl ${locale === "en" ? "tracking-tight" : ""}`}

@@ -39,11 +39,20 @@ const ar = {
     description: "دليل يعرض حملات تبرع موثوقة من جهات رسمية، ويحوّلك مباشرة للتبرع عبر منصة الجهة الرسمية.",
     quickLinksHeading: "روابط سريعة",
     whyHeading: "لماذا غرسة؟",
+    // Short statements, one per `goals.items` entry in the same order
+    // (never the goal's own `title` verbatim — each is a short, natural
+    // paraphrase of what that goal actually says, phrased as a reason to
+    // use Gharsah): [0]~goals.items[0] (ongoing charity), [1]~goals.items[1]
+    // (community campaigns in one place), [2]~goals.items[2] (your
+    // intention reaches those who came before us too), [3]~goals.items[3]
+    // (even the simplest contribution counts), [4]~goals.items[4] (prayer
+    // costs nothing). No question lines anymore — plain visible text only.
     whyItems: [
-      "حملات من المجتمع",
-      "روابط رسمية موثوقة",
-      "تبرع مباشر عبر المنصة الرسمية",
-      "مراجعة قبل النشر",
+      "تبرعك صدقة جارية لمن يحتاجها",
+      "حملات البثوث الرسمية في مكان واحد",
+      "نيتك تشمل من سبقنا أيضًا",
+      "أبسط مساهمة قد تصنع أثرًا عظيمًا",
+      "دعاؤك لهم صدقة لا تكلف شيئًا",
     ],
     contactHeading: "تواصل معنا",
     contactTextBefore: "إذا كان لديك استفسار، اقتراح، أو ترغب في إضافة حملة، يسعدنا التواصل معك عبر",
@@ -51,11 +60,11 @@ const ar = {
     copyright: (year: number) => `© ${year} غرسة. جميع الحقوق محفوظة.`,
   },
   hero: {
-    pill: "نافذتك لحملات المجتمع",
+    pill: "نافذتك لحملات البثوث",
     titleLine1: "صَدَقَةٌ تُهْدَى... وَأَجْرٌ",
     titleLine2: "لَا يَـنـــــــــــــــــــــــقَطِعُ",
     description:
-      "دليل يجمع حملات التبرع الخاصة بالمجتمع من منصات رسمية موثوقة، ويأخذك مباشرة لإتمام تبرعك، لتكون صدقة جارية لمن سبقونا إلى الله.",
+      "دليل يجمع حملات التبرع الخاصة بالبثوث من منصات رسمية موثوقة، ويأخذك مباشرة لإتمام تبرعك، لتكون صدقة جارية لمن سبقونا إلى الله.",
     browseCases: "تصفح الحالات",
     completedCases: "الحالات المكتملة",
     totalCampaigns: "عدد جميع الحملات",
@@ -72,8 +81,8 @@ const ar = {
         description: "إتاحة الفرصة ليستمر أثر الخير من خلال الوصول إلى الحملات الرسمية، والمساهمة في صدقة جارية لمن يحتاجها.",
       },
       {
-        title: "جمع حملات المجتمع",
-        description: "جمع الحملات الرسمية الخاصة بأفراد المجتمع في مكان واحد، لتسهيل الوصول إليها ومشاركتها ودعمها عبر منصاتها الرسمية.",
+        title: "جمع حملات البثوث",
+        description: "جمع الحملات الرسمية الخاصة بالبثوث في مكان واحد، لتسهيل الوصول إليها ومشاركتها ودعمها عبر منصاتها الرسمية.",
       },
       {
         title: "اجعل نيتك أوسع",
@@ -81,7 +90,7 @@ const ar = {
       },
       {
         title: "إحياء روح التكافل",
-        description: "تعزيز ثقافة الصدقة والتعاون بين أفراد المجتمع، وتذكير الجميع بأن أبسط مساهمة قد تكون سببًا في أجرٍ عظيم.",
+        description: "تعزيز ثقافة الصدقة والتعاون بين متابعي البثوث، وتذكير الجميع بأن أبسط مساهمة قد تكون سببًا في أجرٍ عظيم.",
       },
       {
         title: "لا تنسوهم بدعائكم",
@@ -202,6 +211,13 @@ const ar = {
         helper: "وضّح نوع صلتك بالمستفيد (مثل: قريب المستفيد أو أحد أفراد عائلته).",
         placeholder: "مثال: قريب المستفيد",
       },
+      memorial: {
+        label: "هل الحالة عن متوفى؟",
+        helper: "اختر إن كانت الحملة صدقة عن شخص متوفى.",
+        none: "لا، ليست عن متوفى",
+        male: "نعم، عن متوفى (رحمه الله)",
+        female: "نعم، عن متوفاة (رحمها الله)",
+      },
       campaignUrl: {
         label: "رابط الحالة",
         helper:
@@ -239,6 +255,18 @@ const ar = {
       submit: "إرسال",
       submitting: "جارٍ الإرسال...",
       submittedNotice: "تم استلام رسالتك بنجاح، وسنتواصل معك إذا لزم الأمر.",
+    },
+    // Confirmation that replaces a form once the server accepts it.
+    success: {
+      requestTitle: "تم استلام طلبك بنجاح",
+      messageTitle: "تم استلام رسالتك بنجاح",
+      condolenceMale: "أحسن الله عزاءكم، ورحم فقيدكم، وجعل هذه الصدقة في ميزان حسناته.",
+      condolenceFemale: "أحسن الله عزاءكم، ورحم فقيدتكم، وجعل هذه الصدقة في ميزان حسناتها.",
+      notesPreviewLabel: "ملاحظاتك",
+      messagePreviewLabel: "رسالتك",
+      home: "العودة إلى الصفحة الرئيسية",
+      anotherRequest: "إرسال طلب آخر",
+      anotherMessage: "إرسال رسالة أخرى",
     },
   },
   campaignDetail: {
@@ -283,11 +311,14 @@ const en = {
     description: "A directory of trusted donation campaigns from official platforms, taking you straight to the official page to donate.",
     quickLinksHeading: "Quick Links",
     whyHeading: "Why Gharsah?",
+    // See the matching comment in the `ar` block above for how each
+    // statement maps back to a specific `goals.items` entry, in order.
     whyItems: [
-      "Campaigns from the community",
-      "Trusted official links",
-      "Donate directly via the official platform",
-      "Reviewed before publishing",
+      "Your donation becomes an ongoing charity for those who need it",
+      "Official livestream campaigns, all in one place",
+      "Your intention can reach those who came before us too",
+      "Even the simplest contribution can lead to a great reward",
+      "Praying for them is a charity that costs nothing",
     ],
     contactHeading: "Contact Us",
     contactTextBefore: "Have a question or suggestion, or want to add a campaign? We'd love to hear from you via",
@@ -295,11 +326,11 @@ const en = {
     copyright: (year: number) => `© ${year} Gharsah. All rights reserved.`,
   },
   hero: {
-    pill: "Your window into community campaigns",
+    pill: "Your window into livestream campaigns",
     titleLine1: "A Charity That's Given... A Reward",
     titleLine2: "That Never Ends",
     description:
-      "A directory bringing together the community's donation campaigns from trusted official platforms — taking you straight through to complete your donation, an ongoing charity for those who've gone before us.",
+      "A directory bringing together livestream donation campaigns from trusted official platforms — taking you straight through to complete your donation, an ongoing charity for those who've gone before us.",
     browseCases: "Browse Campaigns",
     completedCases: "Completed Campaigns",
     totalCampaigns: "Total campaigns",
@@ -316,8 +347,8 @@ const en = {
         description: "Making it possible for good to keep giving — by reaching official campaigns and contributing to ongoing charity for those who need it.",
       },
       {
-        title: "Bringing Community Campaigns Together",
-        description: "Gathering the community's official campaigns in one place, making them easier to find, share, and support through their official platforms.",
+        title: "Bringing Livestream Campaigns Together",
+        description: "Gathering official livestream campaigns in one place, making them easier to find, share, and support through their official platforms.",
       },
       {
         title: "Widen Your Intention",
@@ -325,7 +356,7 @@ const en = {
       },
       {
         title: "Reviving the Spirit of Solidarity",
-        description: "Fostering a culture of giving and cooperation within the community — and a reminder that even the simplest contribution can lead to a great reward.",
+        description: "Fostering a culture of giving and cooperation among livestream viewers — and a reminder that even the simplest contribution can lead to a great reward.",
       },
       {
         title: "Prayer Is Charity",
@@ -437,16 +468,29 @@ const en = {
     campaignForm: {
       heading: "Request to Add a Campaign",
       subheading: "Please share the following details with us.",
-      name: { label: "Name", helper: "Your name, as the person connected to the beneficiary.", placeholder: "e.g. Turki" },
+      // Both example values are deliberately the same person in either
+      // language — the Arabic side's "محمد" / "Dev27" pair (see the `ar`
+      // block above), not a second, different example — so switching the
+      // language only changes the wording around them, never who the
+      // example is. These are placeholders only; no real name, username or
+      // account is involved.
+      name: { label: "Name", helper: "Your name, as the person connected to the beneficiary.", placeholder: "e.g. Mohammed" },
       username: {
         label: "Username",
         helper: "The username you're known by within the Buthooth community.",
-        placeholder: "e.g. 1TURKI",
+        placeholder: "e.g. Dev27",
       },
       relationship: {
         label: "Relationship",
         helper: "Describe your relationship to the beneficiary (e.g. a relative or family member).",
         placeholder: "e.g. Relative of the beneficiary",
+      },
+      memorial: {
+        label: "Is this on behalf of a deceased person?",
+        helper: "Choose this if the campaign is a charity on behalf of someone who has passed away.",
+        none: "No, not on behalf of a deceased person",
+        male: "Yes, a deceased man (may God have mercy on him)",
+        female: "Yes, a deceased woman (may God have mercy on her)",
       },
       campaignUrl: {
         label: "Campaign Link",
@@ -485,6 +529,19 @@ const en = {
       submit: "Send",
       submitting: "Sending...",
       submittedNotice: "Your message was received successfully — we'll get back to you if needed.",
+    },
+    success: {
+      requestTitle: "Your request was received successfully",
+      messageTitle: "Your message was received successfully",
+      condolenceMale:
+        "May Allah grant you solace, have mercy on your departed, and place this charity in his record of good deeds.",
+      condolenceFemale:
+        "May Allah grant you solace, have mercy on your departed, and place this charity in her record of good deeds.",
+      notesPreviewLabel: "Your notes",
+      messagePreviewLabel: "Your message",
+      home: "Back to the homepage",
+      anotherRequest: "Send another request",
+      anotherMessage: "Send another message",
     },
   },
   campaignDetail: {

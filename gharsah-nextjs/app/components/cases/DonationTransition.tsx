@@ -50,7 +50,7 @@ import { track } from "../../lib/analytics/track";
  *
  * Colors: one gradient, sampled the same way from base to tip — soft green
  * at the roots, softening through turquoise at mid-height, into a subtle
- * blue-leaning teal (#0c787e) near the crown. Every stroke/fill below
+ * blue-leaning teal (#207681, Dusk Indigo) near the crown. Every stroke/fill below
  * reads off this single gradient, never a hardcoded color, so the stem,
  * every branch/twig, and every leaf shift together as one continuous,
  * natural transition.
@@ -104,7 +104,7 @@ function PlantGrowthVisual() {
           <linearGradient id="donation-plant-gradient" x1="70" y1="290" x2="70" y2="44" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stopColor="var(--primary-dark)" />
             <stop offset="55%" stopColor="var(--turquoise-soft)" />
-            <stop offset="100%" stopColor="#0c787e" />
+            <stop offset="100%" stopColor="#207681" />
           </linearGradient>
         </defs>
 

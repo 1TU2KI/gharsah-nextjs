@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import GharsahLoader from "./GharsahLoader";
 import GharsahLoaderDots from "./GharsahLoaderDots";
+import MintTonicBackground from "@/app/components/decor/MintTonicBackground";
 
 // A short hold so the loader never flashes away on the very next tick, even
 // when the page is already `document.readyState === "complete"` by the time
@@ -32,6 +34,8 @@ const MIN_VISIBLE_MS = 400;
 export default function InitialLoadOverlay() {
   const [visible, setVisible] = useState(true);
   const [mounted, setMounted] = useState(true);
+  // Same per-route choice as AmbientBackground, so the fade stays seamless.
+  const slatVariant = usePathname() === "/cases/completed" ? "petrol" : "mint";
 
   useEffect(() => {
     let removeTimeout: ReturnType<typeof setTimeout>;
@@ -85,8 +89,17 @@ export default function InitialLoadOverlay() {
         visible ? "opacity-100" : "pointer-events-none opacity-0"
       }`}
     >
-      <GharsahLoader size={112} />
-      <GharsahLoaderDots />
+      {/* Light Mode: the same Mint Tonic canvas the page background draws
+          (wall-clock-synced, so this fade reveals the identical frame
+          underneath). Hidden in Dark Mode via globals.css, where the
+          `.gharsah-atmosphere-bg` recipe above still applies unchanged. */}
+      <MintTonicBackground variant={slatVariant} className="absolute inset-0 h-full w-full" />
+      <div className="relative">
+        <GharsahLoader size={112} />
+      </div>
+      <div className="relative">
+        <GharsahLoaderDots />
+      </div>
     </div>
   );
 }

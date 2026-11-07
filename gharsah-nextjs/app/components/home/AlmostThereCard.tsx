@@ -90,7 +90,7 @@ export default function AlmostThereCard({ campaign, rank }: { campaign: Campaign
 
   return (
     <article
-      className={`relative flex h-full w-full flex-col rounded-2xl ${borderClass} bg-background/95 ${glowClass} p-5 backdrop-blur-sm transition-all duration-200 hover:-translate-y-2 has-[a:active]:translate-y-0 md:flex-1 md:basis-0 ${orderClass} ${prominenceClass}`}
+      className={`glass-surface glass-clear relative flex h-full w-full flex-col rounded-2xl ${borderClass} bg-background/95 ${glowClass} p-5 backdrop-blur-sm transition-all duration-200 hover:-translate-y-2 has-[a:active]:translate-y-0 md:flex-1 md:basis-0 ${orderClass} ${prominenceClass}`}
     >
       <Link
         href={`/cases/active/${campaign.slug}`}

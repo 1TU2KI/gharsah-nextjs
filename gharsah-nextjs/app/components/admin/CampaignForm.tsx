@@ -99,8 +99,9 @@ export default function CampaignForm({
   const [pendingFetchedDescription, setPendingFetchedDescription] = useState<string | null>(null);
 
   // The controlled list only has four values — if this campaign's stored
-  // phrase predates it (e.g. "رحمها الله", used by most of the original
-  // seed data) and doesn't match any of them, it has to appear as an extra
+  // phrase doesn't match any of them (e.g. the "ي"-prefixed "يرحمها الله",
+  // which the list itself offered before the wording was corrected to the
+  // direct form), it has to appear as an extra
   // selectable option so it stays selected by default. Otherwise the
   // <select> would silently fall back to its first option ("بدون صيغة
   // ترحم") and save that over the real value the moment the admin saves

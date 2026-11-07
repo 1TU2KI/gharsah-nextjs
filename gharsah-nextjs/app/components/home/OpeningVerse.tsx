@@ -42,9 +42,13 @@ export default function OpeningVerse({
 
   return (
     <div>
+      {/* `verse-glass` (globals.css): bright white letters with a subtle
+          silvery light reflection clipped inside the glyphs; solid white
+          fallback. Deliberately no text-* role class, so the adaptive
+          `.on-slat-bg` color never applies to the verse itself. */}
       <p
         dir="rtl"
-        className={`${amiri.className} mx-auto max-w-4xl text-center text-2xl leading-loose text-foreground sm:text-3xl sm:leading-loose md:text-4xl md:leading-loose`}
+        className={`${amiri.className} verse-glass mx-auto max-w-4xl text-center text-2xl leading-loose sm:text-3xl sm:leading-loose md:text-4xl md:leading-loose`}
       >
         {verse}
       </p>

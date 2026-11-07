@@ -18,7 +18,7 @@ export default function LatestNewsSectionClient({ items }: { items: PublicNewsIt
     <section className="relative overflow-x-hidden py-20">
       <div className="relative z-10 mx-auto max-w-6xl px-6">
         <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-          <div className="text-center sm:text-start">
+          <div className="on-slat-bg text-center sm:text-start">
             <h2 className="text-3xl font-extrabold text-foreground sm:text-4xl">{t.news.homeHeading}</h2>
             <p className="mt-2 max-w-xl text-muted">{t.news.homeDescription}</p>
           </div>

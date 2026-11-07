@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { ComponentType } from "react";
-import { CheckBadgeIcon, ExternalLinkIcon, LeafIcon, WarningIcon, WrenchIcon, CodeIcon, MegaphoneIcon } from "@/app/components/home/icons";
+import { CheckBadgeIcon, EyeIcon, LeafIcon, WarningIcon, WrenchIcon, CodeIcon, MegaphoneIcon } from "@/app/components/home/icons";
 import { NEWS_TYPE_META } from "@/app/lib/news/presentation";
 import { useLanguage } from "@/app/lib/i18n/LanguageProvider";
 import type { PublicNewsItem } from "@/app/lib/news/data";
@@ -43,7 +43,7 @@ export default function NewsItemCard({ item }: { item: PublicNewsItem }) {
   const body = locale === "en" && item.bodyEn ? item.bodyEn : item.bodyAr;
 
   return (
-    <article className={`relative flex h-full flex-col overflow-hidden rounded-2xl border p-5 backdrop-blur-sm transition-all ${meta.themeClass}`}>
+    <article className={`glass-surface glass-clear relative flex h-full flex-col overflow-hidden rounded-2xl border p-5 backdrop-blur-sm transition-all ${meta.themeClass}`}>
       {/* Large decorative category watermark — centered behind everything
           else (negative z-index, see globals.css), absolutely positioned
           so it never affects card height/spacing, and purely decorative
@@ -79,12 +79,12 @@ export default function NewsItemCard({ item }: { item: PublicNewsItem }) {
             className="mt-3 inline-flex items-center gap-1.5 self-start text-sm font-semibold text-primary-dark transition-colors hover:underline"
           >
             {t.news.viewCampaign}
-            <ExternalLinkIcon className="h-3.5 w-3.5" />
+            <EyeIcon className="h-3.5 w-3.5" />
           </a>
         ) : (
           <Link href={item.link} className="mt-3 inline-flex items-center gap-1.5 self-start text-sm font-semibold text-primary-dark transition-colors hover:underline">
             {t.news.viewCampaign}
-            <ExternalLinkIcon className="h-3.5 w-3.5" />
+            <EyeIcon className="h-3.5 w-3.5" />
           </Link>
         ))}
     </article>

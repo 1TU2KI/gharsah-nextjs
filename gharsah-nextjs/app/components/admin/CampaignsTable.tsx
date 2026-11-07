@@ -10,10 +10,10 @@ import { moveCampaignAction, reorderCampaignsAction, quickChangeStatusAction } f
 type SortBy = "order" | "newest" | "title";
 
 const STATUS_LABEL: Record<string, string> = { active: "نشطة", completed: "مكتملة", closed: "مغلقة" };
-/** Exact same solid badge colors as the public campaign card's status badge (`badgeClass` in CampaignCard.tsx) — active = primary-dark, completed = the site's dedicated completed-teal #0C787E — so the admin badge and the public one read as the same visual language, not a lookalike. */
+/** Exact same solid badge colors as the public campaign card's status badge (`badgeClass` in CampaignCard.tsx) — active = primary-dark, completed = the site's dedicated completed-teal `--completed` — so the admin badge and the public one read as the same visual language, not a lookalike. */
 const STATUS_CLASS: Record<string, string> = {
   active: "bg-primary-dark text-white",
-  completed: "bg-[#0C787E] text-white",
+  completed: "bg-completed text-white",
   closed: "bg-border text-muted",
 };
 

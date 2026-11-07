@@ -3,34 +3,43 @@
 :root {
   color-scheme: light;
   --background: #ffffff;
-  --foreground: #123524;
+  /* 2026 palette (Deep Moss / Garden Moss / Inked Willow / Willow Mist /
+     Moss Silk) — Light Mode only; Dark Mode's own values below unchanged.
+     Old → new: #16A34A → Deep Moss #247465 (primary/accent, links,
+     buttons), #22C55E → Garden Moss #55B895 (accents/highlights only —
+     2.4:1 on white, so never body text), #15803D → Inked Willow #173E36
+     (button hover), #123524 → Inked Willow (dark text), #EEF6EA → Willow
+     Mist #E5F1CD (pale surfaces), Moss Silk #ACDDB5 for soft borders,
+     subtle fills and selected-state tints. White stays for neutral
+     surfaces and button text (5.6:1 on Deep Moss, 11.8:1 on Inked Willow). */
+  --foreground: #173e36;
   /* Ambient/large-surface tints — deliberately shifted a touch warmer and
      softer than plain mint (moss/sage rather than bright Tailwind green) for
      a more organic, less "corporate" atmosphere. These never carry text
      directly against a contrasting foreground, so shifting them carries no
      accessibility risk. */
-  --wash: #eef6ea;
-  --wash-completed: #e9f6f5;
-  --primary-50: #eef6ea;
-  --primary-100: #dceacb;
-  --primary-200: #c3dcae;
+  --wash: #e5f1cd;
+  --wash-completed: #edf4d9;
+  --primary-50: #e5f1cd;
+  --primary-100: #acddb5;
+  --primary-200: #acddb5;
   --primary-300: #a3c98c;
-  --primary-light: #22c55e;
-  --primary: #16a34a;
-  --primary-dark: #15803d;
+  --primary-light: #55b895;
+  --primary: #247465;
+  --primary-dark: #173e36;
   --primary-darker: #14532d;
   --muted: #5b6b63;
-  --border: #e3ebdd;
+  --border: #acddb5;
   --sunlight: #fffbea;
-  --accent: #16a34a;
-  --accent-strong: #15803d;
+  --accent: #247465;
+  --accent-strong: #173e36;
   --on-accent: #ffffff;
   /* Decorative-only accents (never used for text/background contrast pairs)
      for the natural/organic atmosphere — moss, earthy, and soft turquoise
      notes used in blurred background blobs and subtle surface textures. */
   --moss: #6e8b4f;
   --earth: #7a6a4f;
-  --turquoise-soft: #7fc4be;
+  --turquoise-soft: #53adae;
   /* Shared layered "premium" card depth — a tight contact shadow plus a
      broad soft ambient shadow, instead of a single flat shadow. Status-
      colored cards (campaign cards) build their own tinted version of this
@@ -83,7 +92,7 @@
      during the 2026 global-background rebuild, see body/.gharsah-
      atmosphere-bg below for why); the other 6 tokens went with it as dead
      weight — this is the one survivor still actually referenced. */
-  --blob-b: rgba(127, 196, 190, 0.4);
+  --blob-b: rgba(83, 173, 174, 0.4);
   /* AmbientBackground tokens: 3 large soft drifting orbs + 2 light ribbons,
      every one kept inside the green/turquoise/mint family (2026 pass — the
      previous --ambient-orb-c was a steel-blue outlier, rgba(51,92,122,…),
@@ -100,6 +109,69 @@
   --ambient-orb-c: rgba(60, 168, 120, 0.26);
   --ambient-ribbon-a: rgba(34, 160, 90, 0.35);
   --ambient-ribbon-b: rgba(20, 150, 140, 0.32);
+  /* "Liquid Glass" sheen highlight (approved via /design-preview) — the
+     color of the thin streak `.liquid-sheen` sweeps across the public
+     header and primary action buttons (see that class, near the bottom of
+     this file). A standalone token, deliberately NOT reusing --primary/
+     --accent: those flip to Champagne under data-theme="dark" below (the
+     2026 black/Champagne rebuild), which would make this white-glass
+     highlight silently change meaning there too. White reads correctly on
+     both the green (light) and dark surfaces it crosses, so one token,
+     just dimmer in dark mode (see below) so it doesn't glow too hot
+     against dark backgrounds — never a brand-color decision, purely how
+     bright a highlight should be against what's behind it. */
+  --liquid-sheen: rgba(255, 255, 255, 0.4);
+  /* Shared Liquid Glass card/panel surface (`.glass-surface`, see below):
+     tint triplets per section identity, the default fill opacity, and the
+     thin white edge reflection. */
+  --glass-rgb: 246, 250, 238;
+  --glass-rgb-completed: 240, 248, 246;
+  --glass-rgb-selected: 229, 241, 205;
+  --glass-rgb-sun: 255, 251, 234;
+  --glass-alpha: 0.85;
+  --glass-edge: rgba(255, 255, 255, 0.75);
+  --glass-edge-low: rgba(255, 255, 255, 0.16);
+  /* `.section-edge-glow`: RGB of the section's own border line (--border)
+     and, for borderless sections, of their text (--on-accent). */
+  --border-rgb: 172, 221, 181;
+  --on-accent-rgb: 255, 255, 255;
+  /* RGB triplets for the hardcoded highlight glows/tints below (almost-
+     there cards, overlay mode selector, news "added" category) and the
+     donation-box icon slot. Light Mode = new palette (Garden Moss / Inked
+     Willow / Deep Moss); Dark Mode re-declares the exact previous values
+     so its look is unchanged. */
+  --accent-glow-rgb: 85, 184, 149;
+  --accent-ring-rgb: 23, 62, 54;
+  --icon-slot: #247465;
+  /* Completed Campaigns teal palette (2026: Dusk Indigo / River Indigo /
+     Midnight Lapis / Young Willow / Willow Mist) — replaces the old
+     hardcoded #0C787E family (#0A666B hover, #308C91 gradient end,
+     #DBEBEC / #E7F2F2 tints, #7FC4BE soft teal). Split by WHAT THE TEXT
+     SITS ON, because one teal can't serve every surface in both themes:
+       --completed          fills (badges, buttons, footer, borders) and
+                            text on the pale pill surfaces (4.7:1 on Willow Mist)
+       --completed-hover    button hover fill (white text 11.6:1)
+       --completed-strong   dark teal text on the pale tints (7.6:1 on Young Willow)
+       --completed-link     links on solid page surfaces (5.3:1 on white)
+       --completed-text     teal text on glass over the animated background
+                            (Midnight Lapis — Dusk was only ~4.3:1 on a card
+                            over the darkest slats, ~3.1:1 on the header)
+       --completed-soft / -tint / -surface: River Indigo (gradient end,
+                            decorative), Young Willow (subtle fills, selected
+                            tints, progress track), Willow Mist (lightest
+                            surfaces). Pale surfaces stay pale in Dark Mode
+                            too (same structure as before), so only the two
+                            text-on-dark tokens get Dark Mode values below. */
+  --completed: #207681;
+  --completed-hover: #123e49;
+  --completed-strong: #123e49;
+  --completed-link: #207681;
+  --completed-text: #123e49;
+  --completed-soft: #53adae;
+  --completed-tint: #addbcc;
+  --completed-surface: #edf4d9;
+  --completed-rgb: 32, 118, 129;
+  --teal-soft-rgb: 83, 173, 174;
 }
 
 :root[data-theme="dark"] {
@@ -249,6 +321,80 @@
   --ambient-orb-c: rgba(41, 53, 31, 0.18);
   --ambient-ribbon-a: rgba(24, 74, 50, 0.22);
   --ambient-ribbon-b: rgba(24, 64, 62, 0.2);
+  /* Dimmer than Light Mode's own value — see this token's own comment
+     above for why it's independent of --primary/--accent either way. */
+  --liquid-sheen: rgba(255, 255, 255, 0.16);
+  --glass-rgb: 43, 43, 43;
+  --glass-rgb-completed: 42, 47, 48;
+  --glass-rgb-selected: 34, 30, 23;
+  --glass-rgb-sun: 30, 26, 19;
+  --glass-edge: rgba(255, 248, 234, 0.16);
+  --glass-edge-low: rgba(255, 248, 234, 0.04);
+  --border-rgb: 61, 55, 44;
+  --on-accent-rgb: 255, 248, 234;
+  --accent-glow-rgb: 34, 197, 94;
+  --accent-ring-rgb: 21, 128, 61;
+  --icon-slot: #16a34a;
+  /* Text that sits on DARK surfaces (cards, header, page) in Dark Mode:
+     River Indigo 5.4:1 / Young Willow 9.3:1 on #2b2b2b (the old #0C787E
+     there was 2.7:1). Fills and pale surfaces are shared with Light Mode. */
+  --completed-link: #53adae;
+  --completed-text: #addbcc;
+}
+
+/* "Saffron ink" Dark Mode — PUBLIC SITE ONLY (`:has()` = pages that mount
+   the public background; the admin area and OBS outputs keep the block
+   above). Every color sampled from Saffron ink.mp4's ramp: deep navy
+   (#262a43) surfaces, mauve (#483e58 → #876272) borders and fills, saffron
+   (#e9a667) and gold-cream (#f2ca8f) as the bright accents, a deep saffron
+   (#9b5a3a, ivory text 4.9:1) for filled buttons, cream-ivory text. Same
+   hierarchy as before: dark surfaces, bright tones only for accents. The
+   completed teal (--completed-*) is untouched so status colors stay
+   distinguishable. */
+:root[data-theme="dark"]:has(.ambient-background-layer) {
+  --background: #262a43;
+  --foreground: #fff4df;
+  --wash: #1c1f33;
+  --wash-completed: #1a2233;
+  --border: #4a3f5a;
+  --muted: #b8a7b3;
+  --primary-50: #312d48;
+  --primary-100: #3c3553;
+  --primary-200: #584863;
+  --primary-300: #876272;
+  --primary-light: #f2ca8f;
+  --primary: #e9a667;
+  --primary-dark: #9b5a3a;
+  --primary-darker: #6f3f2a;
+  --sunlight: #2c2538;
+  --accent: #9b5a3a;
+  --accent-strong: #7d4630;
+  --on-accent: #fff4df;
+  --turquoise-soft: #9c6d74;
+  --card-shadow: 0 1px 2px rgba(10, 11, 22, 0.3), 0 16px 32px -12px rgba(10, 11, 22, 0.5), inset 0 1px 0 rgba(246, 217, 160, 0.05);
+  --card-shadow-hover: 0 2px 4px rgba(10, 11, 22, 0.35), 0 22px 40px -12px rgba(10, 11, 22, 0.6), inset 0 1px 0 rgba(246, 217, 160, 0.06);
+  --tier1-highlight: rgba(246, 217, 160, 0.3);
+  --tier1-shadow: 0 20px 50px -14px rgba(10, 11, 22, 0.7), 0 1px 0 rgba(233, 166, 103, 0.22);
+  --tier1-edge-fade: rgba(10, 11, 22, 0.55);
+  --tier2-shadow: 0 8px 20px rgba(10, 11, 22, 0.45), 0 42px 84px -20px rgba(10, 11, 22, 0.7), inset 0 1px 0 rgba(246, 217, 160, 0.1);
+  --liquid-sheen: rgba(246, 217, 160, 0.18);
+  --glass-rgb: 34, 37, 60;
+  --glass-rgb-completed: 30, 44, 58;
+  --glass-rgb-selected: 49, 45, 72;
+  --glass-rgb-sun: 46, 38, 50;
+  --glass-edge: rgba(246, 217, 160, 0.22);
+  --glass-edge-low: rgba(246, 217, 160, 0.05);
+  --border-rgb: 74, 63, 90;
+  --on-accent-rgb: 255, 244, 223;
+}
+
+/* Saffron ink Dark Mode: --primary-dark / --accent-strong are deep saffron
+   button fills; as TEXT they'd sit on the dark navy/mauve fills (hero pill,
+   chips, links) at ~2:1, so text in those roles takes the bright saffron
+   accent instead. (Text on the animated background keeps its adaptive
+   colors — those `.on-slat-bg` rules are more specific.) */
+:root[data-theme="dark"]:has(.ambient-background-layer) :is(.text-primary-dark, .text-accent-strong) {
+  color: var(--primary);
 }
 
 /* Footer + Goals band (Footer.tsx / Goals.tsx) both use a flat, fully
@@ -266,13 +412,13 @@
    against Charcoal than it did against bronze, so no text-color change is
    needed alongside this. Selectors are scoped narrowly: `#goals` (always
    bg-accent) and `footer[class*="bg-accent"]` (the DEFAULT footer variant
-   only — the Completed-page footer swaps to the separate teal `#0C787E`
+   only — the Completed-page footer swaps to the separate teal `--completed`
    identity instead, which isn't part of this brown/gold concern and stays
    untouched) — never a bare `bg-accent` selector, which would also catch
    every accent button site-wide. */
 :root[data-theme="dark"] #goals,
 :root[data-theme="dark"] footer[class*="bg-accent"] {
-  background-color: #2b2b2b;
+  background-color: #1f2237;
 }
 
 @theme inline {
@@ -280,6 +426,14 @@
   --color-foreground: var(--foreground);
   --color-wash: var(--wash);
   --color-wash-completed: var(--wash-completed);
+  --color-completed: var(--completed);
+  --color-completed-hover: var(--completed-hover);
+  --color-completed-strong: var(--completed-strong);
+  --color-completed-link: var(--completed-link);
+  --color-completed-text: var(--completed-text);
+  --color-completed-soft: var(--completed-soft);
+  --color-completed-tint: var(--completed-tint);
+  --color-completed-surface: var(--completed-surface);
   --color-primary-50: var(--primary-50);
   --color-primary-100: var(--primary-100);
   --color-primary-200: var(--primary-200);
@@ -345,6 +499,164 @@
 body {
   color: var(--foreground);
   background-color: var(--flow-1);
+}
+
+/* Light Mode background = the Mint Tonic slats ONLY (MintTonicBackground.tsx,
+   rebuilt from the reference video). Everything else that used to paint the
+   Light Mode atmosphere is switched off here: the 3-gradient
+   `.gharsah-atmosphere-bg` base, AmbientBackground's orbs/ribbons/particle
+   canvas, the body grain overlay, and HeroBackground's vignette/glows/blobs.
+   Dark Mode (public site) now uses the same slat canvas with the "saffron"
+   preset (Saffron ink.mp4) and switches off the same old layers; the
+   admin area and OBS outputs never mount the canvas, so `:has()` keeps
+   them on their previous Dark Mode background. */
+:root:not([data-theme="dark"]) body {
+  background-color: #163e35;
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer) body {
+  background-color: #262a43;
+}
+
+:root:not([data-theme="dark"]) .ambient-background-layer > :not(.mint-tonic-bg),
+:root:not([data-theme="dark"]) .hero-decor,
+:root:not([data-theme="dark"]) body::before,
+:root[data-theme="dark"] .ambient-background-layer > :not(.mint-tonic-bg),
+:root[data-theme="dark"] .hero-decor,
+:root[data-theme="dark"]:has(.ambient-background-layer) body::before {
+  display: none;
+}
+
+/* Text that sits DIRECTLY on the animated slat background (no card,
+   glass or band behind it), Light Mode only — approved on the Completed
+   Campaigns page first, now shared by every public page via `.on-slat-bg`.
+   Put the class on the affected text element itself (or on a wrapper that
+   holds ONLY such text, e.g. around OpeningVerse) — never on a container
+   that also holds its own surfaces (pills, selected tabs, filled buttons),
+   since the color overrides below would leak into them.
+
+   Why: the background is fixed while the page scrolls, so text passes
+   through the slats' dark top band (Mint #163e35 / Petrol #113d48) — where
+   the normal Inked Willow/gray text is ~1:1 — and, lower in the viewport
+   or on short screens, the light end of the ramp; the slanted, moving
+   slats mean one line can sit over both at once. No single fixed color
+   clears both (the best possible is ~3.2:1), and backings (outline, halo,
+   blurred cloud) were rejected, so the text color ADAPTS: each role has a
+   solid light color for dark stripes and a solid dark color for light
+   stripes, mixed by `--slat-t` (0 = light text, 1 = dark text).
+   MintTonicBackground (`adaptText`, page background only) computes the
+   exact background shade behind every text element from the same slat
+   geometry it paints, ~10x/s and on scroll, and sets --slat-t per element,
+   with a margin so it doesn't flip back and forth at the boundary; the
+   color crossfades over 0.45s. Before hydration / without JS --slat-t is
+   0, i.e. the original light colors. No shadow, outline or box behind the
+   text, so the animated background stays fully visible. Unlayered, so
+   these beat the Tailwind text-* and hover:text-* utilities they override.
+     light   / dark      role
+     #ffffff / #173e36   .text-foreground(/90)  (white / Inked Willow)
+     #e5f1cd / #173e36   .text-muted(/70)       (Willow Mist / Inked Willow)
+     #e5f1cd / #173e36   .text-primary-dark     (links, semibold)
+     #edf4d9 / #123e49   .text-completed-link   (Midnight Lapis)
+   Both sides are the darkest/lightest palette tones on purpose: a lighter
+   dark color (Deep Moss, gray) or a mid light one (Moss Silk) only passes
+   over the very ends of the ramp, leaving most of it unreadable either
+   way. Hierarchy comes from size and weight. */
+:root:not([data-theme="dark"])
+  :is(.on-slat-bg, .on-slat-bg *):is(
+    .text-foreground,
+    .text-foreground\/90,
+    .text-muted,
+    .text-muted\/70,
+    .text-primary-dark,
+    .text-completed-link
+  ) {
+  --slat-mix: calc(var(--slat-t, 0) * 100%);
+  transition:
+    color 0.45s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+:root:not([data-theme="dark"]) :is(.on-slat-bg, .on-slat-bg *):is(.text-foreground, .text-foreground\/90) {
+  color: color-mix(in srgb, #ffffff, #173e36 var(--slat-mix));
+}
+
+:root:not([data-theme="dark"]) :is(.on-slat-bg, .on-slat-bg *):is(.text-muted, .text-muted\/70, .text-primary-dark) {
+  color: color-mix(in srgb, #e5f1cd, #173e36 var(--slat-mix));
+}
+
+:root:not([data-theme="dark"]) :is(.on-slat-bg, .on-slat-bg *):is(.text-completed-link) {
+  color: color-mix(in srgb, #edf4d9, #123e49 var(--slat-mix));
+}
+
+/* Hover feedback the overrides above would otherwise swallow (unselected
+   overlay tabs used hover:text-foreground). */
+:root:not([data-theme="dark"]) :is(a, button).on-slat-bg:hover {
+  color: color-mix(in srgb, #ffffff, #173e36 var(--slat-mix));
+}
+
+/* Dark Mode (Saffron ink background, public site): the same adaptive
+   mechanism — the dark navy top band takes the light colors, the cream
+   end of the ramp the deep navy one.
+     light   / dark      role
+     #fff4df / #1f2237   .text-foreground(/90)  (cream-ivory / deep navy)
+     #f4d79d / #1f2237   .text-muted(/70), .text-primary-dark (pale cream)
+     #addbcc / #1f2237   .text-completed-link   (Young Willow) */
+:root[data-theme="dark"]:has(.ambient-background-layer)
+  :is(.on-slat-bg, .on-slat-bg *):is(
+    .text-foreground,
+    .text-foreground\/90,
+    .text-muted,
+    .text-muted\/70,
+    .text-primary-dark,
+    .text-completed-link
+  ) {
+  --slat-mix: calc(var(--slat-t, 0) * 100%);
+  transition:
+    color 0.45s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer) :is(.on-slat-bg, .on-slat-bg *):is(.text-foreground, .text-foreground\/90) {
+  color: color-mix(in srgb, #fff4df, #1f2237 var(--slat-mix));
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer) :is(.on-slat-bg, .on-slat-bg *):is(.text-muted, .text-muted\/70, .text-primary-dark) {
+  color: color-mix(in srgb, #f4d79d, #1f2237 var(--slat-mix));
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer) :is(.on-slat-bg, .on-slat-bg *):is(.text-completed-link) {
+  color: color-mix(in srgb, #addbcc, #1f2237 var(--slat-mix));
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer) :is(a, button).on-slat-bg:hover {
+  color: color-mix(in srgb, #fff4df, #1f2237 var(--slat-mix));
+}
+
+/* Pre-hydration fallback gradient of the slat canvas, per theme (set as
+   custom properties by MintTonicBackground). */
+.mint-tonic-bg {
+  background: var(--slat-fb-light);
+}
+
+:root[data-theme="dark"] .mint-tonic-bg {
+  background: var(--slat-fb-dark);
+}
+
+/* Campaign cards (CampaignCard.tsx), Light Mode: the cards are 85% glass,
+   and when the darkest slats pass behind one the gray --muted text
+   (#5b6b63) drops to 4.3:1. A slightly darker gray keeps the same
+   hierarchy at 4.9:1 (6.5:1 on plain white). Dark Mode untouched. */
+:root:not([data-theme="dark"]) .campaign-card .text-muted,
+:root:not([data-theme="dark"]):has(.ambient-background-layer) .glass-surface .text-muted {
+  color: #52625a;
+}
+
+/* Same page/mode: the empty-state panel's 70% glass over dark petrol only
+   gives the gray message 3.2:1 — use Inked Willow (6.7:1) instead. */
+:root:not([data-theme="dark"]) .completed-empty .text-muted {
+  color: var(--foreground);
 }
 
 /* GPU-compositor-layer promotion for the fixed global particle/orb layer
@@ -456,10 +768,449 @@ html {
   background: linear-gradient(to bottom, var(--tier1-edge-fade), transparent);
 }
 
+/* Soft outer glow along a rectangular section's edges (public header,
+   "أهداف غرسة", footer): a tight halo plus a wider fade, in the color of
+   the section's own border line (--border by default) or, for a
+   borderless section, its text color (`.section-edge-glow--text`). A box-
+   shadow paints only OUTSIDE the box, so it never washes over the
+   section's own text, and it changes no size or spacing; on full-width
+   sections only the top/bottom edges are on screen. The header keeps its
+   existing .header-material highlight + shadow, with the glow added on. */
+.section-edge-glow {
+  --edge-glow-rgb: var(--border-rgb);
+  --edge-glow: 0 0 4px 0 rgba(var(--edge-glow-rgb), 0.55), 0 0 22px 2px rgba(var(--edge-glow-rgb), 0.3);
+  box-shadow: var(--edge-glow);
+}
+
+.section-edge-glow--text {
+  --edge-glow-rgb: var(--on-accent-rgb);
+  --edge-glow: 0 0 4px 0 rgba(var(--edge-glow-rgb), 0.22), 0 0 22px 2px rgba(var(--edge-glow-rgb), 0.12);
+}
+
+.header-material.section-edge-glow {
+  box-shadow: inset 0 1.5px 0 var(--tier1-highlight), var(--tier1-shadow), var(--edge-glow);
+}
+
 /* Tier 2 material — campaign detail card, form panels: deeper than a grid
    card (Tier 3's --card-shadow) but not as heavy as the header. */
 .tier2-elevated {
   box-shadow: var(--tier2-shadow);
+}
+
+/* "Liquid Glass" sheen — approved via /design-preview, then narrowed per
+   follow-up feedback ("noticeably thinner and more subtle... a fine edge
+   highlight," not the preview's original wide/strong band): a slow (14s),
+   thin (an 8%-wide stripe of the gradient, not 30%) streak of light drawn
+   via `background-position` animation on a `::before` pseudo-element —
+   deliberately NOT the preview's `transform: translateX` technique, which
+   needed `overflow: hidden` on the host to clip it. A background-image is
+   always clipped to its own element's box with no such rule needed, so
+   applying this never requires adding `overflow: hidden` to whatever it's
+   put on — important here because the real public header has an
+   absolutely-positioned child (RandomCaseButton's tooltip, in its "header"
+   variant) that deliberately pops OUTSIDE the header's own box; clipping
+   that would break it.
+   Deliberately does NOT set `position` on the host element itself (only
+   the pseudo-element needs `position: absolute`, which uses whatever
+   positioning context the host already has — `position: sticky` on the
+   real header already qualifies). Forcing `position: relative` here the
+   way the design-preview's version did would repeat the exact bug
+   `.header-material`'s own comment above already documents and fixes:
+   this is a plain, unlayered class, so it would always beat the header's
+   `sticky` Tailwind utility regardless of source order, silently breaking
+   the sticky header the same way `.header-material` once did. Add
+   `relative` as an ordinary Tailwind utility at each call site that
+   doesn't already have its own positioning (the two donate buttons,
+   Hero's primary CTA) instead — CampaignCard's own donate button already
+   has `relative`.
+   Scoped to exactly the elements asked for (the real public header +
+   primary action buttons) — never applied to `.header-material` itself
+   (which would leak this into the admin header and the mobile nav panel
+   too, both out of scope) or to any card surface (cards get the plain
+   frosted-glass surface treatment only, no sheen — see CampaignCard.tsx). */
+.liquid-sheen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(115deg, transparent 46%, var(--liquid-sheen) 50%, transparent 54%);
+  background-size: 280% 280%;
+  background-position: 0% 50%;
+  animation: liquid-sheen-sweep 14s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes liquid-sheen-sweep {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liquid-sheen::before {
+    animation: none;
+    background-position: 50% 50%;
+  }
+}
+
+/* Shared Liquid Glass card/panel surface (the /design-preview "White
+   Glass" recipe): a translucent tinted fill, blur(18px) saturate(160%),
+   and a thin white edge reflection. Put it on the ONE visible surface of a
+   card or panel, never on a nested element too.
+   - Tint: `--glass-rgb` by default (green-tinted), or a modifier below.
+   - Opacity: `--glass-alpha` (0.85); a component may set its own.
+   - The reflection is a 1px masked ring on `::after`, at z-index -1 inside
+     the card's own stacking context (`isolation`), so it sits above the
+     fill but under content, and inside any border (category/rank borders
+     stay untouched). Hosts must be positioned (`relative` at call site, as
+     with `.liquid-sheen`, never forced here).
+   - Scoped to pages with the public animated background, so the admin
+     panel's CampaignCard preview and the OBS outputs keep their existing
+     Tailwind surface. The call sites keep their old `bg-background/xx
+     backdrop-blur-*` utilities as that fallback. */
+:root:has(.ambient-background-layer) .glass-surface {
+  isolation: isolate;
+  background-color: rgba(var(--glass-rgb), var(--glass-alpha));
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
+}
+
+:root:has(.ambient-background-layer) .glass-surface:not(.header-material)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(
+    155deg,
+    var(--glass-edge) 0%,
+    var(--glass-edge-low) 32%,
+    transparent 58%,
+    var(--glass-edge-low) 100%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  pointer-events: none;
+}
+
+/* See-through Liquid Glass (`.glass-clear`, with .glass-surface): the
+   approved campaign-card recipe, shared by every public card and boxed
+   panel — a much lighter fill (56%; the #1 اقتربت card 66%, set on
+   .almost-there-card-rank1, so it still stands out) and a gentler 8px
+   blur, so the moving colors and softened stripes read through. Unlayered,
+   so it also replaces any per-panel Tailwind `[--glass-alpha:…]`. */
+.glass-clear {
+  --glass-alpha: 0.56;
+}
+
+:root:has(.ambient-background-layer) .glass-surface.glass-clear {
+  -webkit-backdrop-filter: blur(8px) saturate(150%);
+  backdrop-filter: blur(8px) saturate(150%);
+}
+
+/* Blur once: anything blurred INSIDE a glass panel (e.g. the OBS card
+   previews on /overlay) skips its own backdrop blur — the panel already
+   provides it. Public pages only; the real OBS outputs have no
+   .glass-surface ancestor and stay unchanged. */
+:root:has(.ambient-background-layer) .glass-surface :is([class*="backdrop-blur"], .glass-surface) {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* Quran verse (OpeningVerse `.verse-glass`), both themes: Liquid Glass ON
+   the letters themselves, no panel/border/blur behind them. Bright white
+   glyphs with a subtle silvery light reflection clipped inside the letter
+   and diacritic shapes (background-clip: text) — a slow sweep of a pale
+   silver band with a white core, never darker than #cfdbe0, so the verse
+   stays predominantly white and crisp (≥7.9:1 on the darkest slats, 11.8:1
+   where it's white). The page background shows around and between the
+   letters. Solid white without background-clip support, in forced-colors
+   mode, and the band holds still under reduced motion. */
+.verse-glass {
+  color: #ffffff;
+}
+
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .verse-glass {
+    background-image: linear-gradient(
+      115deg,
+      #ffffff 0%,
+      #ffffff 36%,
+      #cfdbe0 44%,
+      #ffffff 50%,
+      #cfdbe0 56%,
+      #ffffff 64%,
+      #ffffff 100%
+    );
+    background-size: 300% 100%;
+    background-position: 100% 0;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: verse-glass-sheen 9s ease-in-out infinite;
+  }
+
+  .verse-glass::selection {
+    -webkit-text-fill-color: #173e36;
+  }
+}
+
+/* About page: the divider above the closing Arabic couplet (same 64×1px
+   line, centered, same spacing as before). Palette gradient brightest in
+   the center, fading to both ends, with a narrow glow in the same family —
+   a drop-shadow, so the glow follows the gradient and the faded ends don't
+   glow. Light: Willow Mist center / Moss Silk / Garden Moss glow. Dark
+   (Saffron ink): gold-cream center / saffron / saffron glow. */
+.quote-divider {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(172, 221, 181, 0.45) 25%,
+    #e5f1cd 50%,
+    rgba(172, 221, 181, 0.45) 75%,
+    transparent
+  );
+  filter: drop-shadow(0 0 3px rgba(85, 184, 149, 0.85));
+}
+
+:root[data-theme="dark"] .quote-divider {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(233, 166, 103, 0.5) 25%,
+    #f2ca8f 50%,
+    rgba(233, 166, 103, 0.5) 75%,
+    transparent
+  );
+  filter: drop-shadow(0 0 3px rgba(233, 166, 103, 0.8));
+}
+
+@keyframes verse-glass-sheen {
+  0%,
+  100% {
+    background-position: 100% 0;
+  }
+  50% {
+    background-position: 0% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .verse-glass {
+    animation: none;
+    background-position: 50% 0;
+  }
+}
+
+@media (forced-colors: active) {
+  .verse-glass {
+    background: none;
+    -webkit-text-fill-color: currentColor;
+  }
+}
+
+/* The public header / shortcut navigation strip (Header.tsx) as ONE glass
+   surface: a slightly translucent bar fill (72%, the header's existing
+   opacity) with the shared tint and blur. Its `::after` is already the
+   header's own bottom-edge fade (.header-material), so the thin white edge
+   reflection is drawn as inset lines instead of the masked ring: bright
+   along the top, faint along the bottom — the same --glass-edge tokens. */
+.glass-surface--bar {
+  /* 80% (was the header's 72%): the inactive links (Inked Willow at 80%)
+     only reached 4.3:1 over the darkest stripes at 72%. */
+  --glass-alpha: 0.8;
+}
+
+/* Light Mode, same bar: the 11px "قيد التطوير" badge (teal-700, 3:1) takes
+   a deeper teal, and the decorative "!" after «عن غرسة» drops its 70%
+   fade (2.2:1 → Deep Moss at full strength, ≥3:1). */
+:root:not([data-theme="dark"]):has(.ambient-background-layer) .glass-surface--bar .text-teal-700 {
+  color: #134e4a;
+}
+
+:root:not([data-theme="dark"]):has(.ambient-background-layer) .glass-surface--bar .text-primary\/70 {
+  color: var(--primary);
+}
+
+/* Dark Mode (Saffron ink): the navy bar needs a denser fill over the cream
+   end of the background (links were 4.3:1 at 80%), and the "!" drops its
+   70% fade there too. */
+:root[data-theme="dark"]:has(.ambient-background-layer) .glass-surface--bar {
+  --glass-alpha: 0.88;
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer) .glass-surface--bar .text-primary\/70 {
+  color: var(--primary);
+}
+
+:root:has(.ambient-background-layer) .header-material.glass-surface.section-edge-glow {
+  box-shadow:
+    inset 0 1px 0 var(--glass-edge),
+    inset 0 -1px 0 var(--glass-edge-low),
+    var(--tier1-shadow),
+    var(--edge-glow);
+}
+
+.glass-surface--completed {
+  --glass-rgb: var(--glass-rgb-completed);
+}
+
+/* Selected option (Contact page): the deeper Willow Mist tint, a little
+   denser than the other see-through panels so the selection still reads. */
+.glass-surface--selected,
+.glass-surface--hover-select:hover {
+  --glass-rgb: var(--glass-rgb-selected);
+  --glass-alpha: 0.66;
+}
+
+.glass-surface--sun {
+  --glass-rgb: var(--glass-rgb-sun);
+}
+
+/* Text on the glass surfaces, checked against the darkest moment of the
+   background behind them:
+   - Light Mode: the Deep Moss @username on green cards drops to ~4:1 when
+     the darkest slats pass behind; Inked Willow keeps it bold and on-brand.
+   - Dark Mode: gray --muted (#9a948b) sits at ~4.4:1 on the 85% charcoal
+     glass; a step lighter keeps the hierarchy at ~5.4:1. */
+/* @username mentions (MemorialLine `.username-mention`, the handle incl.
+   its @): a distinct accent per campaign type plus a faint glow in that
+   type's own accent around the letters, so the handle stands out from the
+   memorial line. Light Mode: on the 56% glass only a very dark color holds
+   4.5:1 over the darkest stripes, so the letters are a deeper, more
+   saturated tone of each identity (green #063d32 / teal-blue #093a47,
+   both a touch darker than Inked Willow, ≥4.8:1) and the Garden Moss / River Indigo glow
+   carries the accent. Dark Mode: the bright Champagne / Young Willow
+   accents with a matching faint glow. Public pages only (the admin preview
+   keeps its own look). */
+:root:not([data-theme="dark"]):has(.ambient-background-layer) .glass-surface bdi.username-mention {
+  color: #063d32;
+  text-shadow:
+    0 0 2px rgba(85, 184, 149, 0.55),
+    0 0 10px rgba(85, 184, 149, 0.75);
+}
+
+:root:not([data-theme="dark"]):has(.ambient-background-layer) .glass-surface bdi.username-mention--completed {
+  color: #093a47;
+  text-shadow:
+    0 0 2px rgba(83, 173, 174, 0.55),
+    0 0 10px rgba(83, 173, 174, 0.75);
+}
+
+/* Dark Mode (Saffron ink): the gold-cream accent (saffron itself is 3.8:1
+   when the cream end of the background passes behind a card). */
+:root[data-theme="dark"]:has(.ambient-background-layer) .glass-surface bdi.username-mention {
+  color: var(--primary-light);
+  text-shadow: 0 0 9px rgba(233, 166, 103, 0.5);
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer) .glass-surface bdi.username-mention--completed {
+  color: var(--completed-text);
+  text-shadow: 0 0 9px rgba(83, 173, 174, 0.55);
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer) .glass-surface .text-muted {
+  color: #c2b2bd;
+}
+
+/* Light Mode, see-through glass: at a 56% fill, gray secondary text (and
+   faded foreground/80 text) can't hold 4.5:1 when the darkest stripes pass
+   behind, so it takes the main Inked Willow text color (size/weight keep
+   the hierarchy). Must stay after the #52625a .glass-surface .text-muted
+   rule. */
+:root:not([data-theme="dark"]):has(.ambient-background-layer)
+  .glass-clear
+  :is(.text-muted, .text-muted\/70, [class*="text-foreground/"]) {
+  color: var(--foreground);
+}
+
+/* Same panels: Deep Moss directly on the glass drops to ~2.2:1 over the
+   darkest stripes, so plain `.text-primary` there takes Inked Willow —
+   except on its own opaque chip (`bg-*`, e.g. the About/Terms icon
+   circles), where Deep Moss on Willow Mist is 4.6:1, as in the old design. */
+:root:not([data-theme="dark"]):has(.ambient-background-layer) .glass-clear .text-primary:not([class*="bg-"]) {
+  color: var(--primary-dark);
+}
+
+/* About / Terms accents (`.accent-mark`: the decorative "!" and list
+   bullets; `.accent-link`: «اطّلع على الشروط والأحكام» / «تعرّف على غرسة»):
+   a distinct, lighter accent than the body text, as in the old design.
+   Light Mode on the 56% glass: only a very dark color holds 4.5:1 over the
+   darkest stripes, so the lighter green is carried by a soft Garden Moss
+   glow — the marks in a brighter, more saturated green (#1a5c50, ≥3:1 —
+   decorative), the link letters in deep green (#063d32, ≥4.8:1), like the
+   @username mentions. On the animated background (Terms link) the adaptive
+   color pair becomes Moss Silk / deep green with the same glow. Dark Mode:
+   gold-cream with a saffron glow. */
+:root:not([data-theme="dark"]):has(.ambient-background-layer) .glass-clear .accent-mark.text-primary {
+  color: #1a5c50;
+  text-shadow: 0 0 8px rgba(85, 184, 149, 0.75);
+}
+
+:root:not([data-theme="dark"]):has(.ambient-background-layer) .glass-clear .accent-link {
+  color: #063d32;
+  text-shadow:
+    0 0 2px rgba(85, 184, 149, 0.55),
+    0 0 10px rgba(85, 184, 149, 0.75);
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer) .glass-clear :is(.accent-mark, .accent-link.text-primary-dark) {
+  color: var(--primary-light);
+  text-shadow: 0 0 9px rgba(233, 166, 103, 0.5);
+}
+
+:root:not([data-theme="dark"]):has(.ambient-background-layer) .on-slat-bg .accent-link.text-primary-dark {
+  color: color-mix(in srgb, #acddb5, #063d32 var(--slat-mix));
+  text-shadow: 0 0 8px rgba(85, 184, 149, 0.6);
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer) .on-slat-bg .accent-link.text-primary-dark {
+  color: color-mix(in srgb, #f2ca8f, #1f2237 var(--slat-mix));
+  text-shadow: 0 0 8px rgba(233, 166, 103, 0.5);
+}
+
+/* Dark Mode, /overlay panel: the unselected "recommended" badge is deep
+   bronze at 75% opacity (~2:1 on the see-through charcoal); Champagne at
+   full opacity reads ≥5:1. */
+:root[data-theme="dark"]:has(.ambient-background-layer) .glass-clear .overlay-mode-featured-badge {
+  color: var(--primary);
+  opacity: 1;
+}
+
+/* Dark Mode, same panels: a step lighter mauve-gray than the glass gray
+   above (Saffron ink palette). Must stay after that rule. */
+:root[data-theme="dark"]:has(.ambient-background-layer) .glass-clear :is(.text-muted, .text-muted\/70) {
+  color: #cbbcc6;
+}
+
+/* Dark Mode (Saffron ink): the background's lower half is pale cream, so
+   the see-through navy glass needs a denser fill than Light Mode's 56% to
+   keep cream-ivory text readable when the cream passes behind (#1 اقتربت
+   card and the selected Contact option a step denser again, as in Light
+   Mode). Higher specificity, so it wins over the per-component alphas. */
+:root[data-theme="dark"]:has(.ambient-background-layer) .glass-clear {
+  --glass-alpha: 0.82;
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer)
+  .glass-clear:is(.almost-there-card-rank1, .glass-surface--selected, .glass-surface--hover-select:hover) {
+  --glass-alpha: 0.88;
+}
+
+/* Dark Mode: --primary-dark / --accent-strong are deep bronze, meant for
+   text ON a Champagne fill. As text on the charcoal glass, or on the dark
+   --primary-50/100/200 pills inside it, they read at 1.9–2.9:1 (platform
+   pill, "الأقرب للاكتمال" label, #1's percentage, Updates links, selected
+   Contact option, About/Terms links). The brighter Champagne --primary is
+   ≥5:1 on all of those fills. */
+:root[data-theme="dark"]:has(.ambient-background-layer) .glass-surface :is(.text-primary-dark, .text-accent-strong) {
+  color: var(--primary);
 }
 
 /* Feathers a section's decorative backdrop (SectionBackdrop) to transparent
@@ -532,6 +1283,17 @@ textarea:focus-visible,
 
   [class*="bg-sunlight/85"] {
     background-color: var(--sunlight) !important;
+  }
+
+  /* Shared glass surface: opaque in its own tint, no blur, no reflection. */
+  :root:has(.ambient-background-layer) .glass-surface {
+    background-color: rgb(var(--glass-rgb)) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  :root:has(.ambient-background-layer) .glass-surface::after {
+    content: none;
   }
 
   /* Footer/Goals no longer have a translucent variant to normalize here —
@@ -1247,21 +2009,26 @@ textarea:focus-visible,
      this if it truly needs to, so content never overflows or gets cut
      off. */
   aspect-ratio: 4 / 5;
+  /* Shared glass fill opacity (.glass-surface) — #1 below is denser. The
+     sheen/wash gradients are kept faint too (were 0.65 / 0.13–0.16) so the
+     background stays visible through the card (see "Campaign cards: see-
+     through Liquid Glass" next to .glass-surface). */
+  --glass-alpha: 0.56;
   background-image:
-    radial-gradient(135% 90% at 12% 0%, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0) 46%),
+    radial-gradient(135% 90% at 12% 0%, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0) 46%),
     linear-gradient(
       135deg,
-      rgba(34, 197, 94, 0) 0%,
-      rgba(34, 197, 94, 0.13) 28%,
-      rgba(127, 196, 190, 0.16) 62%,
-      rgba(255, 244, 224, 0.08) 100%
+      rgba(var(--accent-glow-rgb), 0) 0%,
+      rgba(var(--accent-glow-rgb), 0.05) 28%,
+      rgba(var(--teal-soft-rgb), 0.06) 62%,
+      rgba(255, 244, 224, 0.04) 100%
     );
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.6),
     0 0 0 2px rgba(20, 83, 45, 0.22),
     0 10px 24px -14px rgba(20, 83, 45, 0.2),
-    0 0 26px 3px rgba(34, 197, 94, 0.2),
-    0 0 56px 14px rgba(127, 196, 190, 0.18);
+    0 0 26px 3px rgba(var(--accent-glow-rgb), 0.2),
+    0 0 56px 14px rgba(var(--teal-soft-rgb), 0.18);
 }
 
 .almost-there-card:hover {
@@ -1269,8 +2036,8 @@ textarea:focus-visible,
     inset 0 1px 0 rgba(255, 255, 255, 0.65),
     0 0 0 2px rgba(20, 83, 45, 0.26),
     0 14px 30px -14px rgba(20, 83, 45, 0.24),
-    0 0 32px 4px rgba(34, 197, 94, 0.25),
-    0 0 68px 16px rgba(127, 196, 190, 0.22);
+    0 0 32px 4px rgba(var(--accent-glow-rgb), 0.25),
+    0 0 68px 16px rgba(var(--teal-soft-rgb), 0.22);
 }
 
 /* #1 — the same recipe, deliberately richer at every layer (stronger
@@ -1283,30 +2050,31 @@ textarea:focus-visible,
      identical between tiers; #1's larger footprint comes only from its own
      `md:scale-110` transform in AlmostThereCard.tsx. */
   aspect-ratio: 4 / 5;
+  --glass-alpha: 0.66;
   background-image:
-    radial-gradient(135% 90% at 12% 0%, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0) 48%),
+    radial-gradient(135% 90% at 12% 0%, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 48%),
     linear-gradient(
       135deg,
-      rgba(34, 197, 94, 0) 0%,
-      rgba(34, 197, 94, 0.22) 28%,
-      rgba(127, 196, 190, 0.2) 62%,
-      rgba(255, 244, 224, 0.1) 100%
+      rgba(var(--accent-glow-rgb), 0) 0%,
+      rgba(var(--accent-glow-rgb), 0.08) 28%,
+      rgba(var(--teal-soft-rgb), 0.08) 62%,
+      rgba(255, 244, 224, 0.05) 100%
     );
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.7),
-    0 0 0 2px rgba(21, 128, 61, 0.4),
+    0 0 0 2px rgba(var(--accent-ring-rgb), 0.4),
     0 14px 32px -14px rgba(20, 83, 45, 0.3),
-    0 0 36px 4px rgba(34, 197, 94, 0.32),
-    0 0 76px 20px rgba(127, 196, 190, 0.26);
+    0 0 36px 4px rgba(var(--accent-glow-rgb), 0.32),
+    0 0 76px 20px rgba(var(--teal-soft-rgb), 0.26);
 }
 
 .almost-there-card-rank1:hover {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.75),
-    0 0 0 2px rgba(21, 128, 61, 0.46),
+    0 0 0 2px rgba(var(--accent-ring-rgb), 0.46),
     0 18px 38px -14px rgba(20, 83, 45, 0.34),
-    0 0 42px 5px rgba(34, 197, 94, 0.38),
-    0 0 90px 24px rgba(127, 196, 190, 0.3);
+    0 0 42px 5px rgba(var(--accent-glow-rgb), 0.38),
+    0 0 90px 24px rgba(var(--teal-soft-rgb), 0.3);
 }
 
 /* Dark-mode override (Level 3, Almost-There) — luxury black/Champagne
@@ -1339,59 +2107,59 @@ textarea:focus-visible,
    Gray contact ring instead of Champagne, per the brief's own "#1 Champagne
    border / #2-#3 Warm Gray border" split. */
 :root[data-theme="dark"] .almost-there-card {
-  border-color: rgba(154, 148, 139, 0.55);
+  border-color: rgba(184, 167, 179, 0.55);
   background-image:
-    radial-gradient(135% 90% at 12% 0%, rgba(232, 217, 176, 0.16) 0%, rgba(232, 217, 176, 0) 42%),
+    radial-gradient(135% 90% at 12% 0%, rgba(246, 217, 160, 0.16) 0%, rgba(246, 217, 160, 0) 42%),
     linear-gradient(
       135deg,
-      rgba(216, 196, 154, 0) 0%,
-      rgba(216, 196, 154, 0.08) 32%,
-      rgba(107, 97, 82, 0.11) 66%,
+      rgba(233, 166, 103, 0) 0%,
+      rgba(233, 166, 103, 0.08) 32%,
+      rgba(156, 109, 116, 0.11) 66%,
       rgba(255, 248, 234, 0.03) 100%
     );
   box-shadow:
-    inset 0 1px 0 rgba(232, 217, 176, 0.14),
-    0 0 0 2px rgba(154, 148, 139, 0.28),
+    inset 0 1px 0 rgba(246, 217, 160, 0.14),
+    0 0 0 2px rgba(184, 167, 179, 0.28),
     0 10px 26px -14px rgba(0, 0, 0, 0.55),
-    0 0 22px 2px rgba(216, 196, 154, 0.16),
-    0 0 46px 13px rgba(107, 97, 82, 0.18);
+    0 0 22px 2px rgba(233, 166, 103, 0.16),
+    0 0 46px 13px rgba(156, 109, 116, 0.18);
 }
 
 :root[data-theme="dark"] .almost-there-card:hover {
-  border-color: rgba(154, 148, 139, 0.7);
+  border-color: rgba(184, 167, 179, 0.7);
   box-shadow:
-    inset 0 1px 0 rgba(232, 217, 176, 0.18),
-    0 0 0 2px rgba(154, 148, 139, 0.34),
+    inset 0 1px 0 rgba(246, 217, 160, 0.18),
+    0 0 0 2px rgba(184, 167, 179, 0.34),
     0 14px 32px -14px rgba(0, 0, 0, 0.6),
-    0 0 28px 3px rgba(216, 196, 154, 0.22),
-    0 0 56px 15px rgba(107, 97, 82, 0.22);
+    0 0 28px 3px rgba(233, 166, 103, 0.22),
+    0 0 56px 15px rgba(156, 109, 116, 0.22);
 }
 
 :root[data-theme="dark"] .almost-there-card-rank1 {
   background-image:
-    radial-gradient(135% 90% at 12% 0%, rgba(232, 217, 176, 0.2) 0%, rgba(232, 217, 176, 0) 44%),
+    radial-gradient(135% 90% at 12% 0%, rgba(246, 217, 160, 0.2) 0%, rgba(246, 217, 160, 0) 44%),
     linear-gradient(
       135deg,
-      rgba(216, 196, 154, 0) 0%,
-      rgba(216, 196, 154, 0.16) 32%,
-      rgba(107, 97, 82, 0.15) 66%,
+      rgba(233, 166, 103, 0) 0%,
+      rgba(233, 166, 103, 0.16) 32%,
+      rgba(156, 109, 116, 0.15) 66%,
       rgba(255, 248, 234, 0.05) 100%
     );
   box-shadow:
-    inset 0 1px 0 rgba(232, 217, 176, 0.18),
-    0 0 0 2px rgba(216, 196, 154, 0.42),
+    inset 0 1px 0 rgba(246, 217, 160, 0.18),
+    0 0 0 2px rgba(233, 166, 103, 0.42),
     0 16px 34px -14px rgba(0, 0, 0, 0.6),
-    0 0 30px 3px rgba(216, 196, 154, 0.32),
-    0 0 62px 17px rgba(107, 97, 82, 0.22);
+    0 0 30px 3px rgba(233, 166, 103, 0.32),
+    0 0 62px 17px rgba(156, 109, 116, 0.22);
 }
 
 :root[data-theme="dark"] .almost-there-card-rank1:hover {
   box-shadow:
-    inset 0 1px 0 rgba(232, 217, 176, 0.22),
-    0 0 0 2px rgba(216, 196, 154, 0.48),
+    inset 0 1px 0 rgba(246, 217, 160, 0.22),
+    0 0 0 2px rgba(233, 166, 103, 0.48),
     0 20px 40px -14px rgba(0, 0, 0, 0.65),
-    0 0 38px 4px rgba(216, 196, 154, 0.38),
-    0 0 76px 20px rgba(107, 97, 82, 0.28);
+    0 0 38px 4px rgba(233, 166, 103, 0.38),
+    0 0 76px 20px rgba(156, 109, 116, 0.28);
 }
 
 /* The two accent NUMBERS (not general content — title/description already
@@ -1417,7 +2185,7 @@ textarea:focus-visible,
 }
 
 :root[data-theme="dark"] .almost-there-card span.border-white {
-  border-color: rgba(154, 148, 139, 0.6);
+  border-color: rgba(184, 167, 179, 0.6);
 }
 
 /* #1's rank badge (`bg-primary text-white` in AlmostThereCard.tsx) is the
@@ -1516,11 +2284,11 @@ textarea:focus-visible,
    green leaves the dark palette entirely. */
 .overlay-mode-featured--selected {
   border-color: var(--primary-light);
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(127, 196, 190, 0.08));
+  background: linear-gradient(135deg, rgba(var(--accent-glow-rgb), 0.1), rgba(var(--teal-soft-rgb), 0.08));
   box-shadow:
-    0 0 0 1px rgba(34, 197, 94, 0.4),
-    0 0 20px 2px rgba(34, 197, 94, 0.22),
-    0 0 36px 10px rgba(127, 196, 190, 0.14),
+    0 0 0 1px rgba(var(--accent-glow-rgb), 0.4),
+    0 0 20px 2px rgba(var(--accent-glow-rgb), 0.22),
+    0 0 36px 10px rgba(var(--teal-soft-rgb), 0.14),
     var(--card-shadow-hover);
 }
 
@@ -1531,14 +2299,14 @@ textarea:focus-visible,
    card is actually selected, echoing the stronger glow above instead of
    competing with it. */
 .overlay-mode-featured-badge {
-  border: 1px solid rgba(34, 197, 94, 0.25);
-  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(var(--accent-glow-rgb), 0.25);
+  background: rgba(var(--accent-glow-rgb), 0.08);
   color: var(--primary-dark);
   opacity: 0.75;
 }
 
 .overlay-mode-featured-badge--selected {
-  border-color: rgba(34, 197, 94, 0.5);
+  border-color: rgba(var(--accent-glow-rgb), 0.5);
   background: var(--primary-100);
   opacity: 1;
 }
@@ -1561,27 +2329,27 @@ textarea:focus-visible,
    read the same physical `left` percentage. */
 .overlay-interval-recommended-line {
   width: 1px;
-  background: rgba(34, 197, 94, 0.35);
+  background: rgba(var(--accent-glow-rgb), 0.35);
   transition: background-color 200ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .overlay-interval-recommended-line--active {
   background: var(--primary-light);
-  box-shadow: 0 0 6px 1px rgba(34, 197, 94, 0.55);
+  box-shadow: 0 0 6px 1px rgba(var(--accent-glow-rgb), 0.55);
 }
 
 .overlay-interval-recommended-glow {
   width: 22px;
   height: 22px;
   border-radius: 9999px;
-  background: radial-gradient(circle, rgba(34, 197, 94, 0.22), rgba(127, 196, 190, 0.12) 55%, transparent 76%);
+  background: radial-gradient(circle, rgba(var(--accent-glow-rgb), 0.22), rgba(var(--teal-soft-rgb), 0.12) 55%, transparent 76%);
   transition: all 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .overlay-interval-recommended-glow--active {
   width: 44px;
   height: 44px;
-  background: radial-gradient(circle, rgba(34, 197, 94, 0.4), rgba(127, 196, 190, 0.22) 55%, transparent 78%);
+  background: radial-gradient(circle, rgba(var(--accent-glow-rgb), 0.4), rgba(var(--teal-soft-rgb), 0.22) 55%, transparent 78%);
 }
 
 /* The floating "٢٥ دقيقة" value tag — only rendered while the slider is
@@ -1596,7 +2364,7 @@ textarea:focus-visible,
 .overlay-interval-recommended-value {
   background: var(--primary);
   color: #ffffff;
-  box-shadow: 0 3px 10px -2px rgba(34, 197, 94, 0.45);
+  box-shadow: 0 3px 10px -2px rgba(var(--accent-glow-rgb), 0.45);
 }
 
 /* Dark-mode recolor for the featured/recommended highlights above — the
@@ -1643,6 +2411,47 @@ textarea:focus-visible,
   box-shadow: 0 3px 10px -2px rgba(216, 196, 154, 0.5);
 }
 
+/* Public /overlay page, Saffron ink Dark Mode: the same controls in the
+   sampled palette (the admin overlay settings keep the rules above). */
+:root[data-theme="dark"]:has(.ambient-background-layer) .overlay-mode-featured--selected {
+  background: linear-gradient(135deg, rgba(233, 166, 103, 0.14), rgba(156, 109, 116, 0.1));
+  box-shadow:
+    0 0 0 1px rgba(233, 166, 103, 0.45),
+    0 0 20px 2px rgba(233, 166, 103, 0.28),
+    0 0 36px 10px rgba(156, 109, 116, 0.18),
+    var(--card-shadow-hover);
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer) .overlay-mode-featured-badge {
+  border-color: rgba(233, 166, 103, 0.35);
+  background: rgba(233, 166, 103, 0.12);
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer) .overlay-mode-featured-badge--selected {
+  border-color: rgba(233, 166, 103, 0.6);
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer) .overlay-interval-recommended-line {
+  background: rgba(233, 166, 103, 0.4);
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer) .overlay-interval-recommended-line--active {
+  box-shadow: 0 0 6px 1px rgba(233, 166, 103, 0.6);
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer) .overlay-interval-recommended-glow {
+  background: radial-gradient(circle, rgba(233, 166, 103, 0.26), rgba(156, 109, 116, 0.14) 55%, transparent 76%);
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer) .overlay-interval-recommended-glow--active {
+  background: radial-gradient(circle, rgba(233, 166, 103, 0.45), rgba(156, 109, 116, 0.26) 55%, transparent 78%);
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer) .overlay-interval-recommended-value {
+  color: #2b2b2b;
+  box-shadow: 0 3px 10px -2px rgba(233, 166, 103, 0.5);
+}
+
 /* "الأخبار" news/updates feed cards (NewsItemCard.tsx, shared by /updates
    and the homepage "آخر التحديثات" preview) — one visual family per post
    type, mirroring CampaignCard.tsx's own `statusTheme` lookup-object
@@ -1656,6 +2465,9 @@ textarea:focus-visible,
 .news-card {
   background-color: var(--background);
   box-shadow: var(--card-shadow);
+  /* Public pages: the shared see-through .glass-surface.glass-clear fill
+     replaces the opaque one (this rule comes later, so it must match). */
+  --glass-alpha: 0.56;
 }
 
 /* Thicker, more visible colored borders + a soft matching glow per type —
@@ -1677,11 +2489,11 @@ textarea:focus-visible,
 
 .news-card--added {
   border-width: 2px;
-  border-color: rgba(34, 197, 94, 0.5);
-  background-image: linear-gradient(180deg, rgba(34, 197, 94, 0.08), transparent 60%);
+  border-color: rgba(var(--accent-glow-rgb), 0.5);
+  background-image: linear-gradient(180deg, rgba(var(--accent-glow-rgb), 0.08), transparent 60%);
   box-shadow:
-    0 0 0 1px rgba(34, 197, 94, 0.14),
-    0 10px 24px -16px rgba(34, 197, 94, 0.4);
+    0 0 0 1px rgba(var(--accent-glow-rgb), 0.14),
+    0 10px 24px -16px rgba(var(--accent-glow-rgb), 0.4);
 }
 
 /* Deliberately the strongest/most distinct treatment of the five — the
@@ -1710,17 +2522,33 @@ textarea:focus-visible,
    exactly per the brief ("pattern ONLY around the frame... interior must
    remain clean"). Applies to BOTH صيانة and تحديث من المطور (shared
    family, see presentation.ts). */
+/* Liquid Glass update: the opaque padding-box fill above can't become
+   translucent without the stripes showing through the interior, so the
+   striped frame is now its own 4px masked ring on `::before` (rounded inner
+   edge via the content-box mask), and the card's real border is 0 with 4px
+   added to its padding: same outer size, same content position, same
+   4px striped frame, while the interior takes the shared glass fill. */
 .news-card--maintenance {
-  border-width: 4px;
-  border-style: solid;
-  border-color: transparent;
-  background-image:
-    linear-gradient(var(--background), var(--background)),
-    repeating-linear-gradient(135deg, #eab308 0 7px, #171308 7px 14px);
-  background-clip: padding-box, border-box;
+  isolation: isolate;
+  border-width: 0;
+  padding: calc(1.25rem + 4px);
   box-shadow:
     0 0 0 1px rgba(234, 179, 8, 0.22),
     0 12px 26px -16px rgba(234, 179, 8, 0.45);
+}
+
+.news-card--maintenance::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  padding: 4px;
+  border-radius: inherit;
+  background: repeating-linear-gradient(135deg, #eab308 0 7px, #171308 7px 14px);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  pointer-events: none;
 }
 
 /* Still no colored glow (that stays exclusive to the other categories —
@@ -1757,7 +2585,7 @@ textarea:focus-visible,
 }
 
 .news-badge--added {
-  background-color: rgba(34, 197, 94, 0.16);
+  background-color: rgba(var(--accent-glow-rgb), 0.16);
   color: var(--primary-dark);
 }
 
@@ -1805,7 +2633,7 @@ textarea:focus-visible,
 }
 
 .news-watermark-icon--added {
-  color: #22c55e;
+  color: rgb(var(--accent-glow-rgb));
   opacity: 0.07;
 }
 
@@ -1846,5 +2674,5 @@ textarea:focus-visible,
    sits," with good contrast for the overlay card in either theme. */
 .overlay-public-preview {
   aspect-ratio: 16 / 9;
-  background: linear-gradient(135deg, #0d2818 0%, #143323 45%, #0c787e 100%);
+  background: linear-gradient(135deg, #0d2818 0%, #143323 45%, #207681 100%);
 }

@@ -1,0 +1,190 @@
+/**
+ * Experimental "White Glass / Liquid Glass" design preview — CSS Module
+ * (Next.js hashes every class name below to something unique at build time,
+ * e.g. `.page_a1b2c3`), so NONE of this can ever collide with or override
+ * anything in globals.css or any other component's classes. Nothing here
+ * is imported anywhere except app/design-preview/*, and nothing in
+ * globals.css imports this file — the two are mutually invisible.
+ *
+ * Deliberately does NOT consume the site's real `var(--primary)` /
+ * `var(--accent)` / `var(--background)` tokens from globals.css: those are
+ * redefined wholesale under the real `:root[data-theme="dark"]` (the 2026
+ * "black/Champagne" dark-mode rebuild — green is intentionally almost
+ * absent there today, see that block's own comment). Reading them here
+ * would make this page's own light/dark preview toggle silently depend on
+ * whatever theme the REAL site happens to have saved in the visitor's
+ * localStorage — exactly the cross-contamination "scoped to this page" is
+ * meant to prevent. So every color below is its own fixed value instead,
+ * scoped under `[data-dp-theme]` on `.page` — completely independent of
+ * the real site's `<html data-theme>`. The light greens are the same hex
+ * values as the real site's light-mode palette (brand continuity); the
+ * dark variant is a new, deliberately GREEN dark treatment (not the real
+ * site's champagne), because the brief for this preview specifically asks
+ * to keep Gharsah's green identity in both modes — flagged as a decision
+ * the approval step should weigh in on, see the final report.
+ */
+
+.page {
+  /* Light (default) */
+  --dp-bg-1: #eef9f1;
+  --dp-bg-2: #dcefe3;
+  --dp-bg-3: #cdeedd;
+  --dp-fg: #0f2b1d;
+  --dp-muted: #4b6358;
+  --dp-green: #16a34a;
+  --dp-green-light: #22c55e;
+  --dp-green-dark: #15803d;
+  --dp-on-green: #ffffff;
+  --dp-glass-fill: rgba(255, 255, 255, 0.55);
+  --dp-glass-fill-strong: rgba(255, 255, 255, 0.72);
+  --dp-glass-border: rgba(255, 255, 255, 0.65);
+  --dp-glass-shadow: 0 8px 30px -10px rgba(15, 43, 29, 0.25);
+  --dp-sheen: rgba(255, 255, 255, 0.9);
+  --dp-card-border: rgba(22, 163, 74, 0.18);
+
+  min-height: 100vh;
+  background:
+    radial-gradient(60vw 60vh at 85% -10%, var(--dp-bg-3), transparent 60%),
+    radial-gradient(70vw 70vh at -10% 20%, var(--dp-bg-2), transparent 65%),
+    var(--dp-bg-1);
+  color: var(--dp-fg);
+  transition: background-color 300ms ease, color 300ms ease;
+}
+
+.page[data-dp-theme="dark"] {
+  --dp-bg-1: #081712;
+  --dp-bg-2: #0c2118;
+  --dp-bg-3: #0a2a1d;
+  --dp-fg: #eafaf0;
+  --dp-muted: #9fc3ad;
+  --dp-green: #22c55e;
+  --dp-green-light: #4ade80;
+  --dp-green-dark: #16a34a;
+  --dp-on-green: #06160e;
+  --dp-glass-fill: rgba(16, 40, 30, 0.55);
+  --dp-glass-fill-strong: rgba(20, 50, 37, 0.7);
+  --dp-glass-border: rgba(74, 222, 128, 0.22);
+  --dp-glass-shadow: 0 10px 36px -8px rgba(0, 0, 0, 0.55);
+  --dp-sheen: rgba(170, 255, 210, 0.35);
+  --dp-card-border: rgba(74, 222, 128, 0.2);
+
+  background:
+    radial-gradient(60vw 60vh at 85% -10%, var(--dp-bg-3), transparent 60%),
+    radial-gradient(70vw 70vh at -10% 20%, var(--dp-bg-2), transparent 65%),
+    var(--dp-bg-1);
+}
+
+/* Shared frosted "White Glass" surface — header, cards, button all build on
+   this, just with different fill/border strength per element below. */
+.glassSurface {
+  background: var(--dp-glass-fill);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid var(--dp-glass-border);
+  box-shadow: var(--dp-glass-shadow);
+}
+
+/* Header — frosted glass + a slow, subtle "Liquid Glass" sheen sweeping
+   across it. The sheen is a pseudo-element (never touches layout/content)
+   so it can never affect the header's actual size or the elements inside
+   it. Very low opacity and slow (14s) per "subtle" — a glint, not a
+   shimmer effect. Applied together with `.glassSurface` in the component
+   (not via CSS Modules' `composes`, which this project doesn't otherwise
+   rely on and isn't confirmed under this Next.js version's Turbopack/
+   lightningcss CSS pipeline) — same plain multi-class pattern the rest of
+   this codebase already uses everywhere with Tailwind. */
+.header {
+  position: sticky;
+  top: 0.75rem;
+  z-index: 20;
+  margin: 0.75rem;
+  border-radius: 1.25rem;
+  overflow: hidden;
+}
+
+.header::before {
+  content: "";
+  position: absolute;
+  inset: -40% -10%;
+  background: linear-gradient(115deg, transparent 35%, var(--dp-sheen) 50%, transparent 65%);
+  transform: translateX(-60%);
+  animation: dp-sheen 14s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes dp-sheen {
+  0%,
+  100% {
+    transform: translateX(-60%);
+  }
+  50% {
+    transform: translateX(60%);
+  }
+}
+
+/* Campaign cards — the same frosted glass family, a calmer/stronger fill
+   (no sheen) so the two cards read as content surfaces, not interactive
+   chrome. */
+.card {
+  background: var(--dp-glass-fill-strong);
+  border-radius: 1.25rem;
+  border-color: var(--dp-card-border);
+}
+
+/* Main CTA button — the header's sheen technique again, plus a solid green
+   fill underneath so it stays unmistakably a primary action button, not
+   just another glass panel. */
+.liquidButton {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--dp-green) 0%, var(--dp-green-dark) 100%);
+  color: var(--dp-on-green);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 10px 24px -8px rgba(21, 128, 61, 0.55);
+}
+
+.liquidButton::before {
+  content: "";
+  position: absolute;
+  inset: -40% -10%;
+  background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.55) 50%, transparent 65%);
+  transform: translateX(-60%);
+  animation: dp-sheen 9s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.progressTrack {
+  background: rgba(22, 163, 74, 0.16);
+}
+
+.page[data-dp-theme="dark"] .progressTrack {
+  background: rgba(34, 197, 94, 0.22);
+}
+
+.progressFill {
+  background: linear-gradient(90deg, var(--dp-green-dark), var(--dp-green-light));
+}
+
+.toggleButton {
+  border-radius: 999px;
+}
+
+/* `prefers-reduced-motion`: collapse the sheen to a static, faint highlight
+   instead of an animated sweep — same convention the rest of this project
+   already uses everywhere else (donation-plant-*, gharsah-loader, etc.). */
+@media (prefers-reduced-motion: reduce) {
+  .header::before,
+  .liquidButton::before {
+    animation: none;
+    transform: translateX(0%);
+  }
+}
+
+/* Browsers without backdrop-filter support (older/odd embedded webviews):
+   fall back to a plain, more-opaque solid surface rather than a see-through
+   panel with no actual blur — still fully readable either way. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glassSurface {
+    background: var(--dp-glass-fill-strong);
+  }
+}

@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
+import MintTonicBackground from "./MintTonicBackground";
 
 type Particle = {
   x: number;
@@ -61,6 +63,9 @@ function readTheme(): "light" | "dark" {
  */
 export default function AmbientBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // Light Mode only: the Completed Campaigns page gets the blue "Petrol"
+  // slats; every other page keeps the green "Mint tonic" slats.
+  const slatVariant = usePathname() === "/cases/completed" ? "petrol" : "mint";
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -109,6 +114,10 @@ export default function AmbientBackground() {
       const { base, variance } = theme === "dark" ? DARK_ALPHA : LIGHT_ALPHA;
 
       ctx!.clearRect(0, 0, width, height);
+      // Light Mode shows only the Mint Tonic background (see
+      // MintTonicBackground.tsx); this canvas is also hidden there via
+      // globals.css. Skipping the draw just avoids wasted work.
+      if (theme === "light") return;
       for (const p of particles) {
         p.x += p.driftX;
         p.y += p.driftY;
@@ -220,6 +229,10 @@ export default function AmbientBackground() {
       />
 
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
+
+      {/* Light Mode's only background (everything else in this layer is
+          hidden in Light Mode via globals.css). */}
+      <MintTonicBackground variant={slatVariant} adaptText className="absolute inset-0 h-full w-full" />
     </div>
   );
 }

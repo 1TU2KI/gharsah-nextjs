@@ -14,14 +14,18 @@ export default function CompletedCasesPageClient({ campaigns }: { campaigns: Cam
     <main className="flex-1">
       <section className="relative overflow-x-hidden py-16">
         <div className="relative z-10 mx-auto max-w-6xl px-6">
-          <OpeningVerse
-            verse="﴿ وَمَا تُنْفِقُوا مِن شَيْءٍ فَإِنَّ اللَّهَ بِهِ عَلِيمٌ ﴾"
-            reference="سورة آل عمران، الآية 92"
-            translation="And whatever you spend - indeed, Allah is Knowing of it."
-            referenceEn="Aal-Imran, Verse 92"
-          />
+          {/* `on-slat-bg` (globals.css, Light Mode only): adaptive text color
+              for text sitting directly on the animated slat background. */}
+          <div className="on-slat-bg on-slat-bg--petrol">
+            <OpeningVerse
+              verse="﴿ وَمَا تُنْفِقُوا مِن شَيْءٍ فَإِنَّ اللَّهَ بِهِ عَلِيمٌ ﴾"
+              reference="سورة آل عمران، الآية 92"
+              translation="And whatever you spend - indeed, Allah is Knowing of it."
+              referenceEn="Aal-Imran, Verse 92"
+            />
+          </div>
 
-          <div className="mt-12 text-center">
+          <div className="on-slat-bg on-slat-bg--petrol mt-12 text-center">
             <h1
               className={`text-3xl font-extrabold text-foreground sm:text-4xl ${locale === "en" ? "tracking-tight" : ""}`}
             >
@@ -38,7 +42,7 @@ export default function CompletedCasesPageClient({ campaigns }: { campaigns: Cam
               ))}
             </div>
           ) : (
-            <div className="mt-12">
+            <div className="completed-empty mt-12">
               <EmptyState
                 icon={CheckBadgeIcon}
                 title={t.cases.emptyCompletedTitle}

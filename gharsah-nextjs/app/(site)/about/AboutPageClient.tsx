@@ -14,7 +14,7 @@ export default function AboutPageClient() {
     <main className="flex-1">
       <section className="relative overflow-x-hidden py-16">
         <div className="relative z-10 mx-auto max-w-4xl px-6">
-          <div className="card-elevated rounded-2xl border border-border bg-background/80 p-8 backdrop-blur-md">
+          <div className="card-elevated glass-surface glass-clear relative rounded-2xl border border-border bg-background/80 p-8 backdrop-blur-md">
             <div className="flex items-center gap-3">
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary">
                 <AlertCircleIcon className="h-5 w-5" />
@@ -24,7 +24,7 @@ export default function AboutPageClient() {
                   locale === "en" ? "leading-tight tracking-tight" : ""
                 }`}
               >
-                {t.about.heading} <span className="text-primary">!</span>
+                {t.about.heading} <span className="accent-mark text-primary">!</span>
               </h1>
             </div>
 
@@ -41,7 +41,7 @@ export default function AboutPageClient() {
             <p className="mt-6 text-sm">
               <Link
                 href="/terms"
-                className="font-semibold text-primary-dark transition-colors hover:underline active:opacity-70"
+                className="accent-link font-semibold text-primary-dark transition-colors hover:underline active:opacity-70"
               >
                 {t.about.termsLinkLabel}
               </Link>
@@ -56,9 +56,9 @@ export default function AboutPageClient() {
               and only the couplet's second line carries the brand green so
               the accent stays a detail, not a wash. */}
           <div className="mt-16 text-center sm:mt-20">
-            <div className="mx-auto h-px w-16 bg-gradient-to-l from-transparent via-primary/40 to-transparent" />
+            <div className="quote-divider mx-auto h-px w-16" />
             <p
-              className={`${locale === "ar" ? amiri.className : ""} mx-auto mt-6 max-w-2xl text-xl leading-loose text-foreground/90 sm:text-2xl`}
+              className={`on-slat-bg ${locale === "ar" ? amiri.className : ""} mx-auto mt-6 max-w-2xl text-xl leading-loose text-foreground/90 sm:text-2xl`}
             >
               {/* Intentional break after the em dash (not left to automatic
                   wrapping): `whitespace-nowrap` keeps this first line whole
