@@ -38,7 +38,7 @@ function subtitleSizeClass(length: number, compact: boolean): string {
 function renderSubtitle(subtitle: string): React.ReactNode {
   return subtitle.split(/(@\S+)/).map((part, i) =>
     part.startsWith("@") ? (
-      <bdi key={i} dir="ltr" className="text-primary-light">
+      <bdi key={i} dir="ltr" className="obs-accent">
         {part}
       </bdi>
     ) : (
@@ -96,24 +96,25 @@ export default function OverlayCard({
   const dir = lang === "ar" ? "rtl" : "ltr";
   const fromLeft = position === "top-left" || position === "bottom-left";
 
-  const surfaceClass =
-    theme === "dark"
-      ? "border-white/10 bg-black/55 text-white shadow-[0_8px_28px_rgba(0,0,0,0.35)]"
-      : "border-black/5 bg-white/88 text-[#0f2415] shadow-[0_8px_28px_rgba(15,36,21,0.18)]";
-  const mutedClass = theme === "dark" ? "text-white/60" : "text-[#0f2415]/60";
-  const trackClass = theme === "dark" ? "bg-white/12" : "bg-black/8";
+  // Gharsah green palette, fixed hex values (globals.css `.obs-card*`) —
+  // never the site's theme tokens, so the website's Light/Dark toggle can't
+  // change the preview or the OBS output. `theme` is the overlay's own
+  // `?theme=` option.
+  const surfaceClass = theme === "dark" ? "obs-card obs-card--dark" : "obs-card obs-card--light";
+  const mutedClass = "obs-muted";
+  const trackClass = "obs-track";
 
   return (
     <div
       dir={dir}
-      className={`overlay-card ${visible ? "overlay-card--visible" : ""} ${fromLeft ? "overlay-card--from-left" : "overlay-card--from-right"} flex flex-col rounded-2xl border backdrop-blur-md ${surfaceClass} ${
+      className={`overlay-card ${visible ? "overlay-card--visible" : ""} ${fromLeft ? "overlay-card--from-left" : "overlay-card--from-right"} flex flex-col rounded-2xl backdrop-blur-md ${surfaceClass} ${
         compact ? "w-64 gap-2 p-3" : "w-80 gap-2.5 p-4"
       }`}
       style={{ transitionDuration: `${transitionDurationMs}ms` }}
     >
       {showLogo && (
         <div className="flex items-center gap-2">
-          <span className="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full">
+          <span className="obs-logo-badge flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full">
             <Image src="/logo.png" alt="" aria-hidden="true" width={20} height={20} className="h-full w-full object-cover" />
           </span>
           <span className={`text-[11px] font-bold leading-none ${mutedClass}`}>غرسة | Gharsah</span>
@@ -137,12 +138,12 @@ export default function OverlayCard({
             <div>
               <div className={`h-1.5 w-full overflow-hidden rounded-full ${trackClass}`}>
                 <div
-                  className="h-full rounded-full bg-gradient-to-l from-primary to-primary-light"
+                  className="obs-fill h-full rounded-full"
                   style={{ width: `${Math.min(100, Math.max(0, campaign.percent))}%` }}
                 />
               </div>
               <div className="mt-1 flex items-baseline justify-between gap-2">
-                <span className="text-sm font-extrabold text-primary-light">{campaign.percent}%</span>
+                <span className="obs-percent text-sm font-extrabold">{campaign.percent}%</span>
                 {showRemaining && <span className={`text-[10px] font-semibold ${mutedClass}`}>{lang === "ar" ? `تبقّى ${campaign.remaining}%` : `${campaign.remaining}% left`}</span>}
               </div>
             </div>

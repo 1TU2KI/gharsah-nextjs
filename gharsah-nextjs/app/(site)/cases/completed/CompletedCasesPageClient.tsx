@@ -12,8 +12,8 @@ export default function CompletedCasesPageClient({ campaigns }: { campaigns: Cam
 
   return (
     <main className="flex-1">
-      <section className="relative overflow-x-hidden py-16">
-        <div className="relative z-10 mx-auto max-w-6xl px-6">
+      <section className="relative overflow-clip py-10 sm:py-16">
+        <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6">
           {/* `on-slat-bg` (globals.css, Light Mode only): adaptive text color
               for text sitting directly on the animated slat background. */}
           <div className="on-slat-bg on-slat-bg--petrol">

@@ -37,7 +37,7 @@ export default function OverlayPageClient({
 
   return (
     <main className="flex-1">
-      <section className="relative overflow-x-hidden py-16">
+      <section className="relative overflow-clip py-16">
         <div className="relative z-10 mx-auto max-w-6xl px-6">
           <div className="on-slat-bg text-center">
             <h1 className="text-3xl font-extrabold text-foreground sm:text-4xl">الأوفرلاي</h1>
@@ -80,7 +80,11 @@ export default function OverlayPageClient({
           {category === "campaign" ? (
             <OverlayPromoSection overlayUrl={overlayUrl} overlayData={overlayData} pickableCampaigns={pickableCampaigns} />
           ) : (
-            <GharsahOverlayPromoSection overlayUrl={gharsahOverlayUrl} overlayData={gharsahOverlayData} />
+            <GharsahOverlayPromoSection
+              overlayUrl={gharsahOverlayUrl}
+              overlayData={gharsahOverlayData}
+              pickableCampaigns={pickableCampaigns}
+            />
           )}
         </div>
       </section>

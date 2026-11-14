@@ -64,7 +64,7 @@ export default function NewsItemCard({ item }: { item: PublicNewsItem }) {
           </span>
           <span className="text-xs font-semibold text-foreground">{locale === "ar" ? meta.labelAr : meta.labelEn}</span>
         </span>
-        <span className="text-[11px] text-muted">{formatDate(item.createdAt, locale)}</span>
+        <span className="text-xs text-muted">{formatDate(item.createdAt, locale)}</span>
       </div>
 
       <h3 className="mt-3 text-base font-bold text-foreground">{title}</h3>
@@ -76,13 +76,13 @@ export default function NewsItemCard({ item }: { item: PublicNewsItem }) {
             href={item.link}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-3 inline-flex items-center gap-1.5 self-start text-sm font-semibold text-primary-dark transition-colors hover:underline"
+            className="tap-expand mt-3 inline-flex items-center gap-1.5 self-start text-sm font-semibold text-primary-dark transition-colors hover:underline"
           >
             {t.news.viewCampaign}
             <EyeIcon className="h-3.5 w-3.5" />
           </a>
         ) : (
-          <Link href={item.link} className="mt-3 inline-flex items-center gap-1.5 self-start text-sm font-semibold text-primary-dark transition-colors hover:underline">
+          <Link href={item.link} className="tap-expand mt-3 inline-flex items-center gap-1.5 self-start text-sm font-semibold text-primary-dark transition-colors hover:underline">
             {t.news.viewCampaign}
             <EyeIcon className="h-3.5 w-3.5" />
           </Link>

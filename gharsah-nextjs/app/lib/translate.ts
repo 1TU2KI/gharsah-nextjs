@@ -1,124 +1,168 @@
 import "server-only";
 
+import { MEMORIAL_PREFIX_EN } from "@/app/lib/admin/memorialPrefixOptions";
+
 /**
- * Auto-translates admin-entered Arabic campaign text to English via the
- * Anthropic Messages API — chosen (over a free MT API) specifically for
- * quality on this content: campaign text carries religious/memorial phrasing
- * ("رحمه الله") and proper names that a literal machine translator renders
- * poorly or disrespectfully. The admin only ever enters Arabic; every public
- * English field is produced here and persisted (see campaignsRepo.ts) so it
- * survives without a network call on every page view.
+ * Arabic -> English for admin-entered campaign text, through Gharsah's own
+ * SELF-HOSTED translation engine (translation-service/ in this repo —
+ * Opus-MT ar-en running on a server we control). Campaign text is only ever
+ * sent to TRANSLATION_ENGINE_URL; no third-party API is involved.
  *
- * Requires ANTHROPIC_API_KEY (paid, billed per request — a campaign's few
- * short fields cost a fraction of a cent). Model is overridable via
- * ANTHROPIC_TRANSLATE_MODEL; defaults to Sonnet 5 for translation quality
- * over the cheaper Haiku, since this content is sensitive and infrequent
- * (only on admin create/edit, not per page view).
+ * The engine is a plain machine translator, so everything Gharsah-specific
+ * is handled HERE, before and after it:
+ * - Fixed religious/memorial phrases are never machine-translated: they're
+ *   cut out of the text and replaced by their fixed English — the same
+ *   MEMORIAL_PREFIX_EN mapping the memorial-phrase field uses, plus the
+ *   «صدقة جارية» wording Gharsah already used.
+ * - @handles and URLs pass through unchanged.
+ * - Output that still contains Arabic letters is rejected, so Arabic is
+ *   never stored as "English".
+ * Machine translation can still mistranslate personal names (they may be
+ * read as ordinary words); admins can correct any field by hand in the
+ * campaign form, and hand-typed English is never auto-overwritten.
+ *
+ * Env: TRANSLATION_ENGINE_URL (e.g. http://127.0.0.1:8089) and
+ * TRANSLATION_ENGINE_KEY (the service's shared secret).
  */
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const DEFAULT_MODEL = "claude-sonnet-5";
-
-const SYSTEM_PROMPT = `You translate short Arabic charity-campaign text into natural, warm, respectful English for Gharsah, a platform listing verified Islamic charity campaigns (mostly ongoing charity — "صدقة جارية" / sadaqah jariyah — dedicated to a deceased relative).
-
-Rules:
-- Translate meaning and tone, never word-for-word. It must read as if originally written in English by a thoughtful person, not machine-translated.
-- Preserve personal/proper names as standard English transliterations — never translate a name's meaning, never omit it.
-- Render religious phrases with the dignity English-speaking Muslims use, e.g. "رحمه الله" -> "may God have mercy on him", "رحمها الله" -> "may God have mercy on her", "صدقة جارية" -> "ongoing charity (sadaqah jariyah)". Reuse exactly these forms when the phrase appears.
-- Never invent content that isn't in the source text.
-- The input never contains usernames, @handles, URLs, or IDs — if you ever see one regardless, copy it through completely unchanged.
-- Output strict JSON only: {"title": "...", "relation": "...", "description": "...", "memorialPrefix": "..."} — include only the keys that were present in the input, omit any that were empty/absent. No prose, no markdown fences, no explanation.`;
 
 export type TranslatableCampaignFields = {
   title?: string;
   relation?: string;
   description?: string;
-  memorialPrefix?: string;
 };
 
 export type TranslationResult =
   | { ok: true; fields: TranslatableCampaignFields }
   | { ok: false; error: string };
 
-/**
- * Translates whichever of the four fields are provided in a single request
- * (cheaper and faster than one call per field). Empty/absent fields are
- * left out of both the request and the response. Never throws — callers
- * always get a typed ok/error result so a translation outage can be
- * surfaced to the admin instead of crashing the save.
- */
-export async function translateCampaignFields(fields: TranslatableCampaignFields): Promise<TranslationResult> {
-  const entries = Object.entries(fields).filter(([, value]) => value && value.trim().length > 0) as [
-    keyof TranslatableCampaignFields,
-    string,
-  ][];
+const REQUEST_TIMEOUT_MS = 30_000;
+const ARABIC_LETTERS = /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]/u;
 
-  if (entries.length === 0) {
-    return { ok: true, fields: {} };
+/** Fixed English for protected phrases — longest first so «صدقة جارية عن» wins over «صدقة جارية». */
+const FIXED_PHRASES: [string, string][] = (
+  [
+    ["صدقة جارية عن", "Ongoing charity (sadaqah jariyah) on behalf of"],
+    ["صدقة جارية", "ongoing charity (sadaqah jariyah)"],
+    ...Object.entries(MEMORIAL_PREFIX_EN),
+  ] as [string, string][]
+).sort((a, b) => b[0].length - a[0].length);
+
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const PROTECTED = new RegExp(
+  `(${[...FIXED_PHRASES.map(([ar]) => escapeRegExp(ar)), "https?:\\/\\/\\S+", "@[A-Za-z0-9_.]+"].join("|")})`,
+  "gu",
+);
+
+type Segment = { kind: "fixed"; text: string } | { kind: "translate"; text: string };
+
+/** Splits Arabic text into fixed pieces (phrases, handles, URLs) and pieces the engine should translate. */
+function segment(text: string, leadingOnBehalfOf = false): Segment[] {
+  const segments: Segment[] = [];
+  // Relation lines ("عن جدة أنس") use «عن» as "on behalf of", which the
+  // engine renders as "About" — pinned for that field only (in descriptions
+  // «عن» usually does mean "about").
+  const lead = leadingOnBehalfOf ? text.match(/^عن\s+/u) : null;
+  if (lead) {
+    segments.push({ kind: "fixed", text: "on behalf of" });
+    text = text.slice(lead[0].length);
   }
+  for (const part of text.split(PROTECTED)) {
+    if (!part) continue;
+    const fixed = FIXED_PHRASES.find(([ar]) => ar === part);
+    if (fixed) segments.push({ kind: "fixed", text: fixed[1] });
+    else if (/^(https?:\/\/|@)/u.test(part)) segments.push({ kind: "fixed", text: part });
+    else if (ARABIC_LETTERS.test(part)) segments.push({ kind: "translate", text: part.trim() });
+    else if (part.trim()) segments.push({ kind: "fixed", text: part.trim() }); // digits/punctuation
+  }
+  return segments;
+}
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
+/** Joins translated pieces and tidies Arabic punctuation and spacing. */
+function assemble(pieces: string[]): string {
+  let text = pieces.filter(Boolean).join(" ");
+  text = text.replace(/،/g, ",").replace(/؛/g, ";").replace(/؟/g, "?");
+  text = text.replace(/\s+([,.;:!?])/g, "$1").replace(/\s{2,}/g, " ").trim();
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+async function callEngine(texts: string[]): Promise<{ ok: true; translations: string[] } | { ok: false; error: string }> {
+  const baseUrl = process.env.TRANSLATION_ENGINE_URL?.trim();
+  if (!baseUrl) {
     return {
       ok: false,
-      error: "ANTHROPIC_API_KEY غير مُعرَّف — أضفه في .env.local لتفعيل الترجمة التلقائية.",
+      error:
+        "محرك الترجمة الذاتي غير مُعدّ (TRANSLATION_ENGINE_URL). حُفظ المحتوى العربي، ويمكنك إدخال الإنجليزية يدويًا أو إعادة المحاولة لاحقًا.",
     };
   }
-
-  const payload: Record<string, string> = {};
-  for (const [key, value] of entries) payload[key] = value.trim();
-
   try {
-    const response = await fetch(ANTHROPIC_API_URL, {
+    const response = await fetch(`${baseUrl.replace(/\/+$/, "")}/translate`, {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
+        "x-translation-key": process.env.TRANSLATION_ENGINE_KEY ?? "",
       },
-      body: JSON.stringify({
-        model: process.env.ANTHROPIC_TRANSLATE_MODEL || DEFAULT_MODEL,
-        max_tokens: 800,
-        system: SYSTEM_PROMPT,
-        messages: [{ role: "user", content: JSON.stringify(payload) }],
-      }),
+      body: JSON.stringify({ texts }),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      cache: "no-store",
     });
-
     if (!response.ok) {
-      const body = await response.text().catch(() => "");
-      return { ok: false, error: `فشل طلب الترجمة (${response.status}): ${body.slice(0, 300)}` };
+      return { ok: false, error: `محرك الترجمة أعاد خطأ (${response.status}). حُفظ المحتوى العربي دون تغيير الإنجليزية.` };
     }
-
-    const data = (await response.json()) as {
-      content?: { type: string; text?: string }[];
-    };
-    const textBlock = data.content?.find((block) => block.type === "text");
-    const raw = textBlock?.text?.trim();
-    if (!raw) return { ok: false, error: "استجابة الترجمة فارغة." };
-
-    const parsed = JSON.parse(stripCodeFence(raw)) as Record<string, unknown>;
-    const result: TranslatableCampaignFields = {};
-    for (const key of Object.keys(payload) as (keyof TranslatableCampaignFields)[]) {
-      const value = parsed[key];
-      if (typeof value === "string" && value.trim()) result[key] = value.trim();
+    const data = (await response.json()) as { translations?: unknown };
+    const translations = data.translations;
+    if (!Array.isArray(translations) || translations.length !== texts.length || !translations.every((t) => typeof t === "string")) {
+      return { ok: false, error: "استجابة غير صالحة من محرك الترجمة." };
     }
-
-    // Every field we asked for must come back — a partial response means
-    // something is off with the model's output, treat it as a failure
-    // rather than silently saving an incomplete translation.
-    const missing = entries.filter(([key]) => !result[key]);
-    if (missing.length > 0) {
-      return { ok: false, error: `لم تُترجَم كل الحقول (${missing.map(([k]) => k).join(", ")}).` };
-    }
-
-    return { ok: true, fields: result };
+    return { ok: true, translations: translations as string[] };
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return { ok: false, error: `تعذّر الاتصال بخدمة الترجمة: ${message}` };
+    const timedOut = error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError");
+    return {
+      ok: false,
+      error: timedOut
+        ? "انتهت مهلة محرك الترجمة. حُفظ المحتوى العربي دون تغيير الإنجليزية."
+        : "تعذّر الاتصال بمحرك الترجمة الذاتي. حُفظ المحتوى العربي دون تغيير الإنجليزية.",
+    };
   }
 }
 
-/** The model occasionally wraps JSON in ```json fences despite instructions not to — strip them defensively rather than failing the parse. */
-function stripCodeFence(text: string): string {
-  const fenced = text.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
-  return fenced ? fenced[1] : text;
+/**
+ * Translates whichever fields are provided, in one engine request. Never
+ * throws. All-or-nothing: if any requested field can't be produced as real
+ * English, the whole result is an error and callers keep their saved English.
+ */
+export async function translateCampaignFields(fields: TranslatableCampaignFields): Promise<TranslationResult> {
+  const entries = (Object.entries(fields) as [keyof TranslatableCampaignFields, string | undefined][]).filter(
+    (entry): entry is [keyof TranslatableCampaignFields, string] => Boolean(entry[1]?.trim()),
+  );
+  if (entries.length === 0) return { ok: true, fields: {} };
+
+  const segmented = entries.map(([key, value]) => ({ key, segments: segment(value.trim(), key === "relation") }));
+  const toTranslate = segmented.flatMap(({ segments }) => segments.filter((s) => s.kind === "translate").map((s) => s.text));
+
+  let translated: string[] = [];
+  if (toTranslate.length > 0) {
+    const engine = await callEngine(toTranslate);
+    if (!engine.ok) return engine;
+    translated = engine.translations;
+  }
+
+  const result: TranslatableCampaignFields = {};
+  let cursor = 0;
+  for (const { key, segments } of segmented) {
+    const pieces = segments.map((s) => {
+      if (s.kind === "fixed") return s.text;
+      let out = (translated[cursor++] ?? "").trim().replace(/\.{2,}/g, ".");
+      // The engine ends every fragment with a period; drop it when the
+      // Arabic fragment didn't end a sentence (it's mid-sentence, before a
+      // fixed phrase, a handle, etc.).
+      if (!/[.!?؟]\s*$/u.test(s.text)) out = out.replace(/[.]+$/, "");
+      return out;
+    });
+    const english = assemble(pieces);
+    if (!english || ARABIC_LETTERS.test(english)) {
+      return { ok: false, error: `لم يُنتج محرك الترجمة نصًا إنجليزيًا صالحًا (${key}). لم تُغيَّر الإنجليزية المحفوظة.` };
+    }
+    result[key] = english;
+  }
+  return { ok: true, fields: result };
 }

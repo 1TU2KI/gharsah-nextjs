@@ -98,6 +98,7 @@ export default function GharsahOverlayClient({
         compact={displayed.settings.compact}
         position={displayed.settings.position}
         transitionDurationMs={displayed.settings.transitionDurationMs}
+        qrValue={displayed.qrValue}
       />
     </div>
   );

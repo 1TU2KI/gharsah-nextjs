@@ -30,11 +30,18 @@ import type { Campaign } from "../../lib/campaigns";
  * documented for arbitrary bracket values elsewhere in globals.css) — a
  * named rule sidesteps that risk entirely.
  */
-export default function AlmostThereGrid({ campaigns }: { campaigns: Campaign[] }) {
+export default function AlmostThereGrid({
+  campaigns,
+  showClosestLabel = true,
+}: {
+  campaigns: Campaign[];
+  /** false on custom «اصنع صفحتك» pages: there #1 is the creator's first pick, not necessarily the closest to completion. */
+  showClosestLabel?: boolean;
+}) {
   return (
     <div className="almost-there-grid flex flex-col gap-6 md:flex-row">
       {campaigns.map((campaign, index) => (
-        <AlmostThereCard key={campaign.slug} campaign={campaign} rank={index + 1} />
+        <AlmostThereCard key={campaign.slug} campaign={campaign} rank={index + 1} showClosestLabel={showClosestLabel} />
       ))}
     </div>
   );

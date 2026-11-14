@@ -186,7 +186,8 @@ export async function recordCampaignAddedEvent(campaign: CampaignEventInput): Pr
     titleAr: "حالة جديدة",
     titleEn: "New Case",
     bodyAr: `تمت إضافة حالة جديدة إلى غرسة: «${campaign.titleAr}»${memorialAr ? ` — ${memorialAr}` : ""}`,
-    bodyEn: `A new case has been added to Gharsah: "${campaign.titleEn}"${memorialEn ? ` — ${memorialEn}` : ""}`,
+    // No English title yet (translation unavailable): leave it out rather than quote an empty string.
+    bodyEn: `A new case has been added to Gharsah${campaign.titleEn ? `: "${campaign.titleEn}"` : ""}${memorialEn ? ` — ${memorialEn}` : ""}`,
     campaignId: campaign.id,
   });
 }
@@ -210,7 +211,7 @@ export async function recordCampaignCompletedEvent(campaign: CampaignEventInput)
     titleAr: "اكتملت حالة",
     titleEn: "Case Completed",
     bodyAr: `بحمد الله اكتملت حملة «${campaign.titleAr}»${memorialAr ? ` — ${memorialAr}` : ""}`,
-    bodyEn: `Alhamdulillah, the campaign "${campaign.titleEn}" has been completed${memorialEn ? ` — ${memorialEn}` : ""}`,
+    bodyEn: `Alhamdulillah, ${campaign.titleEn ? `the campaign "${campaign.titleEn}"` : "a campaign"} has been completed${memorialEn ? ` — ${memorialEn}` : ""}`,
     campaignId: campaign.id,
   });
 }

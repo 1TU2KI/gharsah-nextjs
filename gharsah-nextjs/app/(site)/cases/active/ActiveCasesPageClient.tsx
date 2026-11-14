@@ -6,6 +6,7 @@ import OpeningVerse from "@/app/components/home/OpeningVerse";
 import EmptyState from "@/app/components/ui/EmptyState";
 import { HeartIcon } from "@/app/components/home/icons";
 import SortDropdown from "@/app/components/cases/SortDropdown";
+import RandomCaseButton from "@/app/components/cases/RandomCaseButton";
 import { useLanguage } from "@/app/lib/i18n/LanguageProvider";
 import type { Campaign } from "@/app/lib/campaigns";
 
@@ -61,8 +62,13 @@ export default function ActiveCasesPageClient({ campaigns }: { campaigns: Campai
 
   return (
     <main className="flex-1">
-      <section className="relative overflow-x-hidden py-16">
-        <div className="relative z-10 mx-auto max-w-6xl px-6">
+      {/* `overflow-x-clip`, not `-hidden`: `hidden` silently turns
+          overflow-y into `auto`, making this section a second vertical
+          scroller (left side in RTL, starting under the header) whenever
+          cards mid fade-up (ScrollReveal translateY) poke past its bottom.
+          `clip` still clips sideways but never creates a scroll box. */}
+      <section className="relative overflow-x-clip py-10 sm:py-16">
+        <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6">
           <div>
             {/* `on-slat-bg`: see globals.css (text directly on the slat background). */}
             <div className="on-slat-bg">
@@ -89,8 +95,13 @@ export default function ActiveCasesPageClient({ campaigns }: { campaigns: Campai
               (see Header.tsx) — this row is now just the sort control,
               end-aligned (the LEFT edge in this site's RTL layout) above
               the grid, matching the grid's own max-w-6xl/px-6 container. */}
+          {/* Toolbar: the shared random-pick button (same component + skin
+              as on the Header's menu panel) at the inline start — the right
+              in Arabic, the left in English — and the sort control opposite.
+              Wraps to centered rows on narrow screens. */}
           {campaigns.length > 0 && (
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-2 sm:justify-end">
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3 sm:justify-between">
+              <RandomCaseButton campaigns={campaigns} variant="compact" />
               <SortDropdown<SortMode>
                 label={t.cases.sortLabel}
                 value={sortMode}

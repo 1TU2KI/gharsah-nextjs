@@ -20,14 +20,14 @@ export default function HeroClient({
   const { t, locale } = useLanguage();
 
   return (
-    <section className="relative overflow-x-hidden">
+    <section className="relative overflow-clip">
       <HeroBackground />
 
       <div className="on-slat-bg relative z-10 px-6 pt-14 sm:pt-20">
         <OpeningVerse />
       </div>
 
-      <div className="relative z-10 mx-auto grid max-w-6xl items-center gap-12 px-6 py-20 md:grid-cols-2 md:py-28">
+      <div className="relative z-10 mx-auto grid max-w-6xl items-center gap-8 px-4 py-12 sm:gap-12 sm:px-6 sm:py-20 md:grid-cols-2 md:py-28">
         <div className="text-center md:text-start">
           <span className="inline-flex items-center gap-2 rounded-full bg-primary-100 px-4 py-1.5 text-sm font-semibold text-primary-dark">
             <LeafIcon className="h-4 w-4" />

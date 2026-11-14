@@ -7,8 +7,8 @@ export default function ContactSection() {
   const { t, locale } = useLanguage();
 
   return (
-    <section className="relative overflow-x-hidden py-20">
-      <div className="relative z-10 mx-auto max-w-6xl px-6">
+    <section className="relative overflow-clip py-12 sm:py-20">
+      <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6">
         <div className="on-slat-bg text-center">
           <h2
             className={`text-3xl font-extrabold text-foreground sm:text-4xl ${locale === "en" ? "tracking-tight" : ""}`}

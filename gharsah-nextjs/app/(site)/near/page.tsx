@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import NearPageClient from "./NearPageClient";
 import { getAlmostThereCampaigns } from "@/app/lib/almostThere";
+import { CUSTOM_NEAR_PROTOTYPE } from "@/app/lib/customNear/store";
 
 export const metadata: Metadata = {
   title: "اقتربت... | غرسة",
@@ -20,5 +21,7 @@ export const metadata: Metadata = {
  */
 export default async function NearPage() {
   const campaigns = await getAlmostThereCampaigns(3);
-  return <NearPageClient campaigns={campaigns} />;
+  // «اصنع صفحتك» is a local prototype — its button only shows where the
+  // feature runs (never in production builds, see customNear/store.ts).
+  return <NearPageClient campaigns={campaigns} customPagesEnabled={CUSTOM_NEAR_PROTOTYPE} />;
 }

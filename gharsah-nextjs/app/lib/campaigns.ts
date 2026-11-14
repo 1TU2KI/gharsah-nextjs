@@ -87,10 +87,13 @@ async function rowToCampaign(row: CampaignRow): Promise<Campaign> {
         ? { ar: row.memorial_prefix_ar, en: row.memorial_prefix_en }
         : undefined,
     username: row.username ?? undefined,
-    relation: { ar: row.relation_ar, en: row.relation_en },
-    title: { ar: row.title_ar, en: row.title_en },
+    // Display-only fallback: a campaign whose English couldn't be produced yet
+    // (translation engine unavailable) stores EMPTY English, never Arabic —
+    // the English site shows the Arabic text until English is added.
+    relation: { ar: row.relation_ar, en: row.relation_en || row.relation_ar },
+    title: { ar: row.title_ar, en: row.title_en || row.title_ar },
     status: row.status,
-    description: { ar: row.description_ar ?? undefined, en: row.description_en },
+    description: { ar: row.description_ar ?? undefined, en: row.description_en || (row.description_ar ?? "") },
     percent: row.percent ?? undefined,
     platformLabel: platformConfig ? { ar: platformConfig.labelAr, en: platformConfig.labelEn } : { ar: row.platform, en: row.platform },
     platformLogo: platformConfig?.logo ?? null,

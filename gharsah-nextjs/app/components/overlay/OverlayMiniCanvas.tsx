@@ -70,7 +70,7 @@ export default function OverlayMiniCanvas({
   return (
     <div>
       <p className="text-xs font-semibold text-foreground">{label}</p>
-      <div ref={canvasRef} className="overlay-public-preview relative mt-1.5 w-full overflow-hidden rounded-xl border border-primary/15">
+      <div ref={canvasRef} className="overlay-public-preview relative mt-1.5 w-full overflow-hidden rounded-xl border">
         {scale > 0 && (
           <div className="absolute left-0 top-0 origin-top-left" style={{ width: canvasWidth, height: canvasHeight, transform: `scale(${scale})` }}>
             {renderOverlay(center)}

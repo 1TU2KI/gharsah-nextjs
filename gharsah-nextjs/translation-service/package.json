@@ -1,0 +1,17 @@
+{
+  "name": "gharsah-translation-service",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Self-hosted Arabic-to-English translation engine for the Gharsah admin panel (Opus-MT ar-en on ONNX). Campaign text never leaves the server this runs on.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "download-model": "node server.mjs --download-only"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "4.3.2"
+  }
+}

@@ -45,6 +45,7 @@ export default async function OverlayPage() {
     slug: c.slug,
     title: c.title.ar,
     subtitle: buildSubtitle(c, "ar"),
+    shortCode: c.shortCode,
   }));
 
   return (

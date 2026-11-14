@@ -18,12 +18,12 @@ type TabKey = "campaign" | "other";
  * using the existing `--foreground` token rather than introducing a new
  * error color). */
 const inputClass =
-  "mt-1.5 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm outline-none transition-all hover:border-primary/60 focus:border-primary focus:bg-primary/10 focus:ring-4 focus:ring-primary/20 [&:not(:placeholder-shown)]:border-primary-300 [&:user-invalid]:border-foreground [&:user-invalid]:border-2";
+  "mt-1.5 w-full rounded-xl border border-border bg-background px-4 py-3 text-base outline-none sm:py-2.5 sm:text-sm transition-all hover:border-primary/60 focus:border-primary focus:bg-primary/10 focus:ring-4 focus:ring-primary/20 [&:not(:placeholder-shown)]:border-primary-300 [&:user-invalid]:border-foreground [&:user-invalid]:border-2";
 const labelClass = "text-sm font-medium text-foreground/80";
 /** The forms' own glass panel — shared by the confirmation that replaces them. */
-const panelClass = "tier2-elevated glass-surface glass-clear relative rounded-2xl border border-border bg-background/88 p-8 backdrop-blur-md";
+const panelClass = "tier2-elevated glass-surface glass-clear relative rounded-2xl border border-border bg-background/88 p-5 backdrop-blur-md sm:p-8";
 const primaryButtonClass =
-  "rounded-full bg-accent py-2.5 text-sm font-semibold text-on-accent shadow-[0_8px_20px_-8px_rgba(20,83,45,0.4)] transition-all hover:bg-accent-strong hover:shadow-[0_10px_24px_-8px_rgba(20,83,45,0.5)] active:scale-95 active:brightness-95";
+  "rounded-full bg-accent py-3 text-sm font-semibold sm:py-2.5 text-on-accent shadow-[0_8px_20px_-8px_rgba(20,83,45,0.4)] transition-all hover:bg-accent-strong hover:shadow-[0_10px_24px_-8px_rgba(20,83,45,0.5)] active:scale-95 active:brightness-95";
 
 /**
  * `initialTab`: which form (if any) is shown before the user picks an
@@ -59,7 +59,13 @@ export default function ContactForms({
   }
 
   return (
-    <div className="mx-auto max-w-xl">
+    // `data-reveal-group`: ScrollReveal fades this whole block in once as
+    // one unit and leaves the glass option cards and forms inside it alone.
+    // Otherwise each option card is its own reveal target, and React
+    // rewriting its className on selection wipes ScrollReveal's
+    // `is-revealed` class — the cards slide back to their hidden state
+    // (invisible, 100px down, under the form) and never come back.
+    <div className="mx-auto max-w-xl" data-reveal-group="">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {tabs.map((tab) => {
           const isActive = active === tab.key;

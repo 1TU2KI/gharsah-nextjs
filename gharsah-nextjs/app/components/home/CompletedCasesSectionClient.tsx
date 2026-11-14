@@ -17,8 +17,8 @@ export default function CompletedCasesSectionClient({
   const { t, locale } = useLanguage();
 
   return (
-    <section className="relative overflow-x-hidden py-20">
-      <div className="relative z-10 mx-auto max-w-6xl px-6">
+    <section className="relative overflow-clip py-12 sm:py-20">
+      <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6">
         <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
           <div className="on-slat-bg text-center sm:text-start">
             <h2
@@ -38,7 +38,7 @@ export default function CompletedCasesSectionClient({
         </div>
 
         {campaigns.length > 0 ? (
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="campaign-swipe mt-8 sm:mt-12 sm:grid sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {campaigns.map((campaign) => (
               <CampaignCard key={campaign.slug} campaign={campaign} />
             ))}

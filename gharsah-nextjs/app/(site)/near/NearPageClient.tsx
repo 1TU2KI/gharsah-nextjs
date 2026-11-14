@@ -23,7 +23,14 @@ const COPY_CONFIRMATION_MS = 2000;
  * links out to it (the CTA at the very end), never renders any overlay UI
  * itself, so it stays focused on the "اقتربت..." campaigns as its one job.
  */
-export default function NearPageClient({ campaigns }: { campaigns: Campaign[] }) {
+export default function NearPageClient({
+  campaigns,
+  customPagesEnabled = false,
+}: {
+  campaigns: Campaign[];
+  /** «اصنع صفحتك» button — the feature is a local prototype for now (see customNear/store.ts). */
+  customPagesEnabled?: boolean;
+}) {
   const { t, locale } = useLanguage();
   const [linkCopied, setLinkCopied] = useState(false);
   const copyTimeoutRef = useRef<number | undefined>(undefined);
@@ -62,8 +69,8 @@ export default function NearPageClient({ campaigns }: { campaigns: Campaign[] })
 
   return (
     <main className="flex-1">
-      <section className="relative overflow-x-hidden py-16">
-        <div className="relative z-10 mx-auto max-w-6xl px-6">
+      <section className="relative overflow-clip py-10 sm:py-16">
+        <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6">
           <div className="text-center">
             <h1
               className={`on-slat-bg text-3xl font-extrabold text-foreground sm:text-4xl ${locale === "en" ? "tracking-tight" : ""}`}
@@ -106,10 +113,24 @@ export default function NearPageClient({ campaigns }: { campaigns: Campaign[] })
               page never embeds that UI itself (see the module doc comment
               above), just points to it. */}
           <p className="on-slat-bg mt-12 text-center text-sm">
-            <Link href="/overlay" className="font-semibold text-primary-dark transition-colors hover:underline active:opacity-70">
+            <Link href="/overlay" className="tap-expand font-semibold text-primary-dark transition-colors hover:underline active:opacity-70">
               {t.almostThere.overlayCta}
             </Link>
           </p>
+
+          {/* «اصنع صفحتك» — centered at the very end of the page, under the
+              overlay CTA (moved from beside the copy-link button at the
+              top). Same style and link as before. */}
+          {customPagesEnabled && (
+            <div className="mt-6 text-center">
+              <Link
+                href="/near/create"
+                className="relative liquid-sheen inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-xs font-semibold text-on-accent shadow-[0_8px_20px_-8px_rgba(20,83,45,0.45)] transition-all hover:bg-accent-strong active:scale-95"
+              >
+                {t.customNear.createButton}
+              </Link>
+            </div>
+          )}
         </div>
       </section>
     </main>

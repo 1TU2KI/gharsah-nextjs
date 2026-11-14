@@ -26,6 +26,7 @@ import { track } from "@/app/lib/analytics/track";
  * instead of one row per campaign slug.
  */
 const CAMPAIGN_DETAIL_ROUTE = /^\/cases\/active\/[^/]+$/;
+const CUSTOM_NEAR_VIEW_ROUTE = /^\/n\/[^/]+$/;
 
 export default function PageViewTracker() {
   const pathname = usePathname();
@@ -35,7 +36,11 @@ export default function PageViewTracker() {
     if (lastTracked.current === pathname) return;
     lastTracked.current = pathname;
     if (CAMPAIGN_DETAIL_ROUTE.test(pathname)) return;
-    track({ type: "page_view", route: pathname, referrer: document.referrer || null });
+    // Custom اقتربت... pages are unlisted: record the route shape, never the
+    // page's viewing id. (Edit tokens live in the URL fragment, which
+    // `pathname` never includes.)
+    const route = CUSTOM_NEAR_VIEW_ROUTE.test(pathname) ? "/n/[page]" : pathname;
+    track({ type: "page_view", route, referrer: document.referrer || null });
   }, [pathname]);
 
   return null;

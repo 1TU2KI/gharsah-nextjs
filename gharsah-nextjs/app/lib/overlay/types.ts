@@ -32,4 +32,6 @@ export type PickableCampaign = {
   slug: string;
   title: string;
   subtitle: string;
+  /** Short Gharsah link code (`/c/<code>`), used by Gharsah Overlay's QR preview. */
+  shortCode?: string | null;
 };

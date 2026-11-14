@@ -18,17 +18,6 @@ export const GHARSAH_OVERLAY_TRANSITION_DURATION_MS = 500;
 export const GHARSAH_OVERLAY_THEME: OverlayTheme = "dark";
 export const GHARSAH_OVERLAY_POSITION: OverlayPosition = "top-right";
 export const GHARSAH_OVERLAY_COMPACT = false;
-/** "brand" (today's full card) stays the default — an existing copied URL with no `?style=` must keep behaving exactly as it always has. "logo" is opt-in only. */
+/** "brand" (today's full card) stays the default — an existing copied URL with no `?style=` must keep behaving exactly as it always has. "logo" and "qr" are opt-in only. */
 export const GHARSAH_OVERLAY_DEFAULT_STYLE: GharsahOverlayStyle = "brand";
 
-/**
- * TEMPORARY public-visibility gate for the "أوفرلاي غرسة" section on the
- * `/overlay` page ONLY — does not touch `/overlay/gharsah` (the real OBS
- * route), its API, or any of Gharsah Overlay's implementation. When false,
- * `GharsahOverlayPromoSection` renders a "قريبًا..." placeholder instead of
- * the real config UI; the full implementation (brand/logo style picker,
- * interval slider, generated URL, previews, OBS instructions) stays fully
- * intact in code and resumes exactly as-is the moment this is flipped back
- * to `true`. No reconstruction needed.
- */
-export const GHARSAH_OVERLAY_PUBLIC_ENABLED = false;

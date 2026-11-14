@@ -39,7 +39,16 @@ import { track } from "../../lib/analytics/track";
  * statusTheme shadows at all — see that file for the full recipe and why
  * it lives there instead of as composed Tailwind utilities.
  */
-export default function AlmostThereCard({ campaign, rank }: { campaign: Campaign; rank: number }) {
+export default function AlmostThereCard({
+  campaign,
+  rank,
+  showClosestLabel = true,
+}: {
+  campaign: Campaign;
+  rank: number;
+  /** Hides the #1 «الأقرب للاكتمال» badge (custom pages, see AlmostThereGrid). */
+  showClosestLabel?: boolean;
+}) {
   const { t, locale } = useLanguage();
   const theme = statusTheme.active;
   const title = campaign.title[locale];
@@ -90,7 +99,7 @@ export default function AlmostThereCard({ campaign, rank }: { campaign: Campaign
 
   return (
     <article
-      className={`glass-surface glass-clear relative flex h-full w-full flex-col rounded-2xl ${borderClass} bg-background/95 ${glowClass} p-5 backdrop-blur-sm transition-all duration-200 hover:-translate-y-2 has-[a:active]:translate-y-0 md:flex-1 md:basis-0 ${orderClass} ${prominenceClass}`}
+      className={`glass-surface glass-clear relative flex h-full w-full flex-col rounded-2xl ${borderClass} bg-background/95 ${glowClass} p-4 backdrop-blur-sm sm:p-5 transition-all duration-200 hover:-translate-y-2 has-[a:active]:translate-y-0 md:flex-1 md:basis-0 ${orderClass} ${prominenceClass}`}
     >
       <Link
         href={`/cases/active/${campaign.slug}`}
@@ -115,7 +124,7 @@ export default function AlmostThereCard({ campaign, rank }: { campaign: Campaign
           bg-accent/15) specifically so the card's own border doesn't show
           through where this now overlaps it — same mint/green tone and
           text as before, just solid instead of see-through. */}
-      {isCenter && (
+      {isCenter && showClosestLabel && (
         <span className="absolute -top-3 end-6 inline-flex items-center whitespace-nowrap rounded-full border border-primary/20 bg-primary-50 px-3 py-1 text-xs font-semibold leading-none text-accent-strong shadow-sm">
           {t.almostThere.closestLabel}
         </span>
@@ -140,7 +149,7 @@ export default function AlmostThereCard({ campaign, rank }: { campaign: Campaign
           <MemorialLine campaign={campaign} />
 
           <div className="mt-1.5 flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-dark px-3 py-1 text-xs font-semibold leading-none text-white">
+            <span className="status-badge inline-flex items-center gap-1.5 rounded-full bg-primary-dark px-3 py-1 text-xs font-semibold leading-none text-white">
               <PulseIcon className="h-3.5 w-3.5" />
               {t.campaignCard.status.active}
             </span>
@@ -148,7 +157,7 @@ export default function AlmostThereCard({ campaign, rank }: { campaign: Campaign
               href={campaign.platformHomepageUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className={`relative inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold leading-none transition-all active:scale-90 active:brightness-95 ${theme.platformPillClass}`}
+              className={`tap-expand relative inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold leading-none transition-all active:scale-90 active:brightness-95 ${theme.platformPillClass}`}
             >
               {campaign.platformLabel[locale]}
               {campaign.platformLogo ? (
@@ -181,7 +190,7 @@ export default function AlmostThereCard({ campaign, rank }: { campaign: Campaign
               target="_blank"
               rel="noopener noreferrer"
               onClick={onDonateClick}
-              className={`relative flex w-full items-center justify-center gap-2 rounded-full py-2.5 text-sm font-semibold transition-all active:scale-95 active:brightness-95 ${theme.buttonClass}`}
+              className={`relative flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm font-semibold transition-all sm:py-2.5 active:scale-95 active:brightness-95 ${theme.buttonClass}`}
             >
               {t.campaignCard.donateButton}
             </a>

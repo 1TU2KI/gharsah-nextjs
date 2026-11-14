@@ -52,6 +52,7 @@ export default async function EditCampaignPage({
     memorialPrefixEn: campaign.memorial_prefix_en ?? "",
     status: campaign.translation_status,
     error: campaign.translation_error,
+    manualFields: (campaign.translation_manual ?? "").split(",").filter(Boolean),
   };
 
   return (

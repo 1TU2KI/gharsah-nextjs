@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Alexandria } from "next/font/google";
 import GharsahOverlayClient from "@/app/components/overlay/GharsahOverlayClient";
 import GeneratedUrlBox from "@/app/components/overlay/GeneratedUrlBox";
 import ObsInstructions from "@/app/components/overlay/ObsInstructions";
 import OverlayMiniCanvas from "@/app/components/overlay/OverlayMiniCanvas";
 import type { GharsahOverlayApiResponse, GharsahOverlayStyle } from "@/app/lib/overlay/gharsah/types";
-import { GHARSAH_OVERLAY_DEFAULT_STYLE, GHARSAH_OVERLAY_PUBLIC_ENABLED } from "@/app/lib/overlay/gharsah/defaults";
+import type { PickableCampaign } from "@/app/lib/overlay/types";
+import { GHARSAH_OVERLAY_DEFAULT_STYLE } from "@/app/lib/overlay/gharsah/defaults";
+import { gharsahQrValue, type GharsahQrTarget } from "@/app/lib/overlay/gharsah/qr";
 
 const SMALL_PREVIEW_FILL_RATIO = 0.75;
 /** Matches GharsahOverlayCard's own fixed (non-compact) `w-80` — see cardWidthPx()'s equivalent in OverlayPromoSection.tsx; Gharsah Overlay has no compact setting to read, so this is a plain constant instead of a computed value. Only used for the "brand" style's preview reference width. */
@@ -15,12 +16,19 @@ const GHARSAH_CARD_WIDTH_PX = 320;
 /** Rough visual width of the "logo" style's stacked logo+hostUrl block (112px logo, "gharsah.sa" at text-2xl is narrower) — its own, much smaller preview reference width so "معاينة مصغرة" zooms it to actually fill the frame instead of sitting tiny inside a reference sized for the full brand card. */
 const GHARSAH_LOGO_STYLE_WIDTH_PX = 160;
 
-/** Scoped to the temporary "Coming Soon" gate below ONLY — never applied to the real Gharsah Overlay UI, which keeps the site's normal Cairo typography. */
-const alexandria = Alexandria({ subsets: ["arabic", "latin"], weight: ["400", "500", "600", "700", "800"] });
+/** The "qr" style's preview reference width, sized by HEIGHT because the frame is 16:9: the panel around the 220px code (padding + destination label) is ≈ 280px tall, × 16/9 ≈ 500, plus a little room — otherwise "معاينة مصغرة" would crop the panel and the code's margin. */
+const GHARSAH_QR_STYLE_WIDTH_PX = 540;
 
 const STYLE_OPTIONS: { value: GharsahOverlayStyle; label: string; description: string }[] = [
   { value: "brand", label: "الأوفرلاي الحالي", description: "بطاقة كاملة: الشعار + الجملة التعريفية + رابط الموقع" },
   { value: "logo", label: "شعار غرسة", description: "الشعار فقط مع رابط الموقع gharsah.sa، بلا خلفية أو أي محتوى إضافي" },
+  { value: "qr", label: "كيو آر كود", description: "رمز QR واضح قابل للمسح يوجّه المشاهدين مباشرة إلى وجهة تختارها" },
+];
+
+const QR_TARGET_OPTIONS: { value: GharsahQrTarget; label: string; description: string }[] = [
+  { value: "campaign", label: "حالة محددة", description: "رابط الحالة المختصر في غرسة" },
+  { value: "site", label: "موقع غرسة", description: "gharsah.sa" },
+  { value: "near", label: "اقتربت...", description: "صفحة الحالات الأقرب للاكتمال" },
 ];
 
 /**
@@ -32,9 +40,15 @@ const STYLE_OPTIONS: { value: GharsahOverlayStyle; label: string; description: s
  * without a now-inert leftover `?interval=` — keeps rendering the same
  * "brand" card it always has.
  */
-function buildStyleParams(style: GharsahOverlayStyle): URLSearchParams {
+function buildStyleParams(style: GharsahOverlayStyle, qrTarget: GharsahQrTarget, qrSlug: string | null): URLSearchParams {
   const params = new URLSearchParams();
   if (style !== GHARSAH_OVERLAY_DEFAULT_STYLE) params.set("style", style);
+  // "qr" style: its destination (`?qr=`) and, for a campaign, the slug
+  // (`?c=`) — the OBS route resolves these to the encoded URL server-side.
+  if (style === "qr") {
+    params.set("qr", qrTarget);
+    if (qrTarget === "campaign" && qrSlug) params.set("c", qrSlug);
+  }
   return params;
 }
 
@@ -62,14 +76,27 @@ function buildStyleParams(style: GharsahOverlayStyle): URLSearchParams {
 export default function GharsahOverlayPromoSection({
   overlayUrl,
   overlayData,
+  pickableCampaigns,
 }: {
   /** Base URL (current origin + "/overlay/gharsah") the generated custom URL is built from. */
   overlayUrl: string;
   overlayData: GharsahOverlayApiResponse;
+  /** Current public active campaigns (same list as Campaign Overlay's picker) for the QR "حالة محددة" choice. */
+  pickableCampaigns: PickableCampaign[];
 }) {
   const [style, setStyle] = useState<GharsahOverlayStyle>(overlayData.settings.style);
+  const [qrTarget, setQrTarget] = useState<GharsahQrTarget>(overlayData.settings.qrTarget);
+  const [qrSlug, setQrSlug] = useState<string | null>(pickableCampaigns[0]?.slug ?? null);
 
-  const styleParams = useMemo(() => buildStyleParams(style), [style]);
+  const qrCampaign = useMemo(() => pickableCampaigns.find((c) => c.slug === qrSlug) ?? null, [pickableCampaigns, qrSlug]);
+  // Same helper the OBS route uses (gharsah/qr.ts), so the preview always
+  // encodes exactly what the copied URL will.
+  const qrValue = useMemo(
+    () => (style === "qr" ? gharsahQrValue(qrTarget, qrCampaign) : null),
+    [style, qrTarget, qrCampaign],
+  );
+
+  const styleParams = useMemo(() => buildStyleParams(style, qrTarget, qrSlug), [style, qrTarget, qrSlug]);
   const customOverlayUrl = useMemo(() => {
     const qs = styleParams.toString();
     return qs ? `${overlayUrl}?${qs}` : overlayUrl;
@@ -120,37 +147,21 @@ export default function GharsahOverlayPromoSection({
   // override instead of eventually overwriting it back to "brand".
   const effectivePreviewData = useMemo<GharsahOverlayApiResponse>(() => {
     const base = rawPreviewData ?? overlayData;
-    return { ...base, settings: { ...base.settings, style } };
-  }, [rawPreviewData, overlayData, style]);
+    return {
+      ...base,
+      settings: { ...base.settings, style, qrTarget, qrCampaignSlug: qrTarget === "campaign" ? qrSlug : null },
+      qrValue,
+    };
+  }, [rawPreviewData, overlayData, style, qrTarget, qrSlug, qrValue]);
   // Forces both preview GharsahOverlayClient instances to fully remount when
   // style changes — `displayed` there is seeded from `initialData` via
   // `useState` exactly once per mount, so a bare prop change alone wouldn't
   // apply the new style until its next ~20s poll resolves; remounting
   // applies `effectivePreviewData`'s local override instantly instead. Same
   // technique as OverlayPromoSection's own `previewKey`.
-  const previewKey = style;
-  const previewReferenceWidthPx = style === "logo" ? GHARSAH_LOGO_STYLE_WIDTH_PX : GHARSAH_CARD_WIDTH_PX;
-
-  // Temporary PUBLIC visibility gate — see the flag's doc comment in
-  // gharsah/defaults.ts. Everything below (state, style logic,
-  // preview data fetching, the full config UI) stays fully intact and
-  // untouched; this only swaps what gets rendered on this page. The real
-  // `/overlay/gharsah` OBS route, its API, and all Gharsah Overlay code are
-  // unaffected — flipping the flag back to `true` restores this section
-  // exactly as it is today, with no reconstruction needed.
-  if (!GHARSAH_OVERLAY_PUBLIC_ENABLED) {
-    return (
-      <div className="glass-surface glass-clear relative mt-16 rounded-2xl border border-primary/20 bg-background/95 p-8 shadow-[0_4px_10px_rgba(20,83,45,0.10),0_32px_64px_-20px_rgba(20,83,45,0.30)] backdrop-blur-sm sm:p-12">
-        <div className={`flex min-h-[240px] flex-col items-center justify-center gap-4 text-center sm:min-h-[280px] ${alexandria.className}`}>
-          <h2 className="text-sm font-semibold tracking-[0.2em] text-muted sm:text-base">أوفرلاي غرسة</h2>
-          <p className="text-4xl font-extrabold leading-tight text-primary-dark sm:text-5xl">قريبًا...</p>
-          <p className="max-w-sm text-sm leading-relaxed text-muted sm:text-base">
-            نعمل على تجهيز أوفرلاي غرسة ليكون متاحًا لكم قريبًا.
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const previewKey = `${style}|${qrValue ?? ""}`;
+  const previewReferenceWidthPx =
+    style === "logo" ? GHARSAH_LOGO_STYLE_WIDTH_PX : style === "qr" ? GHARSAH_QR_STYLE_WIDTH_PX : GHARSAH_CARD_WIDTH_PX;
 
   return (
     <div className="glass-surface glass-clear relative mt-16 rounded-2xl border border-primary/20 bg-background/95 p-6 shadow-[0_4px_10px_rgba(20,83,45,0.10),0_32px_64px_-20px_rgba(20,83,45,0.30)] backdrop-blur-sm sm:p-8">
@@ -168,7 +179,7 @@ export default function GharsahOverlayPromoSection({
       <div className="mt-6 rounded-xl border border-primary/15 bg-wash/40 p-4 sm:p-5">
         <p className="text-sm font-bold text-foreground">اختر نوع أوفرلاي غرسة</p>
 
-        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        <div className="mt-3 grid gap-2 sm:grid-cols-3">
           {STYLE_OPTIONS.map((option) => {
             const isSelected = style === option.value;
             return (
@@ -196,6 +207,97 @@ export default function GharsahOverlayPromoSection({
           })}
         </div>
       </div>
+
+      {/* "كيو آر كود" only: where the QR points. Every change updates the
+          preview and the generated OBS URL below immediately. */}
+      {style === "qr" && (
+        <div className="mt-6 rounded-xl border border-primary/15 bg-wash/40 p-4 sm:p-5">
+          <p className="text-sm font-bold text-foreground">وجهة الكيو آر كود</p>
+
+          <div className="mt-3 grid gap-2 sm:grid-cols-3">
+            {QR_TARGET_OPTIONS.map((option) => {
+              const isSelected = qrTarget === option.value;
+              return (
+                <label
+                  key={option.value}
+                  className={`flex cursor-pointer items-start gap-2.5 rounded-xl border p-3 transition-colors ${
+                    isSelected ? "border-primary/50 bg-primary-50/60" : "border-primary/15 hover:border-primary/30"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="gharsah-overlay-qr-target"
+                    value={option.value}
+                    checked={isSelected}
+                    onChange={() => setQrTarget(option.value)}
+                    className="mt-0.5 h-4 w-4 shrink-0"
+                    style={{ accentColor: "var(--primary)" }}
+                  />
+                  <span>
+                    <span className="block text-sm font-semibold text-foreground">{option.label}</span>
+                    <span className="block text-xs text-muted" dir={option.value === "site" ? "ltr" : undefined}>
+                      {option.description}
+                    </span>
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+
+          {qrTarget === "campaign" && (
+            <div className="mt-4">
+              <label htmlFor="gharsah-qr-campaign" className="text-xs font-semibold text-foreground">
+                اختر الحالة
+              </label>
+              {pickableCampaigns.length > 0 ? (
+                <select
+                  id="gharsah-qr-campaign"
+                  value={qrSlug ?? ""}
+                  onChange={(e) => setQrSlug(e.target.value)}
+                  className="mt-1.5 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/20"
+                >
+                  {pickableCampaigns.map((c) => (
+                    <option key={c.slug} value={c.slug}>
+                      {c.title}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <p className="mt-1.5 text-xs text-muted">لا توجد حالات نشطة متاحة حاليًا.</p>
+              )}
+            </div>
+          )}
+
+          {/* اقتربت... — the main /near page, or (later) a custom Almost
+              There page. Custom pages are still a local prototype with no
+              public viewing links, so that choice stays unavailable until
+              they're live; private edit links never go into a QR. */}
+          {qrTarget === "near" && (
+            <div className="mt-4 space-y-2">
+              <label className="flex cursor-pointer items-center gap-2.5 rounded-xl border border-primary/50 bg-primary-50/60 p-3">
+                <input type="radio" name="gharsah-overlay-qr-near" checked readOnly className="h-4 w-4 shrink-0" style={{ accentColor: "var(--primary)" }} />
+                <span className="text-sm font-semibold text-foreground">صفحة اقتربت... الرئيسية</span>
+              </label>
+              <label aria-disabled="true" className="flex cursor-not-allowed items-start gap-2.5 rounded-xl border border-primary/15 p-3 opacity-60">
+                <input type="radio" name="gharsah-overlay-qr-near" disabled className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>
+                  <span className="block text-sm font-semibold text-foreground">صفحة اقتربت مخصصة</span>
+                  <span className="block text-xs text-muted">غير متاحة حاليًا — ستتوفر عند تفعيل روابط المشاهدة العامة للصفحات المخصصة.</span>
+                </span>
+              </label>
+            </div>
+          )}
+
+          {qrValue && (
+            <p className="mt-4 text-xs text-muted">
+              يفتح الرمز:{" "}
+              <span dir="ltr" className="font-semibold text-foreground">
+                {qrValue}
+              </span>
+            </p>
+          )}
+        </div>
+      )}
 
       {/* الرابط المخصص — no timing to configure anymore (the overlay is
           continuously visible, see GharsahOverlayClient.tsx), so this is

@@ -3,6 +3,8 @@ import Footer from "@/app/components/home/Footer";
 import Header from "@/app/components/home/Header";
 import InitialLoadOverlay from "@/app/components/ui/InitialLoadOverlay";
 import PageViewTracker from "@/app/components/analytics/PageViewTracker";
+import ScrollReveal from "@/app/components/ui/ScrollReveal";
+import PageScrollbar from "@/app/components/ui/PageScrollbar";
 import { LanguageProvider } from "@/app/lib/i18n/LanguageProvider";
 import { getDevBadgeVisible, getMaintenanceMessage } from "@/app/lib/db/settings";
 import { getActiveCampaignsLive } from "@/app/lib/campaignLiveSync";
@@ -28,6 +30,8 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       <PageViewTracker />
       <AmbientBackground />
       <InitialLoadOverlay />
+      <ScrollReveal />
+      <PageScrollbar />
       {/* Set from Settings → إعدادات عامة. Purely informational — the site
           stays fully usable underneath; this is a heads-up banner, not a
           gate. */}

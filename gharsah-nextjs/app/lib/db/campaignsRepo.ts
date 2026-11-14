@@ -33,6 +33,8 @@ export type CampaignRow = {
   description_source: "fetched" | "manual" | null;
   /** Same as description_source, but for title_ar. */
   title_source: "fetched" | "manual" | null;
+  /** Comma-separated English fields typed by an admin ("title", "relation", "description") — never auto-translated over. NULL when none. */
+  translation_manual: string | null;
   /** Compact public redirect code for gharsah.sa/c/<code> — see shortCode.ts. Assigned automatically on create and by a startup backfill for older rows, so this is only ever null for the brief instant between a row's INSERT and the backfill step; treat it as always-present in practice. */
   short_code: string | null;
 };
@@ -54,9 +56,11 @@ export type CampaignInput = {
   descriptionSource?: "fetched" | "manual" | null;
   titleSource?: "fetched" | "manual" | null;
   percent?: number | null;
-  /** The *_en fields above are always AI-generated (see app/lib/translate.ts), never admin-typed — these two flag whether that generation actually succeeded, so a translation outage is visible in the admin UI instead of silently shipping stale/missing English. */
+  /** Whether the last automatic translation (self-hosted engine, see app/lib/translate.ts) of the non-manual *_en fields succeeded — a failure is shown in the admin UI instead of silently shipping stale/missing English. */
   translationStatus: "ok" | "error";
   translationError?: string | null;
+  /** Comma-separated admin-typed English fields (see CampaignRow.translation_manual). */
+  translationManual?: string | null;
 };
 
 /** Every non-archived campaign, in display order — the exact set/order the public site renders. */
@@ -168,11 +172,12 @@ export async function createCampaignRow(input: CampaignInput): Promise<CampaignR
     translation_error: input.translationError ?? null,
     description_source: input.descriptionSource ?? null,
     title_source: input.titleSource ?? null,
+    translation_manual: input.translationManual ?? null,
   };
   await run(
     `INSERT INTO campaigns
-      (id, slug, order_index, url, platform, memorial_prefix_ar, memorial_prefix_en, username, relation_ar, relation_en, title_ar, title_en, status, description_ar, description_en, percent, archived_at, created_at, updated_at, completed_at, translation_status, translation_error, description_source, title_source, short_code)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, slug, order_index, url, platform, memorial_prefix_ar, memorial_prefix_en, username, relation_ar, relation_en, title_ar, title_en, status, description_ar, description_en, percent, archived_at, created_at, updated_at, completed_at, translation_status, translation_error, description_source, title_source, short_code, translation_manual)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       row.id,
       row.slug,
@@ -199,6 +204,7 @@ export async function createCampaignRow(input: CampaignInput): Promise<CampaignR
       row.description_source,
       row.title_source,
       row.short_code,
+      row.translation_manual,
     ],
   );
   return row;
@@ -213,7 +219,8 @@ export async function updateCampaignRow(id: string, input: CampaignInput): Promi
       slug = ?, url = ?, platform = ?, memorial_prefix_ar = ?, memorial_prefix_en = ?, username = ?,
       relation_ar = ?, relation_en = ?, title_ar = ?, title_en = ?, status = ?,
       description_ar = ?, description_en = ?, percent = ?, updated_at = ?, completed_at = ?,
-      translation_status = ?, translation_error = ?, description_source = ?, title_source = ?
+      translation_status = ?, translation_error = ?, description_source = ?, title_source = ?,
+      translation_manual = ?
      WHERE id = ?`,
     [
       input.slug,
@@ -236,6 +243,7 @@ export async function updateCampaignRow(id: string, input: CampaignInput): Promi
       input.translationError ?? null,
       input.descriptionSource ?? null,
       input.titleSource ?? null,
+      input.translationManual ?? null,
       id,
     ],
   );
@@ -305,7 +313,8 @@ export async function duplicateCampaignRow(id: string): Promise<CampaignRow | un
     relationAr: source.relation_ar,
     relationEn: source.relation_en,
     titleAr: `${source.title_ar} (نسخة)`,
-    titleEn: `${source.title_en} (Copy)`,
+    // Empty English (a failed/unavailable translation) stays empty — never a bare " (Copy)".
+    titleEn: source.title_en ? `${source.title_en} (Copy)` : "",
     // The title text itself changes here ("(نسخة)" appended), unlike
     // description which is copied verbatim — so unlike descriptionSource
     // below, this can't honestly claim to still be the literal fetched
@@ -320,6 +329,7 @@ export async function duplicateCampaignRow(id: string): Promise<CampaignRow | un
     // the source's own translation status/error through unchanged.
     translationStatus: source.translation_status,
     translationError: source.translation_error,
+    translationManual: source.translation_manual,
   });
 }
 

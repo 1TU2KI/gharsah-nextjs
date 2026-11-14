@@ -62,11 +62,13 @@ const rawQuery: RawQuery = async (text, params = []) => {
 // have no true historical date, so this stays NULL for them rather than
 // guessing one.
 //
-// Admins only ever enter Arabic; *_en columns are AI-generated from it (see
-// app/lib/translate.ts). translation_status 'ok' = every *_en column
-// matches the current *_ar content; 'error' = the last translate attempt
-// failed and at least one *_en column may be stale or missing — surfaced in
-// the admin UI with a retry action, never hidden.
+// *_en columns are machine-translated from the Arabic by Gharsah's
+// self-hosted engine (see app/lib/translate.ts), or typed by an admin
+// (listed in translation_manual). translation_status 'ok' = every
+// auto-translated *_en column matches the current *_ar content; 'error' =
+// the last translate attempt failed and at least one *_en column may be
+// stale or empty (never Arabic) — surfaced in the admin UI with a retry
+// action, never hidden.
 //
 // description_source/title_source record how description_ar/title_ar got
 // their current value: 'fetched' = pulled from the official platform page
@@ -107,6 +109,10 @@ const SCHEMA_STATEMENTS = [
     translation_error TEXT,
     description_source TEXT CHECK (description_source IN ('fetched','manual')),
     title_source TEXT CHECK (title_source IN ('fetched','manual')),
+    -- Comma-separated English fields an admin typed by hand ('title',
+    -- 'relation', 'description'); those are never auto-translated over.
+    -- NULL = all English is machine/seed text.
+    translation_manual TEXT,
     -- Compact public redirect code for /c/<code> (see app/c/[code]/route.ts
     -- and app/lib/db/shortCode.ts) — auto-generated on create, admin can
     -- regenerate or replace with a custom alias from the edit page. Never
@@ -233,6 +239,9 @@ const CAMPAIGN_COLUMN_MIGRATIONS = [
   `ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS description_source TEXT DEFAULT 'manual'`,
   `ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS title_source TEXT DEFAULT 'manual'`,
   `ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS short_code TEXT`,
+  // Additive and nullable: existing rows keep every value; NULL simply means
+  // "no English field was hand-typed".
+  `ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS translation_manual TEXT`,
   // Safe to create while existing rows are still NULL — Postgres allows any
   // number of NULLs in a unique index; `backfillCampaignShortCodes` (run
   // right after seeding, below) is what actually fills them in, at which

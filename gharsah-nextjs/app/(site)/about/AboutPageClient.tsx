@@ -12,8 +12,8 @@ export default function AboutPageClient() {
 
   return (
     <main className="flex-1">
-      <section className="relative overflow-x-hidden py-16">
-        <div className="relative z-10 mx-auto max-w-4xl px-6">
+      <section className="relative overflow-clip py-10 sm:py-16">
+        <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6">
           <div className="card-elevated glass-surface glass-clear relative rounded-2xl border border-border bg-background/80 p-8 backdrop-blur-md">
             <div className="flex items-center gap-3">
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary">
@@ -41,7 +41,7 @@ export default function AboutPageClient() {
             <p className="mt-6 text-sm">
               <Link
                 href="/terms"
-                className="accent-link font-semibold text-primary-dark transition-colors hover:underline active:opacity-70"
+                className="tap-expand accent-link font-semibold text-primary-dark transition-colors hover:underline active:opacity-70"
               >
                 {t.about.termsLinkLabel}
               </Link>
@@ -67,9 +67,9 @@ export default function AboutPageClient() {
                   line of its own — while staying `whitespace-normal` below
                   `sm` so narrow phones can still wrap it naturally instead
                   of overflowing or forcing the font smaller. */}
-              <span className="whitespace-normal sm:whitespace-nowrap">{t.about.coupletLine1}</span>
+              <span className="couplet-glass couplet-glass--1 whitespace-normal sm:whitespace-nowrap">{t.about.coupletLine1}</span>
               <br />
-              <span className="text-primary-dark">{t.about.coupletLine2}</span>
+              <span className="couplet-glass couplet-glass--2 text-primary-dark">{t.about.coupletLine2}</span>
             </p>
           </div>
         </div>

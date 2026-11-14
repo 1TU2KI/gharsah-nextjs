@@ -348,9 +348,9 @@
    (#262a43) surfaces, mauve (#483e58 → #876272) borders and fills, saffron
    (#e9a667) and gold-cream (#f2ca8f) as the bright accents, a deep saffron
    (#9b5a3a, ivory text 4.9:1) for filled buttons, cream-ivory text. Same
-   hierarchy as before: dark surfaces, bright tones only for accents. The
-   completed teal (--completed-*) is untouched so status colors stay
-   distinguishable. */
+   hierarchy as before: dark surfaces, bright tones only for accents.
+   Completed campaigns use antique brass/bronze on deep warm-brown glass
+   (see the end of this block), distinct from the saffron/navy active ones. */
 :root[data-theme="dark"]:has(.ambient-background-layer) {
   --background: #262a43;
   --foreground: #fff4df;
@@ -386,6 +386,211 @@
   --glass-edge-low: rgba(246, 217, 160, 0.05);
   --border-rgb: 74, 63, 90;
   --on-accent-rgb: 255, 244, 223;
+  /* Completed campaigns: no more blue/teal. Antique brass/bronze, taken
+     from the same ramp's gold-cream and saffron but desaturated toward
+     brass, so it stays distinct from the ACTIVE identity (saffron orange
+     accents on navy/mauve glass): completed cards sit on a deep warm-
+     brown glass tint instead of navy, with brass accents.
+       --completed            #8a682f champagne-gold (progress bar start;
+                              buttons/badge/footer: see the rules below)
+       --completed-hover      #63501f deeper bronze (button hover fill)
+       --completed-link       #d6bb7a soft brass (links/text on dark glass)
+       --completed-text       #ece0bb pale brass (text/usernames on glass)
+       --completed-strong     = --completed-text (hover text on deep tints)
+       --completed-soft       #c4a05a progress gradient end
+       --completed-tint       #4a3c26 / --completed-surface #3a2f22
+                              deep warm surfaces (pills, icon slots)
+       --completed-glow-rgb   #b8984f brass (update-card border/glow,
+                              username glow) */
+  --wash-completed: #2a2430;
+  /* Same dark glass fill as the active cards (--glass-rgb above); the
+     gold edge/accents below still mark completed cards. */
+  --glass-rgb-completed: 34, 37, 60;
+  --completed: #8a682f;
+  --completed-hover: #63501f;
+  --completed-strong: #ece0bb;
+  --completed-link: #d6bb7a;
+  --completed-text: #ece0bb;
+  --completed-soft: #c4a05a;
+  --completed-tint: #4a3c26;
+  --completed-surface: #3a2f22;
+  --completed-rgb: 184, 152, 79;
+  --completed-glow-rgb: 184, 152, 79;
+}
+
+/* Completed tokens double as text in two places where Light Mode's pale
+   surfaces made that work: `text-completed` (bronze text on a pale pill →
+   here on a deep warm pill) takes the soft brass link color, and
+   `text-completed-surface` (pale text on the bronze fill, e.g. the
+   Completed page footer) takes ivory. */
+:root[data-theme="dark"]:has(.ambient-background-layer) .text-completed {
+  color: var(--completed-link);
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer) .text-completed-surface {
+  color: var(--on-accent);
+}
+
+/* Completed campaigns, champagne gold (Dark Mode only):
+   - donation buttons: muted #8a682f → #c4a05a gradient with near-black
+     #140e05 text (≥4.6:1 wherever the label sits; the hover gradient is a
+     step BRIGHTER, #967436 → #d0ad66, so contrast only improves);
+   - «مكتملة» badge: lighter gold #e3cc93, dark #2a1d08 text (10.4:1);
+   - glass cards stay dark/translucent, with a fine gold edge: a gold-tinted
+     border plus a thin inset highlight along the top;
+   - Completed page footer: deeper gold #4e3a1a (ivory text 9.9:1). */
+:root[data-theme="dark"]:has(.ambient-background-layer) a.bg-completed {
+  background-image: linear-gradient(to left, #8a682f, #c4a05a);
+  color: #140e05;
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer) a.bg-completed:hover {
+  background-image: linear-gradient(to left, #967436, #d0ad66);
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer) span.bg-completed {
+  background-color: #e3cc93;
+  color: #2a1d08;
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer) .glass-surface--completed {
+  border-color: rgba(196, 160, 90, 0.42);
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer) .campaign-card.glass-surface--completed {
+  box-shadow:
+    inset 0 1px 0 rgba(232, 207, 150, 0.3),
+    inset 0 0 0 1px rgba(196, 160, 90, 0.1),
+    0 1px 2px rgba(184, 152, 79, 0.06),
+    0 16px 32px -12px rgba(184, 152, 79, 0.18);
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer) .campaign-card.glass-surface--completed:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(232, 207, 150, 0.38),
+    inset 0 0 0 1px rgba(196, 160, 90, 0.14),
+    0 2px 4px rgba(184, 152, 79, 0.08),
+    0 22px 40px -12px rgba(184, 152, 79, 0.24);
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer) footer.bg-completed {
+  background-color: #4e3a1a;
+}
+
+/* Campaign card outlines, modeled on the completed cards' gold outline
+   above: a thin 1px border at 42% of the card's accent, a 10% inset ring,
+   and a fine top highlight in a lighter tint of the same hue — same
+   rounded-2xl corners (the card's own). Each rule restates that card's
+   existing outer shadow, since a box-shadow rule replaces the whole value.
+   Dark Mode, active: saffron #e9a667 (highlight #f6d9a0). */
+:root[data-theme="dark"]:has(.ambient-background-layer) .campaign-card:not(.glass-surface--completed),
+:root[data-theme="dark"]:has(.ambient-background-layer) .campaign-card:not(.glass-surface--completed):hover {
+  border-color: rgba(233, 166, 103, 0.42);
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer) .campaign-card:not(.glass-surface--completed) {
+  box-shadow:
+    inset 0 1px 0 rgba(246, 217, 160, 0.3),
+    inset 0 0 0 1px rgba(233, 166, 103, 0.1),
+    0 1px 2px rgba(20, 83, 45, 0.05),
+    0 16px 32px -12px rgba(20, 83, 45, 0.16);
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer) .campaign-card:not(.glass-surface--completed):hover {
+  box-shadow:
+    inset 0 1px 0 rgba(246, 217, 160, 0.38),
+    inset 0 0 0 1px rgba(233, 166, 103, 0.14),
+    0 2px 4px rgba(20, 83, 45, 0.07),
+    0 22px 40px -12px rgba(20, 83, 45, 0.22);
+}
+
+/* Light Mode, active: the donate button green #247465, solid, so it reads
+   as a colored line against the pale glass on all four edges; faint inner
+   accent ring and a Moss Silk #acddb5 top highlight. */
+:root:not([data-theme="dark"]) .campaign-card:not(.glass-surface--completed),
+:root:not([data-theme="dark"]) .campaign-card:not(.glass-surface--completed):hover {
+  border-color: #247465;
+  /* The glass rim just inside the border (.glass-surface::after) is white
+     in Light Mode and visually swallowed the green line — tint it too. */
+  --glass-edge: rgba(36, 116, 101, 0.55);
+  --glass-edge-low: rgba(36, 116, 101, 0.22);
+}
+
+:root:not([data-theme="dark"]) .campaign-card:not(.glass-surface--completed) {
+  box-shadow:
+    inset 0 1px 0 rgba(172, 221, 181, 0.55),
+    inset 0 0 0 1px rgba(36, 116, 101, 0.1),
+    0 1px 2px rgba(20, 83, 45, 0.05),
+    0 16px 32px -12px rgba(20, 83, 45, 0.16);
+}
+
+:root:not([data-theme="dark"]) .campaign-card:not(.glass-surface--completed):hover {
+  box-shadow:
+    inset 0 1px 0 rgba(172, 221, 181, 0.65),
+    inset 0 0 0 1px rgba(36, 116, 101, 0.14),
+    0 2px 4px rgba(20, 83, 45, 0.07),
+    0 22px 40px -12px rgba(20, 83, 45, 0.22);
+}
+
+/* Light Mode, completed: the donate button teal #207681, solid; faint
+   inner accent ring and a Young Willow #addbcc top highlight. */
+:root:not([data-theme="dark"]) .campaign-card.glass-surface--completed,
+:root:not([data-theme="dark"]) .campaign-card.glass-surface--completed:hover {
+  border-color: #207681;
+  --glass-edge: rgba(32, 118, 129, 0.55);
+  --glass-edge-low: rgba(32, 118, 129, 0.22);
+}
+
+:root:not([data-theme="dark"]) .campaign-card.glass-surface--completed {
+  box-shadow:
+    inset 0 1px 0 rgba(173, 219, 204, 0.55),
+    inset 0 0 0 1px rgba(32, 118, 129, 0.1),
+    0 1px 2px rgba(32, 118, 129, 0.06),
+    0 16px 32px -12px rgba(32, 118, 129, 0.18);
+}
+
+:root:not([data-theme="dark"]) .campaign-card.glass-surface--completed:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(173, 219, 204, 0.65),
+    inset 0 0 0 1px rgba(32, 118, 129, 0.14),
+    0 2px 4px rgba(32, 118, 129, 0.08),
+    0 22px 40px -12px rgba(32, 118, 129, 0.24);
+}
+
+/* /cases/completed only (Header.tsx adds `header--completed` there): the
+   header's «تبرع الآن» and random-pick buttons (desktop row + mobile menu)
+   take the completed-campaign accent instead of the regular green/saffron.
+   Light Mode: the completed teal fill (#207681, white text 5.3:1) with its
+   deep hover (#123e49). Dark Mode: the same champagne-gold gradient and
+   near-black text as the completed donation buttons. Pressed states keep
+   the buttons' own active:scale/brightness. The disabled (no campaigns)
+   random button keeps its muted look. */
+.header--completed :is(.header-donate, .random-pick-btn:not(.cursor-not-allowed)) {
+  background-color: var(--completed);
+  color: #ffffff;
+  box-shadow: 0 8px 20px -8px rgba(var(--completed-rgb), 0.45);
+}
+
+.header--completed :is(.header-donate, .random-pick-btn:not(.cursor-not-allowed)):hover {
+  background-color: var(--completed-hover);
+  box-shadow: 0 10px 24px -8px rgba(var(--completed-rgb), 0.55);
+}
+
+.header--completed .random-pick-btn > .animate-glow-pulse {
+  background-color: rgba(var(--completed-rgb), 0.5);
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer)
+  .header--completed
+  :is(.header-donate, .random-pick-btn:not(.cursor-not-allowed)) {
+  background-image: linear-gradient(to left, #8a682f, #c4a05a);
+  color: #140e05;
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer)
+  .header--completed
+  :is(.header-donate, .random-pick-btn:not(.cursor-not-allowed)):hover {
+  background-image: linear-gradient(to left, #967436, #d0ad66);
 }
 
 /* Saffron ink Dark Mode: --primary-dark / --accent-strong are deep saffron
@@ -601,7 +806,7 @@ body {
      light   / dark      role
      #fff4df / #1f2237   .text-foreground(/90)  (cream-ivory / deep navy)
      #f4d79d / #1f2237   .text-muted(/70), .text-primary-dark (pale cream)
-     #addbcc / #1f2237   .text-completed-link   (Young Willow) */
+     #ece0bb / #1f2237   .text-completed-link   (pale brass) */
 :root[data-theme="dark"]:has(.ambient-background-layer)
   :is(.on-slat-bg, .on-slat-bg *):is(
     .text-foreground,
@@ -627,7 +832,7 @@ body {
 }
 
 :root[data-theme="dark"]:has(.ambient-background-layer) :is(.on-slat-bg, .on-slat-bg *):is(.text-completed-link) {
-  color: color-mix(in srgb, #addbcc, #1f2237 var(--slat-mix));
+  color: color-mix(in srgb, #ece0bb, #1f2237 var(--slat-mix));
 }
 
 :root[data-theme="dark"]:has(.ambient-background-layer) :is(a, button).on-slat-bg:hover {
@@ -691,11 +896,135 @@ body::before {
    `scrollbar-color`/`scrollbar-width`, WebKit/Blink (Chrome, Edge, Safari)
    via the `::-webkit-scrollbar*` pseudo-elements below; both read the same
    theme variables so light/dark mode stay in sync automatically. */
-html {
+/* Main page scrollbar (the viewport's, owned by <html>): transparent track
+   so the site background runs to the edge, and a thin, rounded, light
+   thumb, slightly inset top/bottom.
+   - Chrome/Edge ignore every ::-webkit-scrollbar rule on an element whose
+     `scrollbar-color`/`scrollbar-width` is set, so <html> sets them ONLY
+     where ::-webkit-scrollbar doesn't exist (Firefox: thin + same colors;
+     no inset possible there).
+   - Both properties inherit, so <body> re-declares the previous values:
+     inner scrollers (mobile menu, dialogs, …) look exactly as before. */
+/* Light in both themes: behind the transparent track the browser shows the
+   page's base color (body --flow-1, deep green / navy), not the fixed
+   animated layer, which stops at the scrollbar's edge. */
+:root {
+  --page-scrollbar-thumb: rgba(255, 255, 255, 0.5);
+  --page-scrollbar-thumb-hover: rgba(255, 255, 255, 0.72);
+}
+
+:root[data-theme="dark"] {
+  --page-scrollbar-thumb: rgba(255, 248, 234, 0.3);
+  --page-scrollbar-thumb-hover: rgba(255, 248, 234, 0.48);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--page-scrollbar-thumb) transparent;
+  }
+}
+
+body {
   scrollbar-width: thin;
   scrollbar-color: var(--primary) var(--wash);
 }
 
+html::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  background: transparent;
+}
+
+html::-webkit-scrollbar-track {
+  background: transparent;
+  margin-block: 6px;
+}
+
+html::-webkit-scrollbar-thumb {
+  background-color: var(--page-scrollbar-thumb);
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+
+html::-webkit-scrollbar-thumb:hover {
+  background-color: var(--page-scrollbar-thumb-hover);
+}
+
+html::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Public pages on classic-scrollbar systems (Windows): PageScrollbar.tsx
+   hides the native page bar — whose reserved lane left a strip beside the
+   header and background — and floats its own Liquid Glass thumb over the
+   page. Scrolling stays native. Overlay-scrollbar systems never get the
+   attribute, and the admin area never mounts it (rules above apply). */
+html[data-custom-scrollbar] {
+  scrollbar-width: none;
+}
+
+html[data-custom-scrollbar]::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* Invisible lane at the edge (click to jump); above the sticky header
+   (z-50), below the mobile drawer (70) and the full-screen overlays (999). */
+.page-scrollbar-lane {
+  position: fixed;
+  inset-block: 0;
+  right: 0;
+  z-index: 60;
+  width: 14px;
+}
+
+.page-scrollbar-thumb {
+  position: absolute;
+  top: 0;
+  right: 3px;
+  width: 8px;
+  border-radius: 999px;
+  cursor: default;
+  touch-action: none;
+  will-change: transform;
+  /* Liquid Glass: translucent fill + blur, a fine light rim, a soft top
+     highlight, and a faint deep outline so it reads on pale backgrounds. */
+  background: linear-gradient(to right, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.26));
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    0 0 0 0.5px rgba(23, 62, 54, 0.28),
+    0 2px 8px rgba(8, 14, 22, 0.18);
+  -webkit-backdrop-filter: blur(10px) saturate(160%);
+  backdrop-filter: blur(10px) saturate(160%);
+  transition: background-color 150ms ease, opacity 150ms ease;
+  opacity: 0.85;
+}
+
+.page-scrollbar-lane:hover .page-scrollbar-thumb,
+.page-scrollbar-thumb.is-dragging {
+  opacity: 1;
+  background: linear-gradient(to right, rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0.4));
+}
+
+:root[data-theme="dark"] .page-scrollbar-thumb {
+  background: linear-gradient(to right, rgba(255, 248, 234, 0.34), rgba(255, 248, 234, 0.16));
+  border-color: rgba(255, 248, 234, 0.38);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 248, 234, 0.5),
+    0 0 0 0.5px rgba(0, 0, 0, 0.35),
+    0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+:root[data-theme="dark"] .page-scrollbar-lane:hover .page-scrollbar-thumb,
+:root[data-theme="dark"] .page-scrollbar-thumb.is-dragging {
+  background: linear-gradient(to right, rgba(255, 248, 234, 0.5), rgba(255, 248, 234, 0.28));
+}
+
+/* Inner scrollers in Safari (which reads these everywhere): unchanged. */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -961,34 +1290,145 @@ html {
   }
 }
 
-/* About page: the divider above the closing Arabic couplet (same 64×1px
-   line, centered, same spacing as before). Palette gradient brightest in
-   the center, fading to both ends, with a narrow glow in the same family —
-   a drop-shadow, so the glow follows the gradient and the faded ends don't
-   glow. Light: Willow Mist center / Moss Silk / Garden Moss glow. Dark
-   (Saffron ink): gold-cream center / saffron / saffron glow. */
+/* About page: the divider above the closing Arabic couplet (same 64px
+   width, centered, same spacing). 2px thick (was 1px), the extra pixel
+   taken back from the space below so the couplet doesn't move. Mint → ivory
+   → mint, the couplet's own colors (its first line runs ivory → mint, the
+   second pale mint → light teal), brightest in the center and fading to
+   transparent at both ends, with a soft narrow mint glow — a drop-shadow,
+   so the glow follows the gradient and the faded ends don't glow. The
+   couplet is the same in both themes, so the divider is too; Dark Mode
+   only softens the glow a touch over the navy. */
 .quote-divider {
+  height: 2px;
+  margin-bottom: -1px;
+  border-radius: 9999px;
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(172, 221, 181, 0.45) 25%,
-    #e5f1cd 50%,
-    rgba(172, 221, 181, 0.45) 75%,
+    rgba(180, 239, 198, 0.55) 22%,
+    #fffbea 50%,
+    rgba(180, 239, 198, 0.55) 78%,
     transparent
   );
-  filter: drop-shadow(0 0 3px rgba(85, 184, 149, 0.85));
+  filter: drop-shadow(0 0 2.5px rgba(158, 232, 200, 0.75));
 }
 
+/* Dark Mode: the couplet's own warm ivory (#fff4df) at the center and its
+   soft gold (#f2ca8f) toward the ends, fading to transparent both sides,
+   with a gentle gold glow — so the divider matches the Dark Mode couplet
+   instead of the Light Mode mint. Size/position unchanged. */
 :root[data-theme="dark"] .quote-divider {
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(233, 166, 103, 0.5) 25%,
-    #f2ca8f 50%,
-    rgba(233, 166, 103, 0.5) 75%,
+    rgba(242, 202, 143, 0.6) 22%,
+    #fff4df 50%,
+    rgba(242, 202, 143, 0.6) 78%,
     transparent
   );
-  filter: drop-shadow(0 0 3px rgba(233, 166, 103, 0.8));
+  filter: drop-shadow(0 0 2.5px rgba(242, 202, 143, 0.6));
+}
+
+/* About page closing couplet (AboutPageClient `.couplet-glass`): a
+   different BRIGHT gradient per line, clipped to the letters, plus a slow
+   white sheen sweeping inside them. Line 1 ivory → mint, line 2 pale mint
+   → light teal, both running from the start of the line (right, RTL).
+   Deliberately NOT adaptive: the shared `.on-slat-bg` contrast switch
+   (--slat-mix) turned these into deep green over most of the stripes, so
+   the gradients ignore it and stay bright in both themes. A tight, soft
+   deep-green drop-shadow (filter, so it hugs the glyphs and sits under the
+   gradient rather than over it) separates the letters from mid-green
+   stripes; no outline or patch. Font, wording, size, spacing and
+   alignment untouched. */
+.couplet-glass {
+  --cg-sheen: rgba(255, 255, 255, 0.9);
+  filter: drop-shadow(0 1px 1.5px rgba(6, 40, 32, 0.45));
+}
+
+.couplet-glass--1 {
+  --cg-a: #fffbea;
+  --cg-b: #b4efc6;
+}
+
+.couplet-glass--2 {
+  --cg-a: #b4efc6;
+  --cg-b: #fffbea;
+}
+
+/* Dark Mode: warm ivory and soft saffron instead of mint — line 1 ivory →
+   saffron, line 2 saffron → ivory — with a deeper navy shadow so the pale
+   letters hold over the cream lower band of the Saffron ink background. */
+:root[data-theme="dark"] .couplet-glass {
+  --cg-sheen: rgba(255, 250, 238, 0.85);
+  filter: drop-shadow(0 1px 1.5px rgba(20, 18, 40, 0.6)) drop-shadow(0 0 6px rgba(20, 18, 40, 0.35));
+}
+
+:root[data-theme="dark"] .couplet-glass--1 {
+  --cg-a: #fff4df;
+  --cg-b: #f2ca8f;
+}
+
+:root[data-theme="dark"] .couplet-glass--2 {
+  --cg-a: #f6d9a0;
+  --cg-b: #fff4df;
+}
+
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .couplet-glass {
+    background-image:
+      linear-gradient(
+        115deg,
+        transparent 0%,
+        transparent 40%,
+        var(--cg-sheen) 50%,
+        transparent 60%,
+        transparent 100%
+      ),
+      linear-gradient(to left, var(--cg-a), var(--cg-b));
+    background-size:
+      300% 100%,
+      100% 100%;
+    background-position:
+      100% 0,
+      0 0;
+    background-repeat: no-repeat;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: couplet-glass-sheen 11s ease-in-out infinite;
+  }
+
+  .couplet-glass::selection {
+    -webkit-text-fill-color: #173e36;
+  }
+}
+
+@keyframes couplet-glass-sheen {
+  0%,
+  100% {
+    background-position:
+      100% 0,
+      0 0;
+  }
+  50% {
+    background-position:
+      0% 0,
+      0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .couplet-glass {
+    animation: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .couplet-glass {
+    background: none;
+    -webkit-text-fill-color: currentColor;
+  }
 }
 
 @keyframes verse-glass-sheen {
@@ -1016,15 +1456,18 @@ html {
 }
 
 /* The public header / shortcut navigation strip (Header.tsx) as ONE glass
-   surface: a slightly translucent bar fill (72%, the header's existing
-   opacity) with the shared tint and blur. Its `::after` is already the
-   header's own bottom-edge fade (.header-material), so the thin white edge
-   reflection is drawn as inset lines instead of the masked ring: bright
-   along the top, faint along the bottom — the same --glass-edge tokens. */
-.glass-surface--bar {
-  /* 80% (was the header's 72%): the inactive links (Inked Willow at 80%)
-     only reached 4.3:1 over the darkest stripes at 72%. */
-  --glass-alpha: 0.8;
+   surface, using the campaign cards' own recipe (`.glass-surface
+   .glass-clear`: same tint, 56% / Dark 82% fill, blur(8px) saturate(150%))
+   — the bar no longer sets its own denser alpha, and the old Tailwind
+   bg-background/72 + backdrop-blur-xl fallback utilities are gone from the
+   element, so nothing stacks on top of the shared fill. Its `::after` is
+   already the header's own bottom-edge fade (.header-material), so the
+   thin white edge reflection is drawn as inset lines instead of the masked
+   ring: bright along the top, faint along the bottom — the same
+   --glass-edge tokens. At the lighter fill the inactive links drop their
+   80% fade (full foreground), so they stay readable over every stripe. */
+:root:has(.ambient-background-layer) .glass-surface--bar .text-foreground\/80:not(:hover) {
+  color: var(--foreground);
 }
 
 /* Light Mode, same bar: the 11px "قيد التطوير" badge (teal-700, 3:1) takes
@@ -1038,13 +1481,7 @@ html {
   color: var(--primary);
 }
 
-/* Dark Mode (Saffron ink): the navy bar needs a denser fill over the cream
-   end of the background (links were 4.3:1 at 80%), and the "!" drops its
-   70% fade there too. */
-:root[data-theme="dark"]:has(.ambient-background-layer) .glass-surface--bar {
-  --glass-alpha: 0.88;
-}
-
+/* Dark Mode (Saffron ink): the "!" drops its 70% fade too. */
 :root[data-theme="dark"]:has(.ambient-background-layer) .glass-surface--bar .text-primary\/70 {
   color: var(--primary);
 }
@@ -1112,7 +1549,7 @@ html {
 
 :root[data-theme="dark"]:has(.ambient-background-layer) .glass-surface bdi.username-mention--completed {
   color: var(--completed-text);
-  text-shadow: 0 0 9px rgba(83, 173, 174, 0.55);
+  text-shadow: 0 0 9px rgba(var(--completed-glow-rgb), 0.55);
 }
 
 :root[data-theme="dark"]:has(.ambient-background-layer) .glass-surface .text-muted {
@@ -1362,16 +1799,22 @@ textarea:focus-visible,
   0%,
   100% {
     opacity: 0.55;
-    box-shadow: 0 0 0 0 rgba(20, 184, 166, 0);
+    box-shadow: 0 0 0 0 rgba(var(--status-dot-rgb, 20, 184, 166), 0);
   }
   50% {
     opacity: 1;
-    box-shadow: 0 0 4px 1px rgba(20, 184, 166, 0.55);
+    box-shadow: 0 0 4px 1px rgba(var(--status-dot-rgb, 20, 184, 166), 0.55);
   }
 }
 
 .animate-status-dot {
   animation: status-dot-breathe 3.2s ease-in-out infinite;
+}
+
+/* Saffron ink Dark Mode: the dot itself is already saffron (bg-primary);
+   its breathing glow follows instead of the Light Mode teal. */
+:root[data-theme="dark"]:has(.ambient-background-layer) .animate-status-dot {
+  --status-dot-rgb: 233, 166, 103;
 }
 
 .animate-drift {
@@ -1549,6 +1992,109 @@ textarea:focus-visible,
   object-fit: contain;
 }
 
+/* Liquid Glass logo (GharsahLoader `glass`, loading screens only). Every
+   layer is clipped to the logo file's own alpha (mask), so the exact
+   silhouette and petal overlaps stay and nothing is drawn outside the
+   petals. Smooth layers only — no edge-detection filter (it traced the
+   logo's color gradients into a grainy pencil outline):
+     shadow → a faint soft green shade under the petals, for legibility
+              on pale stripes (blurred first, then clipped to the petals);
+     body   → translucent pearly white + backdrop blur (filled glass);
+     depth  → the logo's own shading, grey and inverted, screened in, so
+              the overlapping petals read as denser glass;
+     rim    → a thin white highlight just inside the outer silhouette
+              (SVG erode of the alpha — smooth, anti-aliased);
+     sheen  → a soft light reflection across the upper petals. */
+.gharsah-loader--glass > :is(span, img),
+.gharsah-loader__glass-shadow > span {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.gharsah-loader__glass-body,
+.gharsah-loader__glass-sheen,
+.gharsah-loader__glass-shadow > span {
+  -webkit-mask: url("/logo.png") center / contain no-repeat;
+  mask: url("/logo.png") center / contain no-repeat;
+}
+
+.gharsah-loader__glass-shadow {
+  filter: blur(1.5px);
+  transform: translateY(1px);
+}
+
+.gharsah-loader__glass-shadow > span {
+  background: rgba(8, 48, 38, 0.2);
+}
+
+.gharsah-loader__glass-body {
+  background: linear-gradient(
+    165deg,
+    rgba(255, 255, 255, 0.62) 0%,
+    rgba(236, 246, 242, 0.46) 45%,
+    rgba(246, 241, 250, 0.52) 100%
+  );
+  -webkit-backdrop-filter: blur(6px) saturate(140%) brightness(1.08);
+  backdrop-filter: blur(6px) saturate(140%) brightness(1.08);
+}
+
+.gharsah-loader__glass-depth {
+  filter: grayscale(1) invert(1) contrast(1.1);
+  mix-blend-mode: screen;
+  opacity: 0.5;
+}
+
+.gharsah-loader__glass-rim {
+  opacity: 0.85;
+}
+
+.gharsah-loader__glass-sheen {
+  background:
+    radial-gradient(55% 34% at 44% 30%, rgba(255, 255, 255, 0.45), transparent 72%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.22) 0%, transparent 40%);
+}
+
+:root[data-theme="dark"] .gharsah-loader__glass-body {
+  background: linear-gradient(
+    165deg,
+    rgba(255, 252, 246, 0.72) 0%,
+    rgba(240, 236, 246, 0.56) 45%,
+    rgba(255, 246, 236, 0.62) 100%
+  );
+}
+
+:root[data-theme="dark"] .gharsah-loader__glass-shadow > span {
+  background: rgba(10, 10, 26, 0.28);
+}
+
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .gharsah-loader__glass-body {
+    background: rgba(244, 248, 247, 0.88);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .gharsah-loader__glass-body {
+    background: rgba(244, 248, 247, 0.94);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .gharsah-loader--glass > :is(span, img) {
+    display: none;
+  }
+
+  .gharsah-loader--glass > .gharsah-loader__glass-body {
+    display: block;
+    background: CanvasText;
+  }
+}
+
 /* Three small dots below the logo — now the MAIN loading indicator (the
    logo itself is static, see GharsahLoader above) — still understated in
    visual weight by design: one uniform brand-green color, tiny size, only
@@ -1596,6 +2142,51 @@ textarea:focus-visible,
   }
 }
 
+/* Clear Liquid Glass beads, matching the glass logo: same 6px size, gap
+   and pulse as above — only the paint changes. A nearly clear white body
+   with a frosted backdrop, a small white specular highlight top-left, a
+   bright lower inner rim (light caught inside the bead) and a hairline
+   white edge. */
+.site-loading-dot {
+  background:
+    radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 1) 0 18%, rgba(255, 255, 255, 0.4) 32%, transparent 50%),
+    radial-gradient(circle at 50% 55%, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.32) 70%, rgba(255, 255, 255, 0.6) 100%);
+  -webkit-backdrop-filter: blur(2px) brightness(1.1);
+  backdrop-filter: blur(2px) brightness(1.1);
+  box-shadow:
+    inset 0 -1px 1px rgba(255, 255, 255, 0.55),
+    0 0 0 0.5px rgba(255, 255, 255, 0.85),
+    0 1px 2px rgba(0, 0, 0, 0.16);
+}
+
+/* The initial full-screen loading overlay's Liquid Glass pane
+   (InitialLoadOverlay.tsx): the shared glass tint at a lighter fill, with
+   the same blur + saturate as `.glass-surface`, over the slat canvas. The
+   thin white reflection is a soft diagonal sheen from the top corner plus
+   a 1px inset top line (the pane is the whole viewport, so no edge ring). */
+.loading-glass-pane {
+  background:
+    linear-gradient(155deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.06) 28%, transparent 46%),
+    rgba(var(--glass-rgb), 0.42);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: inset 0 1px 0 var(--glass-edge);
+}
+
+:root[data-theme="dark"] .loading-glass-pane {
+  background:
+    linear-gradient(155deg, rgba(255, 248, 234, 0.1) 0%, rgba(255, 248, 234, 0.03) 28%, transparent 46%),
+    rgba(var(--glass-rgb), 0.55);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .loading-glass-pane {
+    background: rgb(var(--glass-rgb));
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   /* Same treatment as the logo's own petal-growth SVG right above: no
      motion at all, not even the small dot pulse. */
@@ -1604,17 +2195,12 @@ textarea:focus-visible,
   }
 }
 
-/* Donation transition screen (DonationTransition.tsx): a calm, staged
-   reveal — overlay fades in, then the title, then the description, while a
-   determinate progress line fills over the same pause — before leaving
-   Gharsah for the official donation platform in the same tab. Named classes
-   (not inline arbitrary Tailwind `animate-[...]` syntax) both to match this
-   file's own convention and because arbitrary bracket *values* have proven
-   unreliable in this project's Tailwind build (see the scale-[] history
-   elsewhere in this file/session) — named keyframes carry no such risk.
-   All durations/delays below are scaled to fit the ~1.1s total choreography
-   (see TRANSITION_MS in DonationTransition.tsx) so the full plant finishes
-   growing just before the same-tab redirect fires, with no dead time. */
+/* Donation transition (DonationTransition.tsx): shown only while the
+   browser is actually loading the official platform — no minimum time, no
+   timer. The overlay and a small Gharsah sprout simply fade in quickly; the
+   navigation has already started underneath. The thin bar under the
+   message is indeterminate only (no value, no percentage) and never
+   delays anything. */
 @keyframes donation-transition-fade-in {
   from {
     opacity: 0;
@@ -1624,305 +2210,232 @@ textarea:focus-visible,
   }
 }
 
-@keyframes donation-transition-rise-in {
+@keyframes donation-sprout-in {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(4px) scale(0.92);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes donation-transition-fill {
-  from {
-    width: 0%;
-  }
-  to {
-    width: 100%;
+    transform: none;
   }
 }
 
 .donation-transition-overlay {
-  animation: donation-transition-fade-in 0.2s ease-out both;
+  animation: donation-transition-fade-in 0.15s ease-out both;
+  /* The page the visitor came from stays visible: blurred, then washed in
+     its own background tone with a faint glow of the current accent. */
+  background:
+    radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--primary) 16%, transparent), transparent 62%),
+    color-mix(in srgb, var(--background) 62%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(16px) saturate(140%);
 }
 
+/* Leaving from a completed campaign: the completed palette drives the
+   sprout, title, glow and bar (same tokens the completed cards use). */
+.donation-transition--completed {
+  --primary: var(--completed);
+  --primary-light: var(--completed-soft);
+  --primary-dark: var(--completed-hover);
+}
+
+:root[data-theme="dark"] .donation-transition--completed {
+  --primary: var(--completed-soft);
+  --primary-light: #e3cc93;
+  --primary-dark: var(--completed);
+}
+
+/* Visibly Liquid Glass, this card only. The overlay behind it already
+   blurs + washes the page (and, as a backdrop root, leaves the card's own
+   backdrop blur little to sample), so the glass has to come from a thin
+   fill that lets that blurred page read through, a soft static sheen, and
+   a thin light rim — the shared `.glass-surface::after` edge ring, no
+   longer boxed in by the solid `border-border` outline. Comes after
+   `.glass-clear` (same specificity), so this alpha wins. */
+.donation-transition-card {
+  --glass-alpha: 0.3;
+  border-color: rgba(255, 255, 255, 0.55);
+  background-image: linear-gradient(
+    150deg,
+    rgba(255, 255, 255, 0.34) 0%,
+    rgba(255, 255, 255, 0.1) 36%,
+    rgba(255, 255, 255, 0) 62%,
+    rgba(255, 255, 255, 0.08) 100%
+  );
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.35) inset,
+    0 24px 60px -24px rgba(8, 14, 22, 0.35);
+}
+
+/* Same specificity as the Dark Mode `.glass-clear` 0.82 rule, and later,
+   so this card alone keeps its thin fill. */
+:root[data-theme="dark"]:has(.ambient-background-layer) .donation-transition-card {
+  --glass-alpha: 0.38;
+  border-color: var(--glass-edge);
+  background-image: linear-gradient(
+    150deg,
+    var(--liquid-sheen) 0%,
+    transparent 45%,
+    transparent 70%,
+    var(--glass-edge-low) 100%
+  );
+}
+
+/* Status tint, this card only (DonationTransition passes the campaign's
+   real status as `.glass-surface--completed`): the glass fill itself is
+   tinted Gharsah green for an active campaign and Completed teal for a
+   completed one — hues ~95° apart, so they never read as the same color.
+   Only `--glass-rgb` changes; the thin alpha, sheen and rim above stay.
+   Dark Mode: translucent charcoal warmed with the site's own accents
+   instead — saffron for active, muted gold for completed — on the fill and
+   the rim (border + `.glass-surface::after` edge ring) only; the
+   sprout/title/bar keep their Dark Mode colors. */
+.donation-transition-card {
+  --glass-rgb: 163, 201, 140; /* --primary-300 #a3c98c leaf green */
+}
+
+.donation-transition-card.glass-surface--completed {
+  --glass-rgb: 83, 173, 174; /* --completed-soft #53adae teal */
+}
+
+/* Active: charcoal + saffron (--primary #e9a667), reddish-amber. */
+:root[data-theme="dark"]:has(.ambient-background-layer) .donation-transition-card {
+  --glass-alpha: 0.46;
+  --glass-rgb: 74, 52, 40;
+  --glass-edge: rgba(233, 166, 103, 0.5);
+  --glass-edge-low: rgba(233, 166, 103, 0.1);
+  border-color: rgba(233, 166, 103, 0.42);
+}
+
+/* Completed: charcoal + muted gold (completed brass #c4a05a), olive-yellow —
+   a clearly different hue from the saffron above. */
+:root[data-theme="dark"]:has(.ambient-background-layer) .donation-transition-card.glass-surface--completed {
+  --glass-rgb: 62, 58, 38;
+  --glass-edge: rgba(214, 187, 122, 0.5);
+  --glass-edge-low: rgba(214, 187, 122, 0.1);
+  border-color: rgba(214, 187, 122, 0.42);
+}
+
+/* Arabic message: two balanced lines (split at the `\n` in translations.ts).
+   The longer line is ~23.65em wide in Cairo 500, so the size follows the
+   paragraph's own width (cqi) — 13px floor, the original 17px cap — and the
+   paragraph reaches 1rem into the card's side padding for more room. The
+   card's own size is unchanged. */
+.donation-transition-text--ar {
+  container-type: inline-size;
+  width: calc(100% + 2rem);
+  margin-inline: -1rem;
+}
+
+.donation-transition-text--ar > span {
+  font-size: clamp(13px, 4.1cqi, 17px);
+}
+
+/* Heading: About-couplet style (gradient clipped to the letters, soft drop
+   shadow) in the page's own deep-to-accent tones, so it stays readable on
+   the light glass card too. */
 .donation-transition-title {
-  animation: donation-transition-rise-in 0.25s ease-out 0.075s both;
+  color: var(--primary-dark);
+  filter: drop-shadow(0 1px 1px rgba(6, 40, 32, 0.12));
 }
 
-.donation-transition-description {
-  animation: donation-transition-rise-in 0.25s ease-out 0.225s both;
+:root[data-theme="dark"] .donation-transition-title {
+  color: var(--primary-light);
+  filter: drop-shadow(0 1px 1.5px rgba(20, 18, 40, 0.5));
 }
 
-.donation-transition-progress {
-  animation-name: donation-transition-fill;
-  animation-timing-function: linear;
-  animation-fill-mode: forwards;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  /* "Use a simple fade instead of moving animation" — same staged content,
-     no rise-in translate and no moving progress fill, just a short opacity
-     fade for the whole thing. */
-  .donation-transition-overlay,
-  .donation-transition-title,
-  .donation-transition-description {
-    animation: donation-transition-fade-in 0.3s ease-out both;
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .donation-transition-title {
+    background-image: linear-gradient(to left, var(--primary-dark), var(--primary));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 
-  .donation-transition-progress {
-    animation: none;
-    width: 100%;
+  :root[data-theme="dark"] .donation-transition-title {
+    background-image: linear-gradient(to left, #fff4df, var(--primary-light));
   }
-}
 
-/* Donation transition's own growth visual: a small, elegant, ASYMMETRIC
-   sapling growing from a seed — completely independent from the main site
-   loader (GharsahLoader, `.gharsah-loader__*` above) and from its
-   lotus-mark shape. Own classes, own keyframes, own timing (see
-   DonationTransition.tsx's own doc comment for the full bottom-to-top
-   choreography). Real SVG path-drawing via `pathLength` +
-   stroke-dasharray/dashoffset for the stem/branches/twigs — the only
-   technique that grows a curved line without visibly warping it, unlike a
-   Y-axis scale trick — and a non-uniform-scale + rotation "unfold" for
-   every leaf, never a plain fade/pop. Nothing here is mirrored or
-   symmetric by design. Total growth ~4s (see TRANSITION_MS in
-   DonationTransition.tsx, set just past it) — "اجعل نيتك أوسع" is meant
-   to be a real, unhurried pause, not a quick decorative flourish. Every
-   color below comes from the one `donation-plant-gradient` (see
-   DonationTransition.tsx) — never a hardcoded color here. */
-.donation-plant-seed {
-  transform-box: view-box;
-  transform-origin: 70px 290px;
-  opacity: 0;
-  transform: scale(0);
-  animation: donation-plant-seed-pop 0.3s ease-out 0.05s forwards;
-}
-
-.donation-plant-stem {
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-}
-
-.donation-plant-stem--lower {
-  animation: donation-plant-stem-grow 0.85s ease-in-out 0.3s forwards;
-}
-
-/* Starts right as the lower branches are underway, so the upper section
-   reads as the SAME stem continuing to rise, not a second, separate plant
-   part appearing out of nowhere. */
-.donation-plant-stem--upper {
-  animation: donation-plant-stem-grow 0.8s ease-in-out 1.5s forwards;
-}
-
-.donation-plant-branch {
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-}
-
-/* Lower branches (with their own small twigs), then middle branches, then
-   upper branches — each group waits for the previous one to actually
-   finish before it starts, so the growth visibly travels bottom to top
-   rather than sprouting everywhere at once. */
-.donation-plant-branch--l1 {
-  animation: donation-plant-branch-grow 0.45s ease-in-out 0.95s forwards;
-}
-
-.donation-plant-branch--l2 {
-  animation: donation-plant-branch-grow 0.45s ease-in-out 1.15s forwards;
-}
-
-.donation-plant-branch--twig1 {
-  animation: donation-plant-branch-grow 0.3s ease-in-out 1.45s forwards;
-}
-
-.donation-plant-branch--twig2 {
-  animation: donation-plant-branch-grow 0.3s ease-in-out 1.65s forwards;
-}
-
-.donation-plant-branch--l3-left {
-  animation: donation-plant-branch-grow 0.45s ease-in-out 2.35s forwards;
-}
-
-.donation-plant-branch--l3-right {
-  animation: donation-plant-branch-grow 0.45s ease-in-out 2.5s forwards;
-}
-
-.donation-plant-branch--l4 {
-  animation: donation-plant-branch-grow 0.45s ease-in-out 2.9s forwards;
-}
-
-.donation-plant-branch--l4-right {
-  animation: donation-plant-branch-grow 0.45s ease-in-out 3s forwards;
-}
-
-/* The two branches that fork from the stem's own tip, replacing what
-   would otherwise be an isolated top leaf. */
-.donation-plant-branch--top-left {
-  animation: donation-plant-branch-grow 0.45s ease-in-out 3.05s forwards;
-}
-
-.donation-plant-branch--top-right {
-  animation: donation-plant-branch-grow 0.45s ease-in-out 3.2s forwards;
-}
-
-/* Each leaf's own transform-origin (set inline per-element in
-   DonationTransition.tsx, matching its own `d` attribute's attachment
-   point) is what makes it visibly unfurl from exactly where it meets its
-   branch/twig, rather than from one shared point. The non-uniform starting
-   scale (thin on one axis, shorter on the other) plus a slight starting
-   rotation is what reads as "closed/folded/tilted" before it settles open,
-   instead of a flat pop. Every leaf's delay is set to (or just after) the
-   moment its own branch/twig finishes drawing — never before. */
-.donation-plant-leaf {
-  transform-box: view-box;
-  opacity: 0;
-  transform: scale(0.2, 0.45) rotate(-14deg);
-}
-
-.donation-plant-leaf--1 {
-  animation: donation-plant-leaf-unfold 0.4s ease-out 1.4s forwards;
-}
-
-.donation-plant-leaf--1b {
-  animation: donation-plant-leaf-unfold 0.4s ease-out 1.5s forwards;
-}
-
-.donation-plant-leaf--twig1 {
-  animation: donation-plant-leaf-unfold 0.35s ease-out 1.75s forwards;
-}
-
-.donation-plant-leaf--2 {
-  animation: donation-plant-leaf-unfold 0.4s ease-out 1.6s forwards;
-}
-
-.donation-plant-leaf--2b {
-  animation: donation-plant-leaf-unfold 0.4s ease-out 1.7s forwards;
-}
-
-.donation-plant-leaf--2c {
-  animation: donation-plant-leaf-unfold 0.35s ease-out 1.8s forwards;
-}
-
-.donation-plant-leaf--twig2 {
-  animation: donation-plant-leaf-unfold 0.35s ease-out 1.95s forwards;
-}
-
-.donation-plant-leaf--l3left {
-  animation: donation-plant-leaf-unfold 0.4s ease-out 2.8s forwards;
-}
-
-.donation-plant-leaf--l3leftb {
-  animation: donation-plant-leaf-unfold 0.4s ease-out 2.9s forwards;
-}
-
-.donation-plant-leaf--l3right {
-  animation: donation-plant-leaf-unfold 0.4s ease-out 2.95s forwards;
-}
-
-.donation-plant-leaf--l3rightb {
-  animation: donation-plant-leaf-unfold 0.4s ease-out 3.05s forwards;
-}
-
-.donation-plant-leaf--l3rightc {
-  animation: donation-plant-leaf-unfold 0.35s ease-out 3.15s forwards;
-}
-
-.donation-plant-leaf--l4 {
-  animation: donation-plant-leaf-unfold 0.4s ease-out 3.35s forwards;
-}
-
-.donation-plant-leaf--l4b {
-  animation: donation-plant-leaf-unfold 0.4s ease-out 3.45s forwards;
-}
-
-.donation-plant-leaf--l4right {
-  animation: donation-plant-leaf-unfold 0.4s ease-out 3.45s forwards;
-}
-
-.donation-plant-leaf--l4rightb {
-  animation: donation-plant-leaf-unfold 0.4s ease-out 3.55s forwards;
-}
-
-.donation-plant-leaf--topleft {
-  animation: donation-plant-leaf-unfold 0.4s ease-out 3.5s forwards;
-}
-
-.donation-plant-leaf--topleftb {
-  animation: donation-plant-leaf-unfold 0.4s ease-out 3.6s forwards;
-}
-
-.donation-plant-leaf--topright {
-  animation: donation-plant-leaf-unfold 0.4s ease-out 3.65s forwards;
-}
-
-.donation-plant-leaf--toprightb {
-  animation: donation-plant-leaf-unfold 0.4s ease-out 3.75s forwards;
-}
-
-@keyframes donation-plant-seed-pop {
-  0% {
-    transform: scale(0);
-    opacity: 0;
+  [dir="ltr"] .donation-transition-title {
+    background-image: linear-gradient(to right, var(--primary-dark), var(--primary));
   }
-  100% {
-    transform: scale(1);
-    opacity: 1;
+
+  :root[data-theme="dark"][dir="ltr"] .donation-transition-title {
+    background-image: linear-gradient(to right, #fff4df, var(--primary-light));
   }
 }
 
-@keyframes donation-plant-stem-grow {
-  0% {
-    stroke-dashoffset: 1;
-  }
-  100% {
-    stroke-dashoffset: 0;
-  }
+/* Message: solid full-strength text for contrast on the glass, in
+   couplet-like centered lines with a little air between them. */
+.donation-transition-text {
+  color: var(--foreground);
+  text-wrap: pretty;
 }
 
-@keyframes donation-plant-branch-grow {
-  0% {
-    stroke-dashoffset: 1;
-  }
-  100% {
-    stroke-dashoffset: 0;
-  }
+.donation-transition-text > span + span {
+  margin-top: 0.0625rem;
 }
 
-@keyframes donation-plant-leaf-unfold {
-  0% {
-    transform: scale(0.2, 0.45) rotate(-14deg);
-    opacity: 0;
-  }
-  35% {
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1, 1) rotate(0deg);
-    opacity: 1;
-  }
+/* Thin indeterminate bar: no value, no fake percentage; a soft segment
+   glides across while the official platform loads. Never awaited. */
+.donation-transition-bar {
+  position: relative;
+  width: min(100%, 13rem);
+  height: 3px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 18%, transparent);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  /* Skip the growth entirely — show the fully-grown plant with one short fade. */
-  .donation-plant-seed,
-  .donation-plant-stem,
-  .donation-plant-branch,
-  .donation-plant-leaf {
-    animation: donation-plant-fade-in 0.65s ease-out forwards;
-    transform: none;
-    stroke-dashoffset: 0;
-  }
+.donation-transition-bar > span {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 40%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  animation: donation-bar-glide 1.2s ease-in-out infinite;
 }
 
-@keyframes donation-plant-fade-in {
+@keyframes donation-bar-glide {
   from {
-    opacity: 0;
+    transform: translateX(-110%);
   }
   to {
-    opacity: 1;
+    transform: translateX(260%);
+  }
+}
+
+[dir="rtl"] .donation-transition-bar > span {
+  animation-name: donation-bar-glide-rtl;
+}
+
+@keyframes donation-bar-glide-rtl {
+  from {
+    transform: translateX(260%);
+  }
+  to {
+    transform: translateX(-110%);
+  }
+}
+
+.donation-sprout {
+  animation: donation-sprout-in 0.3s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .donation-transition-overlay,
+  .donation-sprout {
+    animation: donation-transition-fade-in 0.15s ease-out both;
+  }
+
+  /* Reduced motion: a still, softly filled bar instead of the glide. */
+  .donation-transition-bar > span {
+    animation: none;
+    width: 100%;
+    opacity: 0.45;
+    background: var(--primary);
   }
 }
 
@@ -2209,7 +2722,7 @@ textarea:focus-visible,
    (transitionDurationMs), set inline per-instance; only the transform/
    opacity VALUES live here. `prefers-reduced-motion` collapses this to a
    plain opacity fade, same convention as every other animated piece of this
-   project (donation-plant-*, gharsah-loader, site-loading-dot*). */
+   project (donation-sprout, gharsah-loader, site-loading-dot*). */
 .overlay-card {
   opacity: 0;
   transform: scale(0.97);
@@ -2237,6 +2750,146 @@ textarea:focus-visible,
   .overlay-card--visible {
     transform: none !important;
   }
+}
+
+/* OBS overlays — Gharsah green palette (every Campaign Overlay mode, Almost
+   There, Gharsah Brand / Logo / QR). Deliberately NOT built on the site's
+   theme tokens (--primary etc.) and never keyed to `data-theme`: the
+   /overlay page preview and the real OBS output render these exact same
+   classes, so toggling the website's Light/Dark Mode changes nothing here.
+   `?theme=dark|light` (the overlay's own URL option) picks the card variant.
+     Inked Willow #173E36  depth (dark surface base, shadows, QR modules)
+     Deep Moss    #247465  primary surfaces (surface glow, progress track,
+                           QR panel)
+     Garden Moss  #55B895  highlights (edges, progress fill, @mentions)
+     Moss Silk    #ACDDB5  / Willow Mist #E5F1CD  lighter details and text
+   Contrast: Willow Mist on Inked Willow 10:1, Moss Silk 7.7:1, Garden
+   Moss 4.9:1 (bold only); Inked Willow on Willow Mist 10:1, Deep Moss
+   4.7:1. */
+.obs-card {
+  position: relative;
+  border-width: 1px;
+  border-style: solid;
+}
+
+.obs-card--dark {
+  color: #e5f1cd;
+  border-color: rgba(85, 184, 149, 0.45);
+  background-color: rgba(23, 62, 54, 0.92);
+  background-image:
+    radial-gradient(120% 90% at 85% -10%, rgba(36, 116, 101, 0.75), transparent 60%),
+    linear-gradient(180deg, rgba(229, 241, 205, 0.07), transparent 40%);
+  box-shadow:
+    0 10px 30px rgba(23, 62, 54, 0.45),
+    inset 0 1px 0 rgba(172, 221, 181, 0.22);
+}
+
+.obs-card--light {
+  color: #173e36;
+  border-color: #acddb5;
+  background-color: rgba(229, 241, 205, 0.94);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.45), transparent 45%);
+  box-shadow:
+    0 10px 30px rgba(23, 62, 54, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.obs-card--dark .obs-muted {
+  color: #acddb5;
+}
+
+.obs-card--light .obs-muted {
+  color: rgba(23, 62, 54, 0.78);
+}
+
+.obs-card--dark .obs-accent {
+  color: #55b895;
+}
+
+.obs-card--light .obs-accent {
+  color: #247465;
+}
+
+.obs-card--dark .obs-percent {
+  color: #acddb5;
+}
+
+.obs-card--light .obs-percent {
+  color: #247465;
+}
+
+.obs-card--dark .obs-track {
+  background-color: #247465;
+}
+
+.obs-card--light .obs-track {
+  background-color: #acddb5;
+}
+
+.obs-card--dark .obs-fill {
+  background-image: linear-gradient(to left, #55b895, #acddb5);
+}
+
+.obs-card--light .obs-fill {
+  background-image: linear-gradient(to left, #247465, #55b895);
+}
+
+/* Logo badge inside the cards: the logo on a Willow Mist disc with a thin
+   Garden Moss ring. */
+.obs-logo-badge {
+  background-color: #e5f1cd;
+  box-shadow: 0 0 0 1px #55b895;
+}
+
+/* "logo" style: no card — the bare logo and host text, lifted off the video
+   with an Inked Willow shadow and a faint Garden Moss glow. */
+.obs-logo-mark {
+  filter: drop-shadow(0 4px 12px rgba(23, 62, 54, 0.6)) drop-shadow(0 0 18px rgba(85, 184, 149, 0.35));
+}
+
+.obs-logo-host {
+  color: #e5f1cd;
+  text-shadow:
+    0 2px 10px rgba(23, 62, 54, 0.85),
+    0 0 2px rgba(23, 62, 54, 0.9);
+}
+
+/* "qr" style: a softly rounded Deep Moss → Inked Willow glass panel with a
+   thin Garden Moss edge. The reflection is painted only on the panel
+   (::before, under the code); the code itself is an opaque square — Inked
+   Willow modules on solid pale ivory, 4-module quiet zone on all sides — so
+   no gradient or highlight ever reaches the scannable area. */
+.obs-qr-panel {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid #55b895;
+  border-radius: 26px;
+  background: linear-gradient(160deg, rgba(36, 116, 101, 0.94) 0%, rgba(23, 62, 54, 0.96) 70%);
+  box-shadow:
+    0 12px 32px rgba(23, 62, 54, 0.45),
+    inset 0 1px 0 rgba(229, 241, 205, 0.28);
+}
+
+.obs-qr-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.06) 28%, transparent 46%),
+    radial-gradient(80% 50% at 100% 100%, rgba(85, 184, 149, 0.22), transparent 70%);
+}
+
+.obs-qr-code {
+  display: block;
+  border-radius: 14px;
+  background: #fffdf2;
+}
+
+.obs-qr-label {
+  color: #e5f1cd;
 }
 
 /* Admin overlay live preview (OverlaySettingsPanel.tsx) — a checkerboard
@@ -2584,6 +3237,28 @@ textarea:focus-visible,
   color: #93c5fd;
 }
 
+/* Saffron ink Dark Mode (public): the "اكتملت حالة" category in the same
+   antique brass as completed campaigns instead of blue — moderate border +
+   glow strength unchanged. Still distinct from the other categories: urgent
+   stays red, maintenance keeps its yellow/black striped frame, added its
+   green, general its neutral border. */
+:root[data-theme="dark"]:has(.ambient-background-layer) .news-card--completed {
+  border-color: rgba(var(--completed-glow-rgb), 0.6);
+  background-image: linear-gradient(180deg, rgba(var(--completed-glow-rgb), 0.1), transparent 60%);
+  box-shadow:
+    0 0 0 1px rgba(var(--completed-glow-rgb), 0.16),
+    0 10px 24px -16px rgba(var(--completed-glow-rgb), 0.45);
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer) .news-badge--completed {
+  background-color: rgba(var(--completed-glow-rgb), 0.2);
+  color: var(--completed-text);
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer) .news-watermark-icon--completed {
+  color: #b8984f;
+}
+
 .news-badge--added {
   background-color: rgba(var(--accent-glow-rgb), 0.16);
   color: var(--primary-dark);
@@ -2674,5 +3349,248 @@ textarea:focus-visible,
    sits," with good contrast for the overlay card in either theme. */
 .overlay-public-preview {
   aspect-ratio: 16 / 9;
-  background: linear-gradient(135deg, #0d2818 0%, #143323 45%, #207681 100%);
+  /* Same in both website themes (no Dark Mode override): the preview must
+     look exactly like the OBS output. Inked Willow → Deep Moss. */
+  background: linear-gradient(135deg, #10302a 0%, #173e36 45%, #247465 100%);
+  border-color: rgba(85, 184, 149, 0.3);
+  color: #173e36;
+}
+
+/* Story-card preview (CampaignStoryShare.tsx): a checkerboard behind the
+   transparent card PNG, the same in both themes. */
+.story-card-checker {
+  background-color: #ffffff;
+  background-image:
+    linear-gradient(45deg, #d9d9d9 25%, transparent 25%),
+    linear-gradient(-45deg, #d9d9d9 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #d9d9d9 75%),
+    linear-gradient(-45deg, transparent 75%, #d9d9d9 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+}
+
+/* Dark Mode (public): black text on «تبرع الآن» (header, desktop and mobile
+   menu) and on every «التبرع عبر المنصة الرسمية» link (campaign cards,
+   detail page, Almost There), for active and completed campaigns alike.
+   Text color only — fills, gradients and effects are unchanged. Outranks
+   the completed-page header rule (#140e05). */
+:root[data-theme="dark"]:has(.ambient-background-layer)
+  :is(.header-donate, a[target="_blank"].bg-accent, a[target="_blank"].bg-completed) {
+  color: #000000;
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer) .header--completed .header-donate.header-donate {
+  color: #000000;
+}
+
+/* Phones: small inline links and pills (platform pill, «عرض الحالة», …)
+   get an invisible, larger touch area — the element itself, its look and
+   the layout are unchanged. Hosts are made relative here. */
+@media (max-width: 639px) {
+  .tap-expand {
+    position: relative;
+  }
+
+  .tap-expand::before {
+    content: "";
+    position: absolute;
+    inset: -11px -6px;
+  }
+}
+
+/* Dark Mode (public): black text and icons on every campaign status badge
+   («نشطة», «مكتملة», …) and a black icon in the circular random-pick
+   buttons (header + floating). Backgrounds unchanged. */
+:root[data-theme="dark"]:has(.ambient-background-layer) .status-badge.status-badge {
+  color: #000000;
+}
+
+:root[data-theme="dark"]:has(.ambient-background-layer) .random-pick-btn:not(.inline-flex) .random-pick-icon {
+  color: #000000;
+}
+
+/* Phones: homepage campaign previews scroll sideways (Ehsan's mobile
+   pattern) — one card ~84% of the screen wide with the next one peeking,
+   snapping card by card. Bleeds to the screen edges (cancels the 16px
+   gutter) and leaves room above/below for the cards' shadow. From sm: up
+   the container is the regular grid again (classes in the markup). */
+@media (max-width: 639px) {
+  .campaign-swipe {
+    display: flex;
+    gap: 12px;
+    margin-inline: -16px;
+    padding: 4px 16px 20px;
+    overflow-x: auto;
+    /* Without this, overflow-x: auto makes overflow-y compute to auto too,
+       so the row could become a vertical scroller of its own while its
+       cards animate/lift. Horizontal swiping only. */
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 16px;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+  }
+
+  .campaign-swipe::-webkit-scrollbar {
+    display: none;
+  }
+
+  .campaign-swipe > * {
+    flex: 0 0 84%;
+    scroll-snap-align: start;
+  }
+
+  .campaign-swipe > .campaign-card:hover {
+    translate: none;
+  }
+}
+
+/* ── Motion (public site; modelled on ehsan.sa) ─────────────────────────
+   One shared set of timings for every public page. Scoped with the same
+   public-site marker used elsewhere, so the admin panel and the OBS
+   output routes keep their own timing.
+   - Buttons/links/toggles/cards: the site-wide hover/press transition
+     (the `*` rule above, 200ms settle curve) becomes Ehsan's button
+     response — 150ms ease-in-out. `:where()` keeps it at zero
+     specificity, so deliberate per-element timings (dice spin, loaders,
+     overlay controls) are untouched.
+   - Scroll entrance (ScrollReveal.tsx): AOS fade-up as Ehsan uses it —
+     100px travel, 2s, ease, no delay.
+   - Menu drawer: 350ms ease (Ehsan's mobile menu timing). */
+:root:has(.ambient-background-layer) {
+  --motion-ui-duration: 150ms;
+  --motion-ui-ease: ease-in-out;
+  --motion-reveal-duration: 2000ms;
+  --motion-reveal-ease: ease;
+  --motion-reveal-distance: 100px;
+  --motion-menu-duration: 350ms;
+  --motion-menu-ease: ease;
+}
+
+:where(:root:has(.ambient-background-layer)) *,
+:where(:root:has(.ambient-background-layer)) *::before,
+:where(:root:has(.ambient-background-layer)) *::after {
+  transition-duration: var(--motion-ui-duration);
+  transition-timing-function: var(--motion-ui-ease);
+}
+
+/* Hidden start state (set by ScrollReveal only after hydration, so
+   content is never hidden without JS). Keeps the elements' own hover
+   motion (translate / shadow / border) on the shared UI timing. */
+[data-reveal] {
+  opacity: 0;
+  transform: translate3d(0, var(--motion-reveal-distance), 0);
+  transition:
+    opacity var(--motion-reveal-duration) var(--motion-reveal-ease),
+    transform var(--motion-reveal-duration) var(--motion-reveal-ease),
+    translate var(--motion-ui-duration) var(--motion-ui-ease),
+    scale var(--motion-ui-duration) var(--motion-ui-ease),
+    box-shadow var(--motion-ui-duration) var(--motion-ui-ease),
+    border-color var(--motion-ui-duration) var(--motion-ui-ease),
+    background-color var(--motion-ui-duration) var(--motion-ui-ease);
+}
+
+[data-reveal].is-revealed {
+  opacity: 1;
+  transform: none;
+}
+
+/* Headings/intro text over the slatted background keep their adaptive
+   0.45s color crossfade (rules above) alongside the reveal. */
+:root:has(.ambient-background-layer) :is(.on-slat-bg, .on-slat-bg *)[data-reveal][data-reveal][data-reveal] {
+  transition:
+    opacity var(--motion-reveal-duration) var(--motion-reveal-ease),
+    transform var(--motion-reveal-duration) var(--motion-reveal-ease),
+    color 0.45s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+[data-reveal].reveal-instant {
+  transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
+/* Mobile/tablet navigation drawer (Header.tsx, below xl:). Slides in from
+   the start edge — right in Arabic, left in English — over a dimmed
+   backdrop; part of the page stays visible beside it. */
+.site-drawer-root {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  visibility: hidden;
+  pointer-events: none;
+  transition: visibility 0s linear var(--motion-menu-duration, 350ms);
+}
+
+.site-drawer-root.is-open {
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
+
+.site-drawer-root .site-drawer-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 14, 22, 0.45);
+  opacity: 0;
+  transition: opacity var(--motion-menu-duration, 350ms) var(--motion-menu-ease, ease);
+}
+
+.site-drawer-root .site-drawer {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: min(84vw, 340px);
+  height: 100dvh;
+  border-inline-end-width: 1px;
+  box-shadow: 0 0 40px rgba(8, 14, 22, 0.25);
+  transform: translateX(100%);
+  transition: transform var(--motion-menu-duration, 350ms) var(--motion-menu-ease, ease);
+}
+
+[dir="ltr"] .site-drawer-root .site-drawer {
+  transform: translateX(-100%);
+}
+
+.site-drawer-root.is-open .site-drawer-backdrop {
+  opacity: 1;
+}
+
+.site-drawer-root.is-open .site-drawer {
+  transform: none;
+}
+
+/* Current page: subtle tinted row plus a slim accent line on the start edge. */
+.site-drawer-link {
+  position: relative;
+}
+
+.site-drawer-link.is-active::before {
+  content: "";
+  position: absolute;
+  inset-block: 10px;
+  inset-inline-start: 0;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--primary);
+}
+
+.site-drawer-link.is-active.is-completed::before {
+  background: var(--completed);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-drawer-root,
+  .site-drawer-root .site-drawer,
+  .site-drawer-root .site-drawer-backdrop {
+    transition: none;
+  }
 }

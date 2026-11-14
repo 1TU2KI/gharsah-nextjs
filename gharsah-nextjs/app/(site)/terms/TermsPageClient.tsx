@@ -11,8 +11,8 @@ export default function TermsPageClient() {
 
   return (
     <main className="flex-1">
-      <section className="relative overflow-x-hidden py-16">
-        <div className="relative z-10 mx-auto max-w-4xl px-6">
+      <section className="relative overflow-clip py-10 sm:py-16">
+        <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6">
           <h1 className={`on-slat-bg text-2xl font-extrabold text-foreground sm:text-3xl ${headingClass}`}>{t.terms.heading}</h1>
 
           <div className="mt-8 space-y-8">

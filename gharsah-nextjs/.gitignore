@@ -46,3 +46,7 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# self-hosted translation service (see translation-service/README.md)
+/translation-service/node_modules
+/translation-service/.model-cache

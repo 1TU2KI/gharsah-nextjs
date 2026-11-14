@@ -1,63 +1,52 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { create } from "qrcode";
-import { createSlatFramePainter } from "@/app/components/decor/MintTonicBackground";
+import { useEffect, useRef, useState } from "react";
 import { LinkIcon } from "@/app/components/home/icons";
 import type { Campaign } from "@/app/lib/campaigns";
 import { useLanguage } from "@/app/lib/i18n/LanguageProvider";
 
-const WIDTH = 1080;
-const HEIGHT = 1920;
+const CARD_WIDTH = 888;
 const SITE_ORIGIN = "https://gharsah.sa";
 
 const copy = {
   ar: {
     open: "شارك الحالة كستوري",
-    heading: "معاينة الستوري",
+    heading: "شارك الحالة كستوري",
     close: "إغلاق",
-    preview: "صورة عمودية لمشاركة الحالة",
+    preview: "بطاقة الحالة بخلفية شفافة",
     preparing: "جارٍ تجهيز الصورة…",
-    share: "مشاركة الصورة",
+    share: "مشاركة كستوري",
     download: "تحميل الصورة",
     copy: "نسخ رابط الحالة",
     copied: "تم نسخ رابط الحالة.",
-    hint: "لإضافة رابط قابل للضغط، انسخ رابط الحالة وألصقه في ملصق الرابط داخل تطبيق الستوري.",
-    shareError: "تعذّرت المشاركة من المتصفح. حمّل الصورة وارفعها من داخل التطبيق.",
+    linkHint: "البطاقة بخلفية شفافة لتضعها فوق صورتك أو مقطعك. إذا وصلت الصورة وحدها إلى إنستغرام أو سناب شات، انسخ رابط الحالة وألصقه في ملصق الرابط داخل الستوري.",
+    noShare: "متصفحك لا يدعم المشاركة المباشرة، فحمّلنا الصورة لك. ارفعها من داخل التطبيق.",
+    shareError: "تعذّرت المشاركة. حمّل الصورة وارفعها من داخل التطبيق.",
     copyError: "تعذّر النسخ التلقائي. يمكنك تحديد الرابط ونسخه يدويًا.",
-    imageError: "تعذّر تجهيز الصورة. جرّب فتح المعاينة مرة أخرى أو انسخ الرابط.",
-    storyLabel: "حملة تبرع موثوقة",
+    imageError: "تعذّر تجهيز الصورة. انسخ رابط الحالة بدلًا من ذلك.",
     progress: (percent: number) => String(percent) + "٪ مكتملة",
-    scan: "امسح الرمز لفتح الحالة",
   },
   en: {
     open: "Share as a story",
-    heading: "Story preview",
+    heading: "Share as a story",
     close: "Close",
-    preview: "Vertical campaign story image",
+    preview: "Campaign card with a transparent background",
     preparing: "Preparing image…",
-    share: "Share image",
+    share: "Share as a story",
     download: "Download image",
     copy: "Copy campaign link",
     copied: "Campaign link copied.",
-    hint: "For a tappable link, copy the campaign URL and paste it into your story app’s link sticker.",
-    shareError: "Your browser couldn’t share the image. Download it and upload it from your app.",
+    linkHint: "The card has a transparent background so you can place it over your own photo or video. If Instagram or Snapchat receives only the image, copy the campaign link and paste it into the story’s link sticker.",
+    noShare: "Your browser can’t share directly, so we downloaded the image. Upload it from your app.",
+    shareError: "Sharing failed. Download the image and upload it from your app.",
     copyError: "Automatic copying failed. You can select and copy the link manually.",
-    imageError: "Couldn’t prepare the image. Reopen the preview to try again or copy the link.",
-    storyLabel: "Verified donation campaign",
+    imageError: "Couldn’t prepare the image. Copy the campaign link instead.",
     progress: (percent: number) => String(percent) + "% complete",
-    scan: "Scan to open the campaign",
   },
 } as const;
 
-function drawWrappedText(
-  ctx: CanvasRenderingContext2D,
-  value: string,
-  y: number,
-  maxWidth: number,
-  lineHeight: number,
-  maxLines: number,
-) {
+/** Splits text into at most `maxLines` lines that fit `maxWidth`. */
+function wrapLines(ctx: CanvasRenderingContext2D, value: string, maxWidth: number, maxLines: number): string[] {
   const lines: string[] = [];
   let line = "";
   for (const word of value.trim().split(/\s+/u)) {
@@ -70,123 +59,106 @@ function drawWrappedText(
     }
   }
   if (line) lines.push(line);
-  for (const [index, text] of lines.slice(0, maxLines).entries()) {
-    const visibleText = index === maxLines - 1 && lines.length > maxLines ? text + "…" : text;
-    ctx.fillText(visibleText, WIDTH / 2, y + index * lineHeight, maxWidth);
-  }
+  const visible = lines.slice(0, maxLines);
+  if (lines.length > maxLines) visible[maxLines - 1] += "…";
+  return visible;
 }
 
-function drawQrCode(ctx: CanvasRenderingContext2D, url: string) {
-  const { modules } = create(url, { errorCorrectionLevel: "M" });
-  const quietZone = 4;
-  const availableSize = 320;
-  const totalModules = modules.size + quietZone * 2;
-  const moduleSize = Math.floor(availableSize / totalModules);
-  const size = totalModules * moduleSize;
-  const x = Math.floor((WIDTH - size) / 2);
-  const y = 1265 + Math.floor((availableSize - size) / 2);
-
-  ctx.fillStyle = "#fff";
-  ctx.fillRect(x, y, size, size);
-  ctx.fillStyle = "#10231f";
-  for (let row = 0; row < modules.size; row++) {
-    for (let column = 0; column < modules.size; column++) {
-      if (!modules.get(row, column)) continue;
-      ctx.fillRect(
-        x + (column + quietZone) * moduleSize,
-        y + (row + quietZone) * moduleSize,
-        moduleSize,
-        moduleSize,
-      );
-    }
-  }
-}
-
-function drawPanel(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number) {
-  ctx.save();
-  ctx.shadowColor = "rgba(12, 48, 38, 0.19)";
-  ctx.shadowBlur = 36;
-  ctx.shadowOffsetY = 14;
-  ctx.fillStyle = "rgba(249, 253, 247, 0.94)";
-  ctx.beginPath();
-  ctx.roundRect(x, y, width, height, 48);
-  ctx.fill();
-  ctx.restore();
-
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
-  ctx.stroke();
-}
-
-async function renderStory(
-  canvas: HTMLCanvasElement,
-  campaign: Campaign,
-  locale: keyof typeof copy,
-  link: string,
-) {
+/**
+ * The story card as a standalone transparent PNG, cropped tightly around
+ * the rounded card: everything outside it is fully transparent, the card's
+ * own fill is a partially transparent glass (72–78% white, so the visitor's
+ * photo or video shows through while the dark title stays ≥4.8:1 even over
+ * pure black), with a thin reflective edge and a soft top sheen. The title,
+ * percentage and progress bar are drawn fully opaque.
+ */
+async function renderStory(campaign: Campaign, locale: keyof typeof copy, fontFamily: string): Promise<File> {
   const labels = copy[locale];
+  await document.fonts.ready;
+
+  const measure = document.createElement("canvas").getContext("2d");
+  if (!measure) throw new Error("Canvas is unavailable.");
+  measure.font = "bold 64px " + fontFamily;
+  const lines = wrapLines(measure, campaign.title[locale], 760, 5);
+  const percent =
+    typeof campaign.percent === "number" && Number.isFinite(campaign.percent)
+      ? Math.max(0, Math.min(100, campaign.percent))
+      : null;
+
+  const inset = 4; // room for the edge stroke's antialiasing
+  const lineHeight = 84;
+  const padding = 80;
+  const cardHeight = padding * 2 + lines.length * lineHeight + (percent === null ? 0 : 150);
+  const canvas = document.createElement("canvas");
+  canvas.width = CARD_WIDTH + inset * 2;
+  canvas.height = cardHeight + inset * 2;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas is unavailable.");
 
-  const fontFamily = getComputedStyle(canvas).fontFamily;
-  const logo = new Image();
-  logo.src = "/logo.png";
-  await Promise.all([document.fonts.ready, logo.decode().catch(() => undefined)]);
+  const x = inset;
+  const y = inset;
+  const radius = 56;
+  const card = new Path2D();
+  card.roundRect(x, y, CARD_WIDTH, cardHeight, radius);
 
-  // Export a still frame of Gharsah’s existing Light Mode background.
-  createSlatFramePainter("mint")(ctx, 1600);
+  // Glass fill: partially transparent, slightly clearer toward the bottom.
+  const fill = ctx.createLinearGradient(0, y, 0, y + cardHeight);
+  fill.addColorStop(0, "rgba(249, 253, 247, 0.78)");
+  fill.addColorStop(1, "rgba(249, 253, 247, 0.72)");
+  ctx.fillStyle = fill;
+  ctx.fill(card);
 
+  // Soft sheen across the top of the card (inside the card only).
+  ctx.save();
+  ctx.clip(card);
+  const sheen = ctx.createLinearGradient(0, y, 0, y + cardHeight * 0.45);
+  sheen.addColorStop(0, "rgba(255, 255, 255, 0.35)");
+  sheen.addColorStop(1, "rgba(255, 255, 255, 0)");
+  ctx.fillStyle = sheen;
+  ctx.fillRect(x, y, CARD_WIDTH, cardHeight * 0.45);
+  ctx.restore();
+
+  // Thin reflective edge: bright at the top-left, fading, catching light
+  // again at the bottom-right; plus a faint inner line for definition.
+  const edge = ctx.createLinearGradient(x, y, x + CARD_WIDTH, y + cardHeight);
+  edge.addColorStop(0, "rgba(255, 255, 255, 0.95)");
+  edge.addColorStop(0.45, "rgba(255, 255, 255, 0.4)");
+  edge.addColorStop(1, "rgba(255, 255, 255, 0.85)");
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = edge;
+  ctx.stroke(card);
+  const innerEdge = new Path2D();
+  innerEdge.roundRect(x + 3, y + 3, CARD_WIDTH - 6, cardHeight - 6, radius - 3);
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = "rgba(23, 62, 54, 0.12)";
+  ctx.stroke(innerEdge);
+
+  // Opaque content.
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.direction = locale === "ar" ? "rtl" : "ltr";
-
-  ctx.fillStyle = "#fff";
-  ctx.beginPath();
-  ctx.arc(540, 288, 75, 0, Math.PI * 2);
-  ctx.fill();
-  if (logo.naturalWidth > 0) {
-    const scale = 115 / Math.max(logo.naturalWidth, logo.naturalHeight);
-    const width = logo.naturalWidth * scale;
-    const height = logo.naturalHeight * scale;
-    ctx.drawImage(logo, 540 - width / 2, 288 - height / 2, width, height);
-  } else {
-    ctx.fillStyle = "#173e36";
-    ctx.font = "bold 36px " + fontFamily;
-    ctx.fillText("غرسة", 540, 288);
-  }
-  ctx.fillStyle = "#fff";
-  ctx.font = "bold 55px " + fontFamily;
-  ctx.fillText(locale === "ar" ? "غرسة" : "Gharsah", 540, 412);
-
-  drawPanel(ctx, 96, 510, 888, 622);
-  ctx.fillStyle = "#247465";
-  ctx.font = "bold 33px " + fontFamily;
-  ctx.fillText(labels.storyLabel, 540, 618, 740);
+  const centerX = x + CARD_WIDTH / 2;
   ctx.fillStyle = "#173e36";
-  ctx.font = "bold 58px " + fontFamily;
-  drawWrappedText(ctx, campaign.title[locale], 730, 740, 75, 4);
+  ctx.font = "bold 64px " + fontFamily;
+  lines.forEach((line, index) => ctx.fillText(line, centerX, y + padding + lineHeight / 2 + index * lineHeight, 760));
 
-  const percent = campaign.percent;
-  if (typeof percent === "number" && Number.isFinite(percent)) {
-    const progress = Math.max(0, Math.min(100, percent));
-    ctx.font = "bold 42px " + fontFamily;
-    ctx.fillText(labels.progress(progress), 540, 1034);
+  if (percent !== null) {
+    const textY = y + padding + lines.length * lineHeight + 60;
+    ctx.font = "bold 44px " + fontFamily;
+    ctx.fillText(labels.progress(percent), centerX, textY);
+    const barX = centerX - 320;
     ctx.fillStyle = "#acddb5";
-    ctx.fillRect(220, 1076, 640, 12);
-    ctx.fillStyle = "#247465";
-    const fillWidth = 640 * progress / 100;
-    ctx.fillRect(locale === "ar" ? 860 - fillWidth : 220, 1076, fillWidth, 12);
+    ctx.beginPath();
+    ctx.roundRect(barX, textY + 50, 640, 14, 7);
+    ctx.fill();
+    const fillWidth = (640 * percent) / 100;
+    if (fillWidth > 0) {
+      ctx.fillStyle = "#247465";
+      ctx.beginPath();
+      ctx.roundRect(locale === "ar" ? barX + 640 - fillWidth : barX, textY + 50, fillWidth, 14, 7);
+      ctx.fill();
+    }
   }
-
-  drawPanel(ctx, 205, 1172, 670, 506);
-  ctx.fillStyle = "#173e36";
-  ctx.font = "bold 36px " + fontFamily;
-  ctx.fillText(labels.scan, 540, 1230, 590);
-  drawQrCode(ctx, link);
-  ctx.fillStyle = "#173e36";
-  ctx.direction = "ltr";
-  ctx.font = "bold 31px " + fontFamily;
-  ctx.fillText(link.replace("https://", ""), 540, 1629, 582);
 
   return new Promise<File>((resolve, reject) => {
     canvas.toBlob((blob) => {
@@ -194,53 +166,61 @@ async function renderStory(
         reject(new Error("PNG export failed."));
         return;
       }
-      resolve(new File([blob], "gharsah-story.png", { type: "image/png" }));
+      resolve(new File([blob], "gharsah-story-card.png", { type: "image/png" }));
     }, "image/png");
   });
 }
 
+/**
+ * «شارك الحالة كستوري»: a quick share flow. The transparent story card is prepared in
+ * the background as soon as the share icon is on the page, so the preview
+ * opens ready and «مشاركة كستوري» calls the native share sheet directly
+ * inside the tap (browsers require a fresh tap for `navigator.share`). The
+ * image and the public campaign link are shared together where the browser
+ * allows; story apps may still keep only the image, so the link-sticker
+ * hint and the copy-link fallback stay visible.
+ */
 export default function CampaignStoryShare({ campaign }: { campaign: Campaign }) {
   const { locale } = useLanguage();
   const labels = copy[locale];
   const dialog = useRef<HTMLDialogElement>(null);
-  const canvas = useRef<HTMLCanvasElement>(null);
+  const button = useRef<HTMLButtonElement>(null);
   const [file, setFile] = useState<File | null>(null);
-  const [preparing, setPreparing] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
   const [message, setMessage] = useState("");
   const path = campaign.shortCode
     ? "/c/" + encodeURIComponent(campaign.shortCode)
     : "/cases/active/" + encodeURIComponent(campaign.slug);
+  // The one public campaign link: shared with the image and copied by "Copy campaign link".
   const link = SITE_ORIGIN + path;
 
-  async function openPreview() {
-    if (!dialog.current || !canvas.current || preparing) return;
-    setFile(null);
-    setMessage("");
-    dialog.current.showModal();
-    setPreparing(true);
-    try {
-      setFile(await renderStory(canvas.current, campaign, locale, link));
-    } catch {
-      setMessage(labels.imageError);
-    } finally {
-      setPreparing(false);
-    }
-  }
+  // Prepare the image ahead of time (and again if the language changes).
+  useEffect(() => {
+    if (!button.current) return;
+    let cancelled = false;
+    let url: string | null = null;
+    const fontFamily = getComputedStyle(button.current).fontFamily;
+    renderStory(campaign, locale, fontFamily)
+      .then((result) => {
+        if (cancelled) return;
+        url = URL.createObjectURL(result);
+        setFile(result);
+        setPreviewUrl(url);
+        setFailed(false);
+      })
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
+    return () => {
+      cancelled = true;
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [campaign, locale]);
 
-  async function shareImage() {
-    if (!file) return;
-    const data = { files: [file] };
-    try {
-      if (!navigator.canShare?.(data)) {
-        setMessage(labels.shareError);
-        return;
-      }
-      await navigator.share(data);
-    } catch (error) {
-      if (!(error instanceof DOMException && error.name === "AbortError")) {
-        setMessage(labels.shareError);
-      }
-    }
+  function openDialog() {
+    setMessage("");
+    dialog.current?.showModal();
   }
 
   function downloadImage() {
@@ -255,6 +235,23 @@ export default function CampaignStoryShare({ campaign }: { campaign: Campaign })
     window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
   }
 
+  // No `await` before navigator.share: it must run inside the tap itself.
+  function shareStory() {
+    if (!file) return;
+    setMessage("");
+    const withLink: ShareData = { files: [file], url: link };
+    const imageOnly: ShareData = { files: [file] };
+    const data = navigator.canShare?.(withLink) ? withLink : navigator.canShare?.(imageOnly) ? imageOnly : null;
+    if (!data) {
+      downloadImage();
+      setMessage(labels.noShare);
+      return;
+    }
+    navigator.share(data).catch((error) => {
+      if (!(error instanceof DOMException && error.name === "AbortError")) setMessage(labels.shareError);
+    });
+  }
+
   async function copyLink() {
     try {
       await navigator.clipboard.writeText(link);
@@ -264,64 +261,71 @@ export default function CampaignStoryShare({ campaign }: { campaign: Campaign })
     }
   }
 
-  const actionClass = "rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-primary-50 disabled:opacity-50";
+  const smallActionClass =
+    "rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-primary-50 disabled:opacity-50";
 
   return (
     <>
       <button
+        ref={button}
         type="button"
-        onClick={openPreview}
-        disabled={preparing}
-        className="relative mt-2 flex w-full items-center justify-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground hover:bg-primary-50 disabled:opacity-50"
+        onClick={openDialog}
+        aria-label={labels.open}
+        // Icon-only, pinned to the card's top end corner (top-left in Arabic).
+        // CampaignCard pads the memorial line so text never runs under it.
+        className="absolute end-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background/80 text-foreground transition-colors hover:bg-primary-50 active:scale-95"
       >
         <LinkIcon className="h-4 w-4" />
-        {labels.open}
       </button>
 
       <dialog
         ref={dialog}
         aria-label={labels.heading}
-        className="fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-md overflow-y-auto rounded-2xl border border-border bg-background p-4 text-foreground shadow-2xl backdrop:bg-black/65 sm:p-6"
+        className="fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-xs overflow-y-auto rounded-2xl border border-border bg-background p-4 text-foreground shadow-2xl backdrop:bg-black/65"
       >
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg font-bold">{labels.heading}</h2>
-          <button type="button" onClick={() => dialog.current?.close()} className={actionClass}>
+          <h2 className="text-base font-bold">{labels.heading}</h2>
+          <button type="button" onClick={() => dialog.current?.close()} className={smallActionClass}>
             {labels.close}
           </button>
         </div>
 
-        <canvas
-          ref={canvas}
-          width={WIDTH}
-          height={HEIGHT}
-          role="img"
-          aria-label={labels.preview}
-          className={file ? "mx-auto my-4 h-auto w-full max-w-[230px] rounded-xl" : "sr-only"}
-        />
-        {preparing && <p role="status" className="my-4 text-sm text-muted">{labels.preparing}</p>}
+        {/* Checkerboard behind the card so its transparency is obvious. */}
+        <div className="story-card-checker mt-3 flex min-h-32 items-center justify-center overflow-hidden rounded-xl border border-border p-4">
+          {previewUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- local blob preview of the generated PNG (the same file shared/downloaded)
+            <img src={previewUrl} alt={labels.preview} className="h-auto w-full" />
+          ) : (
+            <p role="status" className="text-center text-xs text-muted">
+              {failed ? labels.imageError : labels.preparing}
+            </p>
+          )}
+        </div>
 
-        <div className="mt-4 flex flex-wrap justify-center gap-2">
-          <button type="button" onClick={shareImage} disabled={!file} className={actionClass}>
-            {labels.share}
-          </button>
-          <button type="button" onClick={downloadImage} disabled={!file} className={actionClass}>
+        <button
+          type="button"
+          onClick={shareStory}
+          disabled={!file}
+          className="mt-4 w-full rounded-full bg-accent py-2.5 text-sm font-semibold text-on-accent transition-all hover:bg-accent-strong active:scale-95 disabled:opacity-50"
+        >
+          {labels.share}
+        </button>
+
+        <div className="mt-2 flex justify-center gap-2">
+          <button type="button" onClick={downloadImage} disabled={!file} className={smallActionClass}>
             {labels.download}
           </button>
-          <button type="button" onClick={copyLink} className={actionClass}>
+          <button type="button" onClick={copyLink} className={smallActionClass}>
             {labels.copy}
           </button>
         </div>
 
-        <p className="mt-4 text-sm leading-6 text-muted">{labels.hint}</p>
-        <input
-          dir="ltr"
-          readOnly
-          aria-label={labels.copy}
-          value={link}
-          onFocus={(event) => event.currentTarget.select()}
-          className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
-        />
-        {message && <p role="status" className="mt-3 text-sm text-foreground">{message}</p>}
+        <p className="mt-3 text-[11px] leading-5 text-muted">{labels.linkHint}</p>
+        {message && (
+          <p role="status" className="mt-2 text-xs text-foreground">
+            {message}
+          </p>
+        )}
       </dialog>
     </>
   );

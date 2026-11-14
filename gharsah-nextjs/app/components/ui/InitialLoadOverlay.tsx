@@ -94,8 +94,11 @@ export default function InitialLoadOverlay() {
           underneath). Hidden in Dark Mode via globals.css, where the
           `.gharsah-atmosphere-bg` recipe above still applies unchanged. */}
       <MintTonicBackground variant={slatVariant} className="absolute inset-0 h-full w-full" />
+      {/* Liquid Glass pane over the canvas (globals.css `.loading-glass-pane`):
+          frosts the slats behind it; the logo and dots sit above it, unblurred. */}
+      <div className="loading-glass-pane absolute inset-0" />
       <div className="relative">
-        <GharsahLoader size={112} />
+        <GharsahLoader size={112} glass />
       </div>
       <div className="relative">
         <GharsahLoaderDots />

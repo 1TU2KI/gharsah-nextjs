@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CheckBadgeIcon, LeafIcon } from "./icons";
+import { DuaIcon, HeartIcon, SproutIcon, TargetIcon, UsersIcon } from "./icons";
 import { useLanguage } from "../../lib/i18n/LanguageProvider";
 
 const quickLinks = [
@@ -15,12 +15,12 @@ const quickLinks = [
   { href: "/contact", key: "contact" as const },
 ];
 
-// One entry per `footer.whyItems` row (see translations.ts) — same
-// alternating Leaf/CheckBadge pattern this list always used, sized for its
-// current 5 statements. Deliberately NOT `goalIcons` from Goals.tsx: this
-// list keeps its own existing icon treatment, not the Goals section's
-// bespoke per-item icons.
-const whyIcons = [LeafIcon, CheckBadgeIcon, LeafIcon, CheckBadgeIcon, LeafIcon];
+// One entry per `footer.whyItems` row (see translations.ts), reusing the
+// matching "أهداف غرسة" icons (same order as Goals.tsx's goalIcons): sprout =
+// ongoing charity, target = campaigns in one place, heart = the broader
+// intention, people = solidarity, prayer = الدعاء. Rendered at footer size
+// inside the existing chips.
+const whyIcons = [SproutIcon, TargetIcon, HeartIcon, UsersIcon, DuaIcon];
 
 export default function Footer() {
   const { t } = useLanguage();
@@ -45,7 +45,7 @@ export default function Footer() {
 
   return (
     <footer className={`section-edge-glow border-t border-border ${surfaceClass}`}>
-      <div className="mx-auto grid max-w-6xl gap-x-8 gap-y-10 px-6 py-12 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mx-auto grid max-w-6xl gap-x-8 gap-y-10 px-4 py-12 sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
         <div>
           <div className="flex items-center gap-2">
             {/* Footer-only: white circular backdrop behind the logo mark (per

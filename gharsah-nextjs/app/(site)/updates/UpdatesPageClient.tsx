@@ -15,8 +15,8 @@ export default function UpdatesPageClient({ items }: { items: PublicNewsItem[] }
 
   return (
     <main className="flex-1">
-      <section className="relative overflow-x-hidden py-16">
-        <div className="relative z-10 mx-auto max-w-3xl px-6">
+      <section className="relative overflow-clip py-10 sm:py-16">
+        <div className="relative z-10 mx-auto max-w-3xl px-4 sm:px-6">
           <div className="on-slat-bg text-center">
             <h1 className="text-3xl font-extrabold text-foreground sm:text-4xl">{t.news.pageHeading}</h1>
             <p className="mx-auto mt-3 max-w-xl text-muted">{t.news.pageDescription}</p>

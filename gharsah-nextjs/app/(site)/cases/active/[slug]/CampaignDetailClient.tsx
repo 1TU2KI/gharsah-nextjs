@@ -108,8 +108,8 @@ export default function CampaignDetailClient({ campaign }: { campaign: Campaign 
 
   return (
     <main className="flex-1">
-      <section className="relative overflow-x-hidden py-16">
-        <div className="relative z-10 mx-auto max-w-3xl px-6">
+      <section className="relative overflow-clip py-10 sm:py-16">
+        <div className="relative z-10 mx-auto max-w-3xl px-4 sm:px-6">
           <div className="flex items-center justify-between gap-3">
             <Link
               href={backLinkHref}
@@ -149,7 +149,7 @@ export default function CampaignDetailClient({ campaign }: { campaign: Campaign 
 
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <span
-                className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold ${theme.badgeClass}`}
+                className={`status-badge flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold ${theme.badgeClass}`}
               >
                 {campaign.status === "completed" && <CheckBadgeIcon className="h-3.5 w-3.5" />}
                 {campaign.status === "active" && <PulseIcon className="h-3.5 w-3.5" />}
@@ -160,7 +160,7 @@ export default function CampaignDetailClient({ campaign }: { campaign: Campaign 
                 href={campaign.platformHomepageUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all active:scale-90 active:brightness-95 ${theme.platformPillClass}`}
+                className={`tap-expand inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all active:scale-90 active:brightness-95 ${theme.platformPillClass}`}
               >
                 {campaign.platformLabel[locale]}
                 {platformLogo ? (
@@ -176,28 +176,23 @@ export default function CampaignDetailClient({ campaign }: { campaign: Campaign 
 
             {description && <p className="mt-4 leading-8 text-foreground/80">{description}</p>}
 
-            {/* Completion percentage only (no progress box or bar), straight
-                on the main card, in locale digits ("١٪" / "1%"). Hidden when
-                there's no value; screen readers get the full label. */}
             {campaign.percent !== undefined && (
-              <p
-                className={`mt-6 text-2xl font-extrabold leading-none ${
-                  campaign.status === "completed" ? "text-completed-text" : "text-primary-dark"
-                }`}
-              >
-                <span aria-hidden="true">
-                  {new Intl.NumberFormat(locale === "ar" ? "ar-u-nu-arab" : "en").format(campaign.percent)}
-                  {locale === "ar" ? "٪" : "%"}
-                </span>
-                <span className="sr-only">{t.campaignCard.progressLabel(campaign.percent)}</span>
-              </p>
+              <div className="mt-6">
+                <div aria-hidden="true" className={'h-2.5 w-full overflow-hidden rounded-full ' + theme.progressTrackClass}>
+                  <div
+                    className={'h-full rounded-full ' + theme.progressFillClass}
+                    style={{ width: Math.max(0, Math.min(100, campaign.percent)) + '%' }}
+                  />
+                </div>
+                <p className="mt-2 text-sm text-muted">{t.campaignCard.progressLabel(campaign.percent)}</p>
+              </div>
             )}
 
             {/* The donate link itself — href, target, rel, classes, and
                 label — is completely unchanged from before; DonationTransition
                 only supplies the click handler that inserts the brief pause,
                 via a render prop, so this element's design is untouched. */}
-            <DonationTransition url={campaign.url} campaignId={campaign.id} metadata={viaShortLink ? "short_link" : undefined}>
+            <DonationTransition url={campaign.url} campaignId={campaign.id} metadata={viaShortLink ? "short_link" : undefined} completed={isCompleted}>
               {(onDonateClick) => (
                 <a
                   href={campaign.url}

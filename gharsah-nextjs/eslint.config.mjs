@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Standalone self-hosted translation service — its own package/deps.
+    "translation-service/**",
   ]),
 ]);
 

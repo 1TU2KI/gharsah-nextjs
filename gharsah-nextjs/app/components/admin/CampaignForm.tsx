@@ -37,7 +37,7 @@ function isEhsanUrl(url: string): boolean {
   }
 }
 
-/** The current AI-generated English text — read-only in this form, shown so the admin can see what's published without needing to (or being able to) edit it directly. `undefined` in create mode, where nothing has been translated yet. */
+/** The campaign's saved English (machine-translated by the self-hosted engine, or hand-typed — see `manualFields`). Pre-fills the form's editable English fields. `undefined` in create mode. */
 export type CampaignTranslationInfo = {
   titleEn: string;
   relationEn: string;
@@ -45,6 +45,8 @@ export type CampaignTranslationInfo = {
   memorialPrefixEn: string;
   status: "ok" | "error";
   error: string | null;
+  /** English fields an admin typed by hand ("title" | "relation" | "description") — never auto-translated over. */
+  manualFields: string[];
 };
 
 const fieldClass =
@@ -642,6 +644,70 @@ export default function CampaignForm({
           </div>
         </section>
 
+        {/* Editable English. Pre-filled with the saved English; leaving a
+            field unchanged keeps it automatic, typing replaces it (and it's
+            never auto-translated over again), clearing it returns it to
+            automatic translation. Keyed on the saved values so the inputs
+            reload after every save instead of resubmitting stale text. */}
+        <section
+          key={translation ? `${translation.titleEn}\u0000${translation.relationEn}\u0000${translation.descriptionEn}` : "new"}
+          className="rounded-2xl border border-border bg-background p-4 sm:p-5"
+        >
+          <h2 className="text-sm font-bold text-foreground">النص الإنجليزي</h2>
+          <p className="mt-1 text-xs leading-6 text-muted">
+            يُترجَم تلقائيًا بمحرك الترجمة الخاص بغرسة. اتركه كما هو ليتحدّث تلقائيًا، أو اكتب نصك ليُحفظ كما هو ولا يُستبدل بالترجمة
+            التلقائية، أو امسحه لإعادته إلى الترجمة التلقائية. راجع أسماء الأشخاص، فقد تُترجَم آليًا كمعانٍ.
+          </p>
+          <div className="mt-4 space-y-4" dir="ltr">
+            {(
+              [
+                { name: "titleEn", key: "title", label: "English title", value: translation?.titleEn ?? "", rows: 0 },
+                { name: "relationEn", key: "relation", label: "English subtitle", value: translation?.relationEn ?? "", rows: 0 },
+                { name: "descriptionEn", key: "description", label: "English description", value: translation?.descriptionEn ?? "", rows: 4 },
+              ] as const
+            ).map((field) => {
+              const isManual = translation?.manualFields.includes(field.key) ?? false;
+              const error = state.fieldErrors[field.name];
+              return (
+                <div key={field.name}>
+                  <label htmlFor={`campaign-${field.name}`} className={`${labelClass} flex items-center gap-2`}>
+                    {field.label}
+                    <span
+                      dir="rtl"
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${isManual ? "bg-primary-50 text-primary-dark" : "bg-wash text-muted"}`}
+                    >
+                      {isManual ? "يدوي" : "تلقائي"}
+                    </span>
+                  </label>
+                  {field.rows ? (
+                    <textarea
+                      id={`campaign-${field.name}`}
+                      name={field.name}
+                      defaultValue={field.value}
+                      rows={field.rows}
+                      maxLength={2000}
+                      placeholder={mode === "create" ? "Leave empty to translate automatically" : ""}
+                      className={`${fieldClass} resize-y leading-6 ${error ? "error" : ""}`}
+                    />
+                  ) : (
+                    <input
+                      id={`campaign-${field.name}`}
+                      name={field.name}
+                      defaultValue={field.value}
+                      maxLength={field.name === "titleEn" ? 300 : 200}
+                      placeholder={mode === "create" ? "Leave empty to translate automatically" : ""}
+                      className={`${fieldClass} ${error ? "error" : ""}`}
+                    />
+                  )}
+                  <div dir="rtl">
+                    <FieldError message={error} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
         <div className="flex items-center gap-3">
           <button
             type="submit"
@@ -682,7 +748,7 @@ export default function CampaignForm({
 
         <div className="rounded-2xl border border-border bg-background p-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold text-foreground">الترجمة الإنجليزية (تلقائية)</h3>
+            <h3 className="text-xs font-bold text-foreground">الترجمة الإنجليزية</h3>
             {translation?.status === "error" && (
               <span className="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-600">تعذرت الترجمة — حاول مجددًا</span>
             )}
@@ -691,7 +757,11 @@ export default function CampaignForm({
             )}
           </div>
 
-          {!translation && <p className="mt-2 text-xs text-muted">ستُنشأ الترجمة تلقائيًا بعد إنشاء الحملة.</p>}
+          {!translation && (
+            <p className="mt-2 text-xs text-muted">
+              تُنشأ الترجمة تلقائيًا عند الإنشاء بمحرك الترجمة الخاص بغرسة، ويمكنك كتابة الإنجليزية يدويًا في قسم «النص الإنجليزي».
+            </p>
+          )}
 
           {translation && (
             <div dir="ltr" className="mt-3 space-y-2 text-start text-xs text-foreground">
@@ -715,6 +785,9 @@ export default function CampaignForm({
             >
               {retrying ? "جارٍ إعادة الترجمة..." : "إعادة إنشاء الترجمة"}
             </button>
+          )}
+          {campaignId && (translation?.manualFields.length ?? 0) > 0 && (
+            <p className="mt-2 text-[11px] leading-5 text-muted">الحقول المكتوبة يدويًا لا تُستبدل عند إعادة الإنشاء.</p>
           )}
         </div>
       </aside>

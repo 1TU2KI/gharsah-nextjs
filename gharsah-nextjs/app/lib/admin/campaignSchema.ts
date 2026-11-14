@@ -38,6 +38,17 @@ import { z } from "zod";
  * under `/cases/active/[slug]` (see the public route) — letters/digits/
  * dashes only, so a bad slug can't produce a broken or confusing URL.
  */
+const ARABIC_LETTERS = /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]/u;
+
+function englishField(max: number) {
+  return z
+    .string()
+    .trim()
+    .max(max)
+    .refine((value) => !ARABIC_LETTERS.test(value), { message: "اكتب النص الإنجليزي بحروف إنجليزية فقط" })
+    .optional();
+}
+
 export const campaignFormSchema = z.object({
   slug: z
     .string()
@@ -63,6 +74,15 @@ export const campaignFormSchema = z.object({
   descriptionAr: z.string().trim().max(2000).optional().or(z.literal("")),
   /** Set by CampaignForm.tsx (hidden input) whenever it populates descriptionAr — 'fetched' after a successful official-description fetch, 'manual' after the admin types/edits the textarea directly. Purely informational (see the column comment in client.ts); never required, since it's meaningless when descriptionAr is empty. */
   descriptionSource: z.enum(["fetched", "manual"]).optional(),
+  /**
+   * Optional hand-typed English (CampaignForm's English fields). Absent =
+   * the form didn't send the field (leave English as-is); "" = cleared
+   * (back to automatic translation). Arabic letters are rejected so Arabic
+   * can never be saved as English.
+   */
+  titleEn: englishField(300),
+  relationEn: englishField(200),
+  descriptionEn: englishField(2000),
   status: z.enum(["active", "completed"]),
   percent: z
     .union([z.literal(""), z.coerce.number().int().min(0).max(100)])

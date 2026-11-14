@@ -1,5 +1,6 @@
 import { parseIntervalMinutesParam, parseEnumParam } from "../queryParams";
 import type { ResolvedGharsahOverlayDisplay, GharsahOverlayStyle } from "./types";
+import { GHARSAH_QR_SLUG_PATTERN, GHARSAH_QR_TARGETS } from "./qr";
 import {
   GHARSAH_OVERLAY_DEFAULT_INTERVAL_MINUTES,
   GHARSAH_OVERLAY_DISPLAY_DURATION_MS,
@@ -10,7 +11,7 @@ import {
   GHARSAH_OVERLAY_DEFAULT_STYLE,
 } from "./defaults";
 
-const STYLE_VALUES = ["brand", "logo"] as const satisfies readonly GharsahOverlayStyle[];
+const STYLE_VALUES = ["brand", "logo", "qr"] as const satisfies readonly GharsahOverlayStyle[];
 
 /**
  * Gharsah Overlay's configurable dimensions are timing and, now, style —
@@ -24,6 +25,7 @@ const STYLE_VALUES = ["brand", "logo"] as const satisfies readonly GharsahOverla
  * this keeps Gharsah Overlay's actual configurable surface honest and small.
  */
 export function resolveGharsahOverlayDisplay(searchParams: URLSearchParams): ResolvedGharsahOverlayDisplay {
+  const slug = searchParams.get("c") ?? "";
   return {
     intervalMinutes: parseIntervalMinutesParam(searchParams.get("interval")) ?? GHARSAH_OVERLAY_DEFAULT_INTERVAL_MINUTES,
     displayDurationMs: GHARSAH_OVERLAY_DISPLAY_DURATION_MS,
@@ -32,5 +34,9 @@ export function resolveGharsahOverlayDisplay(searchParams: URLSearchParams): Res
     compact: GHARSAH_OVERLAY_COMPACT,
     position: GHARSAH_OVERLAY_POSITION,
     style: parseEnumParam(searchParams.get("style"), STYLE_VALUES) ?? GHARSAH_OVERLAY_DEFAULT_STYLE,
+    // "qr" style only (ignored by brand/logo): `?qr=` destination (homepage
+    // by default) and `?c=` campaign slug, validated the same strict way.
+    qrTarget: parseEnumParam(searchParams.get("qr"), GHARSAH_QR_TARGETS) ?? "site",
+    qrCampaignSlug: GHARSAH_QR_SLUG_PATTERN.test(slug) ? slug.toLowerCase() : null,
   };
 }

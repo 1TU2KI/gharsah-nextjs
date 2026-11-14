@@ -17,7 +17,7 @@ export default function Goals() {
     // supersedes the previous feathered-backdrop treatment (see git history
     // if that soft-blend version is ever wanted back).
     <section id="goals" className="section-edge-glow section-edge-glow--text bg-accent">
-      <div className="mx-auto max-w-6xl px-6 py-16">
+      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
         <h2
           className={`text-center text-2xl font-extrabold text-on-accent sm:text-3xl ${locale === "en" ? "tracking-tight" : ""}`}
         >

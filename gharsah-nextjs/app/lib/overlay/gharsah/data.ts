@@ -1,5 +1,7 @@
 import { resolveGharsahOverlayDisplay } from "./queryParams";
 import type { GharsahOverlayApiResponse } from "./types";
+import { gharsahQrValue, type GharsahQrTarget } from "./qr";
+import { getActiveCampaignsLive } from "@/app/lib/campaignLiveSync";
 
 /**
  * Same words as the homepage hero's two-line title (see translations.ts
@@ -31,5 +33,20 @@ export async function buildGharsahOverlayResponse(searchParams: URLSearchParams,
     settings,
     hostUrl: new URL(origin).host,
     message: GHARSAH_TAGLINE,
+    qrValue: settings.style === "qr" ? await resolveQrValue(settings.qrTarget, settings.qrCampaignSlug) : null,
   };
+}
+
+/**
+ * "qr" style: the encoded destination (see qr.ts). A campaign target only
+ * resolves against the CURRENT public active campaigns — the same live list
+ * the /overlay picker shows — so a campaign that's no longer public simply
+ * yields no QR instead of a code to a dead page. Only the "qr" style ever
+ * reads campaign data; brand/logo stay DB-free exactly as before.
+ */
+async function resolveQrValue(target: GharsahQrTarget, slug: string | null): Promise<string | null> {
+  if (target !== "campaign") return gharsahQrValue(target);
+  if (!slug) return null;
+  const campaign = (await getActiveCampaignsLive()).find((c) => c.slug.toLowerCase() === slug);
+  return gharsahQrValue("campaign", campaign ?? null);
 }

@@ -62,7 +62,7 @@ export default function GharsahLoadingState({
 
   return (
     <div className={`flex ${minHeight} flex-col items-center justify-center gap-4 ${className}`}>
-      <GharsahLoader size={resolvedSize} />
+      <GharsahLoader size={resolvedSize} glass />
       <GharsahLoaderDots />
     </div>
   );

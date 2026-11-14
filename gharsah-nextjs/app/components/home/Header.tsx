@@ -3,7 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { CloseIcon, GlobeIcon, MenuIcon } from "./icons";
 import ThemeToggle from "./ThemeToggle";
 import RandomCaseButton from "../cases/RandomCaseButton";
@@ -46,6 +47,16 @@ function scrollToTop() {
 
 const otherLanguageLabel: Record<Locale, string> = { ar: "EN", en: "العربية" };
 
+/** false during SSR/hydration, true afterwards — gates the body portal for the menu drawer without a setState-in-effect. */
+const noopSubscribe = () => () => {};
+function useIsClient() {
+  return useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false,
+  );
+}
+
 export default function Header({
   devBadgeVisible = true,
   activeCampaigns,
@@ -56,6 +67,24 @@ export default function Header({
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const { locale, t, toggleLocale } = useLanguage();
+  const isClient = useIsClient();
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Drawer open: lock page scroll, Escape closes, focus the close button.
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeButtonRef.current?.focus({ preventScroll: true });
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
 
   // Clicking the nav link for the page you're already on has nothing to
   // navigate to, so it scrolls to top instead of doing nothing. Exact-match
@@ -80,14 +109,21 @@ export default function Header({
   // nothing about the color/shape/shadow changes. One shared constant used
   // by both the desktop button below and the mobile-menu one further down,
   // so the sheen applies identically to both without a second edit.
+  // `header-donate` + `header--completed` (below): on /cases/completed the
+  // donate and random-pick buttons take the completed-campaign accent
+  // (globals.css), everywhere else their usual colors.
   const donateButtonClass =
-    "relative liquid-sheen bg-accent text-on-accent shadow-[0_8px_20px_-8px_rgba(20,83,45,0.45)] hover:bg-accent-strong hover:shadow-[0_10px_24px_-8px_rgba(20,83,45,0.55)]";
+    "header-donate relative liquid-sheen bg-accent text-on-accent shadow-[0_8px_20px_-8px_rgba(20,83,45,0.45)] hover:bg-accent-strong hover:shadow-[0_10px_24px_-8px_rgba(20,83,45,0.55)]";
 
   return (
     // `glass-surface glass-surface--bar` (globals.css): the whole strip,
     // mobile menu panel included, is ONE shared Liquid Glass surface.
-    <header className="header-material glass-surface glass-surface--bar liquid-sheen section-edge-glow sticky top-0 z-50 border-b border-border bg-background/72 backdrop-blur-xl backdrop-saturate-[1.4]">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-6 py-4">
+    <header
+      className={`header-material glass-surface glass-clear glass-surface--bar liquid-sheen section-edge-glow sticky top-0 z-50 border-b border-border ${
+        pathname === "/cases/completed" ? "header--completed" : ""
+      }`}
+    >
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:gap-6 sm:px-6">
         {/* Brand cluster: the logo link plus the "in development" status,
             grouped as a single flex item so the header keeps exactly three
             top-level children (brand / nav / controls) — the status badge
@@ -95,6 +131,16 @@ export default function Header({
             The divider keeps it visually distinct from the logo, not nested
             inside the clickable Link. */}
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            aria-label={t.nav.openMenu}
+            aria-expanded={open}
+            aria-controls="site-nav-drawer"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border text-foreground transition-all active:scale-90 active:bg-primary-50 xl:hidden"
+          >
+            <MenuIcon className="h-5 w-5" />
+          </button>
           <Link href="/" className="flex items-center gap-2">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full">
               <Image src="/logo.png" alt={t.nav.logoAlt} width={36} height={36} className="h-full w-full object-cover" />
@@ -158,9 +204,9 @@ export default function Header({
                 className={`group inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-[13px] transition-colors active:opacity-70 ${
                   active
                     ? isCompletedLink
-                      ? "font-semibold text-completed-text"
-                      : "font-semibold text-primary-dark"
-                    : `font-medium text-foreground/80 ${isCompletedLink ? "hover:text-completed-text" : "hover:text-primary"}`
+                      ? "font-bold text-completed-text"
+                      : "font-bold text-primary-dark"
+                    : `font-semibold text-foreground/80 ${isCompletedLink ? "hover:text-completed-text" : "hover:text-primary"}`
                 }`}
               >
                 {t.nav[link.key]}
@@ -177,7 +223,7 @@ export default function Header({
           })}
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <Link
             href="/cases/active"
             onClick={() => track({ type: "nav_click", route: "/cases/active", metadata: "donateNow" })}
@@ -195,113 +241,137 @@ export default function Header({
           <div className="hidden sm:block">
             <RandomCaseButton campaigns={activeCampaigns} variant="header" />
           </div>
+          {/* Phones (below sm:): a compact «تبرع الآن» stays in the top row,
+              next to the menu button, so it's always one tap away. The
+              language switch moves into the menu panel at these widths to
+              make room (see below). */}
+          <Link
+            href="/cases/active"
+            onClick={() => track({ type: "nav_click", route: "/cases/active", metadata: "donateNow" })}
+            className={`shrink-0 whitespace-nowrap rounded-full px-3.5 py-2.5 text-xs font-semibold transition-all active:scale-95 active:brightness-95 sm:hidden ${donateButtonClass}`}
+          >
+            {t.nav.donateNow}
+          </Link>
           <button
             type="button"
             onClick={toggleLocale}
             aria-label={t.nav.switchLanguage}
             title={t.nav.switchLanguage}
-            className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-border px-4 py-[9px] text-sm font-semibold text-foreground transition-all hover:bg-primary-50 hover:text-primary active:scale-90 active:bg-primary-100"
+            className="hidden shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-border px-4 py-[9px] text-sm font-semibold text-foreground transition-all hover:bg-primary-50 hover:text-primary active:scale-90 active:bg-primary-100 sm:flex"
           >
             <GlobeIcon className="h-4 w-4 shrink-0" />
             <span className="hidden sm:inline">{otherLanguageLabel[locale]}</span>
           </button>
           <ThemeToggle />
-          <button
-            type="button"
-            onClick={() => setOpen((v) => !v)}
-            aria-label={t.nav.openMenu}
-            aria-expanded={open}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-foreground transition-all active:scale-90 active:bg-primary-50 xl:hidden"
-          >
-            {open ? <CloseIcon className="h-5 w-5" /> : <MenuIcon className="h-5 w-5" />}
-          </button>
         </div>
       </div>
 
-      {/* Always mounted (not conditionally rendered) so the open/close can
-          actually transition — reuses the same grid-template-rows 0fr/1fr
-          collapse trick already established in ContactForms.tsx, rather
-          than the previous hard mount/unmount with no exit motion at all.
-          Anchored to the hamburger button above it (same edge, same xl:hidden
-          breakpoint), so it opens from the control that triggered it.
-          No fill/blur of its own: it sits inside the header, so the header's
-          single glass surface covers it (one surface, blur applied once).
-          The nav's own opacity/translate-y transition (separate from the
-          grid-rows one on its wrapper) is what makes the links fade/slide in
-          with the panel instead of popping in the instant there's any
-          height. The separator line and the nav's vertical padding only
-          exist while open — a closed panel used to leave a 32px empty band
-          under the header on every width below xl. */}
-      <div
-        aria-hidden={!open}
-        className={`relative grid overflow-hidden border-border transition-[grid-template-rows] duration-300 ease-in-out xl:hidden ${
-          open ? "grid-rows-[1fr] border-t" : "grid-rows-[0fr] border-t-0"
-        }`}
-      >
-        {/* Own opacity/translate-y transition, separate from the outer
-            grid-rows one, so the links visibly fade/slide in as the panel
-            grows instead of appearing at full opacity the instant there's
-            any height — the "materialize with the container" effect. */}
-        <nav
-          className={`flex min-h-0 flex-col gap-1 px-6 transition-all duration-300 ${
-            open ? "translate-y-0 py-4 opacity-100" : "-translate-y-4 py-0 opacity-0"
-          }`}
-        >
-          {navLinks.map((link) => {
-            const active = isActiveLink(pathname, link.href);
-            const isCompletedLink = link.href === "/cases/completed";
-            const isAboutLink = link.href === "/about";
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={(e) => {
-                  setOpen(false);
-                  handleNavClick(e, link.href, link.key);
-                }}
-                aria-current={active ? "page" : undefined}
-                className={`group flex items-center gap-1 rounded-lg px-2 py-2.5 text-sm transition-colors ${
-                  active
-                    ? isCompletedLink
-                      ? "bg-completed-tint font-semibold text-completed-strong"
-                      : "bg-primary-50 font-semibold text-primary-dark"
-                    : isCompletedLink
-                      ? "font-medium text-foreground/80 hover:bg-completed-surface active:bg-completed-surface hover:text-completed-strong"
-                      : "font-medium text-foreground/80 hover:bg-primary-50 active:bg-primary-50 hover:text-primary"
-                }`}
-              >
-                {t.nav[link.key]}
-                {isAboutLink && (
-                  <span
-                    aria-hidden="true"
-                    className="shrink-0 text-xs font-bold leading-none text-primary/70 transition-all duration-200 group-hover:scale-110 group-hover:text-primary"
-                  >
-                    !
+      {/* Below xl: side drawer (replaces the old full-width dropdown).
+          Portaled to <body> because the header's glass backdrop-filter
+          would otherwise become the containing block of these fixed
+          layers. Always mounted after hydration so it can slide both ways;
+          slides in from the start edge (right in Arabic, left in English —
+          .site-drawer in globals.css) over a dimmed backdrop that closes it. */}
+      {isClient &&
+        createPortal(
+          <div className={`site-drawer-root xl:hidden ${open ? "is-open" : ""} ${pathname === "/cases/completed" ? "header--completed" : ""}`} aria-hidden={!open} inert={!open}>
+            <div className="site-drawer-backdrop" onClick={() => setOpen(false)} />
+            <div
+              id="site-nav-drawer"
+              role="dialog"
+              aria-modal="true"
+              aria-label={t.nav.openMenu}
+              className="site-drawer glass-surface glass-clear glass-surface--bar flex flex-col border-border bg-background/90 backdrop-blur-xl"
+            >
+              <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-3">
+                <Link href="/" onClick={() => setOpen(false)} className="flex items-center gap-2">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full">
+                    <Image src="/logo.png" alt={t.nav.logoAlt} width={36} height={36} className="h-full w-full object-cover" />
                   </span>
-                )}
-              </Link>
-            );
-          })}
-          <Link
-            href="/cases/active"
-            onClick={() => {
-              setOpen(false);
-              track({ type: "nav_click", route: "/cases/active", metadata: "donateNow" });
-            }}
-            className={`mt-2 whitespace-nowrap rounded-full px-5 py-2.5 text-center text-sm font-semibold transition-all active:scale-95 active:brightness-95 ${donateButtonClass}`}
-          >
-            {t.nav.donateNow}
-          </Link>
-          {/* Same random-campaign action as the desktop top row above —
-              reachable here instead on the narrow widths where it's hidden
-              from the top row for space (see the `hidden sm:block` wrapper
-              up top). Labeled ("compact") rather than icon-only since this
-              panel has vertical room for it, unlike the tight top row. */}
-          <div className="mt-2 flex justify-center">
-            <RandomCaseButton campaigns={activeCampaigns} variant="compact" />
-          </div>
-        </nav>
-      </div>
+                  <span className="text-xl font-bold text-foreground">غرسة</span>
+                </Link>
+                <button
+                  ref={closeButtonRef}
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  aria-label={t.nav.closeMenu}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border text-foreground transition-all active:scale-90 active:bg-primary-50"
+                >
+                  <CloseIcon className="h-5 w-5" />
+                </button>
+              </div>
+
+              <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3">
+                <ul className="flex flex-col gap-1">
+                  {navLinks.map((link) => {
+                    const active = isActiveLink(pathname, link.href);
+                    const isCompletedLink = link.href === "/cases/completed";
+                    const isAboutLink = link.href === "/about";
+                    return (
+                      <li key={link.href}>
+                        <Link
+                          href={link.href}
+                          onClick={(e) => {
+                            setOpen(false);
+                            handleNavClick(e, link.href, link.key);
+                          }}
+                          aria-current={active ? "page" : undefined}
+                          className={`site-drawer-link group flex min-h-12 items-center gap-1 rounded-xl px-4 text-[15px] transition-colors ${
+                            active
+                              ? isCompletedLink
+                                ? "is-active is-completed bg-completed-tint/70 font-bold text-completed-strong"
+                                : "is-active bg-primary-50/80 font-bold text-primary-dark"
+                              : isCompletedLink
+                                ? "font-semibold text-foreground/80 hover:bg-completed-surface active:bg-completed-surface hover:text-completed-strong"
+                                : "font-semibold text-foreground/80 hover:bg-primary-50 active:bg-primary-50 hover:text-primary"
+                          }`}
+                        >
+                          {t.nav[link.key]}
+                          {isAboutLink && (
+                            <span
+                              aria-hidden="true"
+                              className="shrink-0 text-xs font-bold leading-none text-primary/70 transition-all duration-200 group-hover:scale-110 group-hover:text-primary"
+                            >
+                              !
+                            </span>
+                          )}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+
+                <div className="mt-4 flex flex-col gap-2 border-t border-border px-1 pt-4">
+                  <Link
+                    href="/cases/active"
+                    onClick={() => {
+                      setOpen(false);
+                      track({ type: "nav_click", route: "/cases/active", metadata: "donateNow" });
+                    }}
+                    className={`whitespace-nowrap rounded-full px-5 py-3 text-center text-sm font-semibold transition-all active:scale-95 active:brightness-95 ${donateButtonClass}`}
+                  >
+                    {t.nav.donateNow}
+                  </Link>
+                  <div className="flex justify-center">
+                    <RandomCaseButton campaigns={activeCampaigns} variant="compact" />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpen(false);
+                      toggleLocale();
+                    }}
+                    className="flex items-center justify-center gap-2 rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition-all hover:bg-primary-50 active:scale-95 sm:hidden"
+                  >
+                    <GlobeIcon className="h-4 w-4 shrink-0" />
+                    {otherLanguageLabel[locale]}
+                  </button>
+                </div>
+              </nav>
+            </div>
+          </div>,
+          document.body,
+        )}
     </header>
   );
 }
