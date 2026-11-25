@@ -32,7 +32,7 @@ function formatDate(iso: string, locale: "ar" | "en"): string {
  * comment), so falling back to the Arabic text in English mode is the
  * correct behavior for manual posts, not a bug.
  */
-export default function NewsItemCard({ item }: { item: PublicNewsItem }) {
+export default function NewsItemCard({ item, compact = false }: { item: PublicNewsItem; compact?: boolean }) {
   const { locale, t } = useLanguage();
   const meta = NEWS_TYPE_META[item.type];
   const Icon = TYPE_ICON[item.type];
@@ -43,7 +43,10 @@ export default function NewsItemCard({ item }: { item: PublicNewsItem }) {
   const body = locale === "en" && item.bodyEn ? item.bodyEn : item.bodyAr;
 
   return (
-    <article className={`glass-surface glass-clear relative flex h-full flex-col overflow-hidden rounded-2xl border p-5 backdrop-blur-sm transition-all ${meta.themeClass}`}>
+    <article
+      id={compact ? undefined : `update-${item.id}`}
+      className={`glass-surface glass-clear relative flex ${compact ? "h-80" : "h-full scroll-mt-24"} flex-col overflow-hidden rounded-2xl border p-5 backdrop-blur-sm transition-all ${meta.themeClass}`}
+    >
       {/* Large decorative category watermark — centered behind everything
           else (negative z-index, see globals.css), absolutely positioned
           so it never affects card height/spacing, and purely decorative
@@ -57,7 +60,7 @@ export default function NewsItemCard({ item }: { item: PublicNewsItem }) {
           the same small circular-chip language previously used only at
           the bottom, now the sole indicator (top badge removed per the
           brief: no category should ever appear twice on one card). */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2">
         <span className="flex items-center gap-1.5">
           <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${meta.badgeClass}`}>
             <Icon className="h-3.5 w-3.5" />
@@ -67,8 +70,17 @@ export default function NewsItemCard({ item }: { item: PublicNewsItem }) {
         <span className="text-xs text-muted">{formatDate(item.createdAt, locale)}</span>
       </div>
 
-      <h3 className="mt-3 text-base font-bold text-foreground">{title}</h3>
-      <p className="mt-1.5 flex-1 whitespace-pre-line text-sm leading-6 text-foreground/80">{body}</p>
+      <h3 className={`mt-3 text-base font-bold text-foreground ${compact ? "line-clamp-2 shrink-0 break-words" : ""}`}>{title}</h3>
+      <p className={`mt-1.5 flex-1 whitespace-pre-line text-sm leading-6 text-foreground/80 ${compact ? "min-h-0 overflow-hidden line-clamp-4 break-words" : ""}`}>{body}</p>
+
+      {compact && (
+        <Link
+          href={`/updates#update-${item.id}`}
+          className="mt-3 inline-flex shrink-0 self-start text-sm font-semibold text-primary-dark transition-colors hover:underline"
+        >
+          {t.news.readMore}
+        </Link>
+      )}
 
       {item.link &&
         (item.linkIsExternal ? (

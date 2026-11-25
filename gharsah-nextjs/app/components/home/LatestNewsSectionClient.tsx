@@ -32,7 +32,7 @@ export default function LatestNewsSectionClient({ items }: { items: PublicNewsIt
 
         <div className="mt-10 grid gap-4 sm:grid-cols-3">
           {items.map((item) => (
-            <NewsItemCard key={item.id} item={item} />
+            <NewsItemCard key={item.id} item={item} compact />
           ))}
         </div>
       </div>

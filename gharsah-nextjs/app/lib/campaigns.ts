@@ -103,6 +103,8 @@ export type Campaign = {
   liveReplaceableEnglish?: ("title" | "description")[];
   /** ISO timestamp of the row's real DB `created_at` — i.e. when the campaign was actually added to Gharsah, not when it was last edited. Exposed only for the /cases/active sort-by-date-added control; not otherwise rendered anywhere. */
   createdAt: string;
+  /** Recorded completion time; older campaigns may have no known date. */
+  completedAt?: string | null;
 };
 
 async function rowToCampaign(row: CampaignRow): Promise<Campaign> {
@@ -136,6 +138,7 @@ async function rowToCampaign(row: CampaignRow): Promise<Campaign> {
     platformHomepageUrl: platformConfig?.homepageUrl ?? row.platform,
     shortCode: row.short_code,
     createdAt: row.created_at,
+    completedAt: row.completed_at,
   };
 }
 
