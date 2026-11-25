@@ -42,15 +42,18 @@ export default function CampaignCopyLinkButton({
   const [preparing, setPreparing] = useState(false);
   const [shareFile, setShareFile] = useState<File | null>(null);
   const [shareMessage, setShareMessage] = useState("");
+  const [saveToPhotos, setSaveToPhotos] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const timeout = useRef<number | undefined>(undefined);
   const source = useRef<HTMLElement | null>(null);
   const mounted = useRef(true);
   const downloads = useRef<string[]>([]);
+  const photoClose = useRef<HTMLButtonElement>(null);
   const completed = campaign.status === "completed";
   const storyPreview = campaign.id === STORY_PREVIEW_CAMPAIGN_ID;
   const labels = locale === "ar"
-    ? { download: "تحميل البطاقة", loading: "جارٍ تجهيز البطاقة…", retry: "إعادة تجهيز البطاقة", close: "إغلاق", hint: "حمّل البطاقة، ثم ارفعها للستوري وأضف ملصق الرابط فوقها. ألصق فيه الرابط المنسوخ.", error: "تعذّر تجهيز الصورة. الرابط منسوخ ويمكنك إعادة المحاولة.", saved: "بدأ تحميل البطاقة. ارفعها للستوري، ثم أضف ملصق الرابط فوقها وألصق الرابط المنسوخ." }
-    : { download: "Download card", loading: "Preparing card…", retry: "Prepare card again", close: "Close", hint: "Download the card, upload it to your story, then add a link sticker on it and paste the copied link.", error: "Could not prepare the image. Your link is copied; you can retry.", saved: "Download started. Upload the card to your story, add a link sticker on it, and paste the copied link." };
+    ? { download: "تحميل البطاقة", photos: "حفظ البطاقة في الصور", photoHint: "اضغط مطولًا على الصورة واختر «حفظ في الصور» أو «حفظ/تنزيل الصورة» من قائمة المتصفح.", mobileHint: "افتح البطاقة واحفظها في الصور بالضغط المطوّل، ثم ارفعها للستوري وأضف ملصق الرابط المنسوخ.", loading: "جارٍ تجهيز البطاقة…", retry: "إعادة تجهيز البطاقة", close: "إغلاق", hint: "حمّل البطاقة، ثم ارفعها للستوري وأضف ملصق الرابط فوقها. ألصق فيه الرابط المنسوخ.", error: "تعذّر تجهيز الصورة. الرابط منسوخ ويمكنك إعادة المحاولة.", saved: "بدأ تحميل البطاقة. ارفعها للستوري، ثم أضف ملصق الرابط فوقها وألصق الرابط المنسوخ." }
+    : { download: "Download card", photos: "Save card to Photos", photoHint: "Touch and hold the image, then choose Save to Photos or Save/Download Image from your browser’s menu.", mobileHint: "Open the card and touch and hold to save it to Photos. Then upload it to your story and add the copied link using a link sticker.", loading: "Preparing card…", retry: "Prepare card again", close: "Close", hint: "Download the card, upload it to your story, then add a link sticker on it and paste the copied link.", error: "Could not prepare the image. Your link is copied; you can retry.", saved: "Download started. Upload the card to your story, add a link sticker on it, and paste the copied link." };
 
   useEffect(() => {
     mounted.current = true;
@@ -61,6 +64,28 @@ export default function CampaignCopyLinkButton({
       urls.forEach((url) => URL.revokeObjectURL(url));
     };
   }, []);
+
+  useEffect(() => {
+    if (!photoUrl) return;
+    const previousOverflow = document.body.style.overflow;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    document.body.style.overflow = "hidden";
+    photoClose.current?.focus();
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setPhotoUrl(null);
+      if (event.key === "Tab") {
+        event.preventDefault();
+        photoClose.current?.focus();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+      URL.revokeObjectURL(photoUrl);
+      previousFocus?.focus();
+    };
+  }, [photoUrl]);
 
   async function prepareCard() {
     if (!source.current) return;
@@ -85,6 +110,12 @@ export default function CampaignCopyLinkButton({
     if (!shareFile) return void prepareCard();
     const url = URL.createObjectURL(shareFile);
     downloads.current.push(url);
+    if (saveToPhotos) {
+      // Browsers cannot write directly to the Photos library. A real image
+      // preserves the mobile browser's native long-press Save Image action.
+      setPhotoUrl(url);
+      return;
+    }
     const link = document.createElement("a");
     link.href = url;
     link.download = shareFile.name;
@@ -104,6 +135,7 @@ export default function CampaignCopyLinkButton({
     void copyText(window.location.origin + path, () => {
       setCopied(true);
       if (storyPreview) {
+        setSaveToPhotos(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && window.innerWidth < 1024));
         setShareOpen(true);
         void prepareCard();
       }
@@ -148,10 +180,31 @@ export default function CampaignCopyLinkButton({
             <button type="button" onClick={() => setShareOpen(false)} aria-label={labels.close} className="flex h-8 w-8 items-center justify-center rounded-full text-muted hover:bg-primary/10">×</button>
           </div>
           <button type="button" onClick={downloadCard} disabled={preparing} className="mt-3 flex min-h-11 w-full items-center justify-center rounded-full bg-accent px-4 py-2 text-sm font-semibold text-on-accent disabled:opacity-60">
-            {preparing ? labels.loading : shareFile ? labels.download : labels.retry}
+            {preparing ? labels.loading : shareFile ? (saveToPhotos ? labels.photos : labels.download) : labels.retry}
           </button>
-          <p className="mt-2 text-xs leading-5 text-muted" role="status" aria-live="polite">{shareMessage || labels.hint}</p>
+          <p className="mt-2 text-xs leading-5 text-muted" role="status" aria-live="polite">{shareMessage || (saveToPhotos ? labels.mobileHint : labels.hint)}</p>
         </aside>, document.body,
+      )}
+      {storyPreview && photoUrl && createPortal(
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={labels.photos}
+          data-campaign-photo-save={campaign.slug}
+          onClick={(event) => { if (event.target === event.currentTarget) setPhotoUrl(null); }}
+          className="fixed inset-0 z-[200] flex items-center justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-sm"
+        >
+          <div className="glass-surface glass-clear relative w-full max-w-lg rounded-2xl border border-border/50 p-4 text-foreground shadow-xl">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h2 className="text-base font-bold">{labels.photos}</h2>
+              <button ref={photoClose} type="button" onClick={() => setPhotoUrl(null)} aria-label={labels.close} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted hover:bg-primary/10">×</button>
+            </div>
+            <p className="mb-4 text-sm leading-6 text-foreground">{labels.photoHint}</p>
+            {/* eslint-disable-next-line @next/next/no-img-element -- A native blob image is required for mobile long-press Save Image. */}
+            <img src={photoUrl} alt={campaign.title[locale]} className="block max-h-[60dvh] w-full select-auto object-contain" style={{ WebkitTouchCallout: "default" }} />
+            <p className="mt-4 text-xs leading-5 text-muted">{labels.hint}</p>
+          </div>
+        </div>, document.body,
       )}
     </>
   );
