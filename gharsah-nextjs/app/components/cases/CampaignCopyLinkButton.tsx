@@ -52,8 +52,8 @@ export default function CampaignCopyLinkButton({
   const completed = campaign.status === "completed";
   const storyPreview = campaign.id === STORY_PREVIEW_CAMPAIGN_ID;
   const labels = locale === "ar"
-    ? { download: "تحميل البطاقة", photos: "حفظ البطاقة في الصور", photoHint: "اضغط مطولًا على الصورة واختر «حفظ في الصور» أو «حفظ/تنزيل الصورة» من قائمة المتصفح.", mobileHint: "افتح البطاقة واحفظها في الصور بالضغط المطوّل، ثم ارفعها للستوري وأضف ملصق الرابط المنسوخ.", loading: "جارٍ تجهيز البطاقة…", retry: "إعادة تجهيز البطاقة", close: "إغلاق", hint: "حمّل البطاقة، ثم ارفعها للستوري وأضف ملصق الرابط فوقها. ألصق فيه الرابط المنسوخ.", error: "تعذّر تجهيز الصورة. الرابط منسوخ ويمكنك إعادة المحاولة.", saved: "بدأ تحميل البطاقة. ارفعها للستوري، ثم أضف ملصق الرابط فوقها وألصق الرابط المنسوخ." }
-    : { download: "Download card", photos: "Save card to Photos", photoHint: "Touch and hold the image, then choose Save to Photos or Save/Download Image from your browser’s menu.", mobileHint: "Open the card and touch and hold to save it to Photos. Then upload it to your story and add the copied link using a link sticker.", loading: "Preparing card…", retry: "Prepare card again", close: "Close", hint: "Download the card, upload it to your story, then add a link sticker on it and paste the copied link.", error: "Could not prepare the image. Your link is copied; you can retry.", saved: "Download started. Upload the card to your story, add a link sticker on it, and paste the copied link." };
+    ? { download: "تحميل البطاقة", photos: "حفظ البطاقة في الصور", photoHint: "افتح البطاقة واحفظها في الصور بالضغط المطوّل.", mobileHint: "افتح البطاقة واحفظها في الصور بالضغط المطوّل.", loading: "جارٍ تجهيز البطاقة…", retry: "إعادة تجهيز البطاقة", close: "إغلاق", hint: "حمّل البطاقة وضعها فوق أي خلفية تختارها، ثم ألصق رابط الحالة المنسوخ عليها.", error: "تعذّر تجهيز الصورة. الرابط منسوخ ويمكنك إعادة المحاولة.", saved: "بدأ تحميل البطاقة. ضعها فوق أي خلفية تختارها، ثم ألصق رابط الحالة المنسوخ عليها." }
+    : { download: "Download card", photos: "Save card to Photos", photoHint: "Open the card, then touch and hold the image to save it to Photos.", mobileHint: "Open the card, then touch and hold the image to save it to Photos.", loading: "Preparing card…", retry: "Prepare card again", close: "Close", hint: "Download the card, place it over any background you choose, then paste the copied campaign link onto it.", error: "Could not prepare the image. Your link is copied; you can retry.", saved: "Download started. Place the card over any background you choose, then paste the copied campaign link onto it." };
 
   useEffect(() => {
     mounted.current = true;
@@ -202,7 +202,6 @@ export default function CampaignCopyLinkButton({
             <p className="mb-4 text-sm leading-6 text-foreground">{labels.photoHint}</p>
             {/* eslint-disable-next-line @next/next/no-img-element -- A native blob image is required for mobile long-press Save Image. */}
             <img src={photoUrl} alt={campaign.title[locale]} className="block max-h-[60dvh] w-full select-auto object-contain" style={{ WebkitTouchCallout: "default" }} />
-            <p className="mt-4 text-xs leading-5 text-muted">{labels.hint}</p>
           </div>
         </div>, document.body,
       )}
