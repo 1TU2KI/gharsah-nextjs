@@ -17,7 +17,7 @@ const STORY_PREVIEW_CAMPAIGN_ID = "fa762fc9-4982-4e21-917b-cad9460f899c";
  * The one share action on every campaign card (CampaignCard and
  * AlmostThereCard): a small pale, translucent circle pinned to the card's
  * top end corner that copies the campaign's public link in one tap.
- * Turki's grandmother alone also offers the opt-in transparent PNG preview.
+ * Turki's grandmother alone also offers a transparent PNG download.
  *
  * It sits above the card's stretched detail-page link (`relative z-10`) and
  * also stops the click itself, so copying never opens the campaign or
@@ -49,8 +49,8 @@ export default function CampaignCopyLinkButton({
   const completed = campaign.status === "completed";
   const storyPreview = campaign.id === STORY_PREVIEW_CAMPAIGN_ID;
   const labels = locale === "ar"
-    ? { share: "مشاركة البطاقة", loading: "جارٍ تجهيز البطاقة…", retry: "إعادة تجهيز البطاقة", close: "إغلاق", hint: "صورة شفافة. أضف ملصق الرابط داخل تطبيق الستوري.", error: "تعذّر تجهيز الصورة. الرابط منسوخ ويمكنك إعادة المحاولة.", saved: "حُفظت البطاقة الشفافة. ألصق الرابط المنسوخ في ملصق الرابط داخل التطبيق." }
-    : { share: "Share card", loading: "Preparing card…", retry: "Prepare card again", close: "Close", hint: "Transparent image. Add a link sticker in your story app.", error: "Could not prepare the image. Your link is copied; you can retry.", saved: "Transparent card saved. Paste the copied link into your app’s link sticker." };
+    ? { download: "تحميل البطاقة", loading: "جارٍ تجهيز البطاقة…", retry: "إعادة تجهيز البطاقة", close: "إغلاق", hint: "حمّل البطاقة، ثم ارفعها للستوري وأضف ملصق الرابط فوقها. ألصق فيه الرابط المنسوخ.", error: "تعذّر تجهيز الصورة. الرابط منسوخ ويمكنك إعادة المحاولة.", saved: "بدأ تحميل البطاقة. ارفعها للستوري، ثم أضف ملصق الرابط فوقها وألصق الرابط المنسوخ." }
+    : { download: "Download card", loading: "Preparing card…", retry: "Prepare card again", close: "Close", hint: "Download the card, upload it to your story, then add a link sticker on it and paste the copied link.", error: "Could not prepare the image. Your link is copied; you can retry.", saved: "Download started. Upload the card to your story, add a link sticker on it, and paste the copied link." };
 
   useEffect(() => {
     mounted.current = true;
@@ -81,17 +81,8 @@ export default function CampaignCopyLinkButton({
     }
   }
 
-  async function shareCard() {
+  function downloadCard() {
     if (!shareFile) return void prepareCard();
-    if (navigator.canShare?.({ files: [shareFile] }) && navigator.share) {
-      try {
-        await navigator.share({ files: [shareFile] });
-        return;
-      } catch (error) {
-        if (error instanceof Error && error.name === "AbortError") return;
-        // Save the same transparent PNG if file sharing is unavailable.
-      }
-    }
     const url = URL.createObjectURL(shareFile);
     downloads.current.push(url);
     const link = document.createElement("a");
@@ -149,15 +140,15 @@ export default function CampaignCopyLinkButton({
       {storyPreview && shareOpen && createPortal(
         <aside
           data-campaign-share-preview={campaign.slug}
-          aria-label={labels.share}
-          className="fixed inset-x-4 bottom-6 z-[100] mx-auto w-auto max-w-sm rounded-2xl border border-border bg-background/95 p-4 text-foreground shadow-xl backdrop-blur-md"
+          aria-label={labels.download}
+          className="glass-surface glass-clear fixed inset-x-4 bottom-6 z-[100] mx-auto w-auto max-w-[21rem] rounded-2xl border border-border/50 p-4 text-foreground shadow-xl backdrop-blur-md"
         >
           <div className="flex items-center justify-between gap-3">
             <p role="status" className="flex items-center gap-2 text-sm font-semibold"><CheckIcon className="h-4 w-4 text-primary" />{t.campaignDetail.linkCopied}</p>
             <button type="button" onClick={() => setShareOpen(false)} aria-label={labels.close} className="flex h-8 w-8 items-center justify-center rounded-full text-muted hover:bg-primary/10">×</button>
           </div>
-          <button type="button" onClick={shareCard} disabled={preparing} className="mt-3 flex min-h-11 w-full items-center justify-center rounded-full bg-accent px-4 py-2 text-sm font-semibold text-on-accent disabled:opacity-60">
-            {preparing ? labels.loading : shareFile ? labels.share : labels.retry}
+          <button type="button" onClick={downloadCard} disabled={preparing} className="mt-3 flex min-h-11 w-full items-center justify-center rounded-full bg-accent px-4 py-2 text-sm font-semibold text-on-accent disabled:opacity-60">
+            {preparing ? labels.loading : shareFile ? labels.download : labels.retry}
           </button>
           <p className="mt-2 text-xs leading-5 text-muted" role="status" aria-live="polite">{shareMessage || labels.hint}</p>
         </aside>, document.body,
