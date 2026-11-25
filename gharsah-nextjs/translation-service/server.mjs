@@ -28,7 +28,7 @@
 import { createServer } from "node:http";
 import { timingSafeEqual } from "node:crypto";
 import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { env, pipeline } from "@huggingface/transformers";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -40,6 +40,14 @@ const DTYPE = process.env.TRANSLATION_DTYPE || "q8";
 
 env.cacheDir = process.env.TRANSLATION_CACHE_DIR || join(here, ".model-cache");
 env.allowRemoteModels = process.env.TRANSLATION_OFFLINE !== "1";
+// The Vercel bundle contains the model already; inference must not attempt
+// to write into its read-only filesystem or download a model on each cold start.
+if (process.env.VERCEL && !process.argv.includes("--download-only")) {
+  env.allowRemoteModels = false;
+  env.useFSCache = false;
+  env.allowLocalModels = true;
+  env.localModelPath = join(here, ".model-cache");
+}
 
 const MAX_TEXTS = 50;
 const MAX_CHARS = 5000; // per text; campaign fields are far shorter
@@ -48,7 +56,11 @@ let translatorPromise = null;
 let ready = false;
 function getTranslator() {
   if (!translatorPromise) {
-    translatorPromise = pipeline("translation", MODEL, { dtype: DTYPE }).then((t) => {
+    translatorPromise = pipeline("translation", MODEL, {
+      dtype: DTYPE,
+      device: "cpu",
+      session_options: { intraOpNumThreads: 1, interOpNumThreads: 1 },
+    }).then((t) => {
       ready = true;
       return t;
     });
@@ -91,18 +103,23 @@ async function translateTexts(texts) {
 }
 
 function keyMatches(provided) {
-  if (!KEY) return true;
+  if (!KEY) return !process.env.VERCEL && HOST === "127.0.0.1";
   const a = Buffer.from(String(provided || ""));
   const b = Buffer.from(KEY);
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
 function send(res, status, body) {
-  res.writeHead(status, { "content-type": "application/json; charset=utf-8" });
+  res.writeHead(status, { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" });
   res.end(JSON.stringify(body));
 }
 
 async function readJson(req, limit = 256 * 1024) {
+  if (req.body !== undefined) {
+    const raw = typeof req.body === "string" ? req.body : JSON.stringify(req.body);
+    if (Buffer.byteLength(raw) > limit) throw new Error("payload too large");
+    return JSON.parse(raw);
+  }
   let size = 0;
   const chunks = [];
   for await (const chunk of req) {
@@ -113,31 +130,48 @@ async function readJson(req, limit = 256 * 1024) {
   return JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}");
 }
 
-if (process.argv.includes("--download-only")) {
+const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isMain && process.argv.includes("--download-only")) {
   console.log(`Downloading ${MODEL} (${DTYPE}) into ${env.cacheDir} ...`);
   await getTranslator();
   console.log("Model ready.");
   process.exit(0);
 }
 
-const server = createServer(async (req, res) => {
+// Bound overlapping inference requests so one warm instance cannot exhaust
+// its memory by running several copies of the ONNX decoder concurrently.
+let busy = false;
+export default async function handleRequest(req, res) {
   try {
-    if (req.method === "GET" && req.url === "/health") {
-      return send(res, 200, { ok: true, model: MODEL, dtype: DTYPE, ready });
+    const path = new URL(req.url, "http://localhost").pathname;
+    if (req.method === "GET" && path === "/health") {
+      return send(res, 200, {
+        ok: Boolean(KEY) || !process.env.VERCEL,
+        model: MODEL,
+        dtype: DTYPE,
+        ready,
+        onDemand: Boolean(process.env.VERCEL),
+      });
     }
-    if (req.method === "POST" && req.url === "/translate") {
+    if (req.method === "POST" && path === "/translate") {
       if (!keyMatches(req.headers["x-translation-key"])) return send(res, 401, { error: "unauthorized" });
       const body = await readJson(req);
       const texts = body?.texts;
       if (
         !Array.isArray(texts) ||
-        texts.length > MAX_TEXTS ||
+        texts.length === 0 || texts.length > MAX_TEXTS ||
         !texts.every((t) => typeof t === "string" && t.length <= MAX_CHARS)
       ) {
         return send(res, 400, { error: `expected { texts: string[] } (max ${MAX_TEXTS} items, ${MAX_CHARS} chars each)` });
       }
-      const translations = await translateTexts(texts);
-      return send(res, 200, { translations });
+      if (busy) return send(res, 503, { error: "engine busy; retry shortly" });
+      busy = true;
+      try {
+        const translations = await translateTexts(texts);
+        return send(res, 200, { translations });
+      } finally {
+        busy = false;
+      }
     }
     return send(res, 404, { error: "not found" });
   } catch (error) {
@@ -145,9 +179,9 @@ const server = createServer(async (req, res) => {
     console.error("translate failed:", error instanceof Error ? error.message : error);
     return send(res, 500, { error: "translation failed" });
   }
-});
+}
 
-server.listen(PORT, HOST, () => {
+if (isMain) createServer(handleRequest).listen(PORT, HOST, () => {
   console.log(`Gharsah translation engine on http://${HOST}:${PORT} (model ${MODEL}, ${DTYPE})`);
   if (!KEY) console.warn("TRANSLATION_ENGINE_KEY is not set — only run like this on a private interface.");
   // Warm the model in the background so the first admin request is fast.

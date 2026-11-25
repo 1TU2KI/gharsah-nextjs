@@ -245,8 +245,10 @@ export async function getTranslationEngineHealth(): Promise<"online" | "offline"
   if (!baseUrl) return "not-configured";
   try {
     const response = await fetch(`${baseUrl.replace(/\/+$/, "")}/health`, { signal: AbortSignal.timeout(3000), cache: "no-store" });
-    const data = (await response.json()) as { ok?: boolean; ready?: boolean };
-    return response.ok && data.ok && data.ready ? "online" : "offline";
+    const data = (await response.json()) as { ok?: boolean; ready?: boolean; onDemand?: boolean };
+    // An on-demand deployment loads the bundled model on its first
+    // authenticated translation. A cold instance is reachable, not offline.
+    return response.ok && data.ok && (data.ready || data.onDemand) ? "online" : "offline";
   } catch {
     return "offline";
   }

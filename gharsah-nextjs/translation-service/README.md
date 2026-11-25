@@ -14,10 +14,30 @@ still works, the saved English is kept, and admins can type English by hand.
 
 ## Why it is a separate service
 
-The site runs on Vercel serverless functions. The model and its runtime
-(~113 MB model + ~470 MB `node_modules`, ~1 GB RAM while translating) exceed
-what a Vercel function can reasonably bundle and cold-start, so the engine
-runs on a server you control and the site reaches it over HTTP.
+The engine is isolated from the website so its model and runtime are never
+added to the website's functions. It can run on a small Node server, or in
+a separate Vercel project using Fluid Compute / Large Functions (available
+since June 2026). The model is ~113 MB, with ~1 GB RAM while translating.
+There is no paid translation API; hosting is subject to the provider's quotas.
+
+## Production on Vercel
+
+The dedicated project is `gharsah-translation`. `vercel.json` routes both
+endpoints to one function. Build time downloads the model into the bundle;
+production inference uses those local files without downloading or writing
+to the read-only function filesystem. Node dependencies are installed for
+Linux by Vercel, not uploaded from Windows.
+
+- Set `TRANSLATION_ENGINE_KEY` as a production Secret on both projects.
+- Set `VERCEL_SUPPORT_LARGE_FUNCTIONS=1` on the engine project.
+- Set `TRANSLATION_ENGINE_URL` on the website to the engine's stable alias.
+- Deploy the engine from `translation-service/`, then redeploy the website.
+- `/health` reports `ready` for a loaded model and `onDemand` on Vercel.
+  A cold on-demand instance loads the model at the first authenticated
+  `/translate` request. Anonymous translation requests are rejected.
+- The function has a 60-second limit; the website retains its shorter
+  request timeout and records a retryable error on failure. Overlapping
+  inference requests on one instance return 503 rather than exhausting RAM.
 
 ## Requirements
 
