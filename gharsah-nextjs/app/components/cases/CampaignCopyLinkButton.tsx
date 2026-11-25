@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useId, useRef, useState, type MouseEvent } from "react";
 import { createPortal } from "react-dom";
 import { CheckIcon, LinkIcon } from "@/app/components/home/icons";
 import type { Campaign } from "@/app/lib/campaigns";
@@ -9,15 +9,13 @@ import { copyText } from "@/app/lib/overlay/copyText";
 import { track } from "@/app/lib/analytics/track";
 
 const CONFIRMATION_MS = 2000;
-// Explicit one-campaign rollout requested for Turki's grandmother. Duplicates
-// or renamed/other campaigns never accidentally inherit this experiment.
-const STORY_PREVIEW_CAMPAIGN_ID = "fa762fc9-4982-4e21-917b-cad9460f899c";
+const LINK_COPIED_EVENT = "gharsah:campaign-link-copied";
 
 /**
  * The one share action on every campaign card (CampaignCard and
  * AlmostThereCard): a small pale, translucent circle pinned to the card's
  * top end corner that copies the campaign's public link in one tap.
- * Turki's grandmother alone also offers a transparent PNG download.
+ * Every active campaign also offers a transparent PNG download.
  *
  * It sits above the card's stretched detail-page link (`relative z-10`) and
  * also stops the click itself, so copying never opens the campaign or
@@ -37,6 +35,7 @@ export default function CampaignCopyLinkButton({
   className?: string;
 }) {
   const { t, locale } = useLanguage();
+  const copyActionId = useId();
   const [copied, setCopied] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [preparing, setPreparing] = useState(false);
@@ -50,7 +49,7 @@ export default function CampaignCopyLinkButton({
   const downloads = useRef<string[]>([]);
   const photoClose = useRef<HTMLButtonElement>(null);
   const completed = campaign.status === "completed";
-  const storyPreview = campaign.id === STORY_PREVIEW_CAMPAIGN_ID;
+  const cardDownloadEnabled = campaign.status === "active";
   const labels = locale === "ar"
     ? { download: "تحميل البطاقة", photos: "حفظ البطاقة في الصور", photoHint: "افتح البطاقة واحفظها في الصور بالضغط المطوّل.", photoFooter: "احفظ البطاقة، ثم أضفها فوق أي خلفية وألصق رابط الحالة المنسوخ عليها.", mobileHint: "افتح البطاقة واحفظها في الصور بالضغط المطوّل.", loading: "جارٍ تجهيز البطاقة…", retry: "إعادة تجهيز البطاقة", close: "إغلاق", hint: "حمّل البطاقة وضعها فوق أي خلفية، ثم ألصق رابط الحالة المنسوخ عليها.", error: "تعذّر تجهيز الصورة. الرابط منسوخ ويمكنك إعادة المحاولة.", saved: "بدأ تحميل البطاقة. ضعها فوق أي خلفية، ثم ألصق رابط الحالة المنسوخ عليها." }
     : { download: "Download card", photos: "Save card to Photos", photoHint: "Open the card, then touch and hold the image to save it to Photos.", photoFooter: "Save the card, place it over any background, then paste the copied campaign link onto it.", mobileHint: "Open the card, then touch and hold the image to save it to Photos.", loading: "Preparing card…", retry: "Prepare card again", close: "Close", hint: "Download the card, place it over any background, then paste the copied campaign link onto it.", error: "Could not prepare the image. Your link is copied; you can retry.", saved: "Download started. Place the card over any background, then paste the copied campaign link onto it." };
@@ -58,12 +57,22 @@ export default function CampaignCopyLinkButton({
   useEffect(() => {
     mounted.current = true;
     const urls = downloads.current;
+    // Only the card whose link is on the clipboard may offer a download,
+    // including when the same campaign appears in multiple homepage sections.
+    function dismissOtherCards(event: Event) {
+      if ((event as CustomEvent<string>).detail === copyActionId) return;
+      setCopied(false);
+      setShareOpen(false);
+      setPhotoUrl(null);
+    }
+    window.addEventListener(LINK_COPIED_EVENT, dismissOtherCards);
     return () => {
       mounted.current = false;
+      window.removeEventListener(LINK_COPIED_EVENT, dismissOtherCards);
       window.clearTimeout(timeout.current);
       urls.forEach((url) => URL.revokeObjectURL(url));
     };
-  }, []);
+  }, [copyActionId]);
 
   useEffect(() => {
     if (!photoUrl) return;
@@ -133,8 +142,9 @@ export default function CampaignCopyLinkButton({
       ? "/c/" + encodeURIComponent(campaign.shortCode)
       : "/cases/active/" + encodeURIComponent(campaign.slug);
     void copyText(window.location.origin + path, () => {
+      window.dispatchEvent(new CustomEvent(LINK_COPIED_EVENT, { detail: copyActionId }));
       setCopied(true);
-      if (storyPreview) {
+      if (cardDownloadEnabled) {
         setSaveToPhotos(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && window.innerWidth < 1024));
         setShareOpen(true);
         void prepareCard();
@@ -156,7 +166,7 @@ export default function CampaignCopyLinkButton({
       >
         {copied ? <CheckIcon className="h-4 w-4" /> : <LinkIcon className="h-4 w-4" />}
       </button>
-      {copied && !storyPreview &&
+      {copied && !cardDownloadEnabled &&
         createPortal(
           <div
             role="status"
@@ -169,7 +179,7 @@ export default function CampaignCopyLinkButton({
           </div>,
           document.body,
         )}
-      {storyPreview && shareOpen && createPortal(
+      {cardDownloadEnabled && shareOpen && createPortal(
         <aside
           data-campaign-share-preview={campaign.slug}
           aria-label={labels.download}
@@ -185,7 +195,7 @@ export default function CampaignCopyLinkButton({
           <p className="mt-2 text-xs leading-5 text-muted" role="status" aria-live="polite">{shareMessage || (saveToPhotos ? labels.mobileHint : labels.hint)}</p>
         </aside>, document.body,
       )}
-      {storyPreview && photoUrl && createPortal(
+      {photoUrl && createPortal(
         <div
           role="dialog"
           aria-modal="true"
