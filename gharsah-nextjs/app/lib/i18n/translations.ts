@@ -127,6 +127,7 @@ const ar = {
     },
     progressLabel: (percent: number) => `نسبة الإنجاز: ${percent}٪`,
     donateButton: "التبرع عبر المنصة الرسمية",
+    copyLink: "نسخ رابط الحملة الرسمي",
   },
   // «اصنع صفحتك» — custom اقتربت... pages (local prototype).
   customNear: {
@@ -317,7 +318,7 @@ const ar = {
     backLinkActive: "← العودة إلى الحالات النشطة",
     backLinkCompleted: "← العودة إلى الحالات المكتملة",
     donateDisclaimer: "جميع التبرعات تتم عبر الجهة الرسمية، ولا يستقبل موقع غرسة أي أموال.",
-    copyLink: "نسخ رابط الحالة",
+    copyLink: "نسخ رابط الصفحة",
     linkCopied: "تم نسخ الرابط",
     transition: {
       title: "اجعل نيتك أوسع",
@@ -439,6 +440,7 @@ const en = {
     },
     progressLabel: (percent: number) => `Progress: ${percent}%`,
     donateButton: "Donate via Official Platform",
+    copyLink: "Copy official campaign link",
   },
   customNear: {
     createButton: "Create your page",
@@ -637,7 +639,7 @@ const en = {
     backLinkActive: "← Back to Active Campaigns",
     backLinkCompleted: "← Back to Completed Campaigns",
     donateDisclaimer: "All donations are made directly through the official organization — Gharsah does not receive any funds.",
-    copyLink: "Copy Case Link",
+    copyLink: "Copy page link",
     linkCopied: "Link copied",
     transition: {
       title: "Widen Your Intention",

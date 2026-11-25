@@ -14,7 +14,7 @@ const LINK_COPIED_EVENT = "gharsah:campaign-link-copied";
 /**
  * The one share action on every campaign card (CampaignCard and
  * AlmostThereCard): a small pale, translucent circle pinned to the card's
- * top end corner that copies the campaign's public link in one tap.
+ * top end corner that copies the official campaign URL in one tap.
  * Every active campaign also offers a transparent PNG download.
  *
  * It sits above the card's stretched detail-page link (`relative z-10`) and
@@ -138,10 +138,7 @@ export default function CampaignCopyLinkButton({
     event.preventDefault();
     event.stopPropagation();
     source.current = event.currentTarget.closest("article");
-    const path = campaign.shortCode
-      ? "/c/" + encodeURIComponent(campaign.shortCode)
-      : "/cases/active/" + encodeURIComponent(campaign.slug);
-    void copyText(window.location.origin + path, () => {
+    void copyText(campaign.url, () => {
       window.dispatchEvent(new CustomEvent(LINK_COPIED_EVENT, { detail: copyActionId }));
       setCopied(true);
       if (cardDownloadEnabled) {
@@ -160,8 +157,8 @@ export default function CampaignCopyLinkButton({
       <button
         type="button"
         onClick={handleClick}
-        aria-label={copied ? t.campaignDetail.linkCopied : t.campaignDetail.copyLink}
-        title={t.campaignDetail.copyLink}
+        aria-label={copied ? t.campaignDetail.linkCopied : t.campaignCard.copyLink}
+        title={t.campaignCard.copyLink}
         className={`copy-link-btn ${completed ? "copy-link-btn--completed" : ""} absolute end-3 z-10 flex h-9 w-9 items-center justify-center rounded-full transition-all active:scale-90 ${className}`}
       >
         {copied ? <CheckIcon className="h-4 w-4" /> : <LinkIcon className="h-4 w-4" />}
