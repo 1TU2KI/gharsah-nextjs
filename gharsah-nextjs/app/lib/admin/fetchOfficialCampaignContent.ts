@@ -2,6 +2,7 @@
 
 import { requireAdminSession } from "../auth/guard";
 import { extractMetaContent } from "../ehsanParse";
+import { looksLikeUrl } from "../translation/arabic";
 
 /**
  * On-demand admin action: "fetch the official title/description now,"
@@ -77,8 +78,12 @@ export async function fetchOfficialCampaignContentAction(url: string): Promise<F
     }
 
     const html = await response.text();
-    const title = extractMetaContent(html, "og:title");
-    const description = extractMetaContent(html, "og:description");
+    // Invalid extractions (empty, or a URL instead of a title) come back as
+    // null, so the form keeps the title it already has.
+    const rawTitle = extractMetaContent(html, "og:title");
+    const rawDescription = extractMetaContent(html, "og:description");
+    const title = rawTitle && !looksLikeUrl(rawTitle) ? rawTitle : null;
+    const description = rawDescription && !looksLikeUrl(rawDescription) ? rawDescription : null;
     if (!title && !description) {
       return { ok: false, reason: "not-found", message: "لم يتم العثور على عنوان أو وصف رسمي في صفحة الحملة على إحسان." };
     }

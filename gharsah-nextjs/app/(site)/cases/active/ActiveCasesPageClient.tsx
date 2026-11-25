@@ -119,7 +119,7 @@ export default function ActiveCasesPageClient({ campaigns }: { campaigns: Campai
           {campaigns.length > 0 ? (
             <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {sortedCampaigns.map((campaign) => (
-                <CampaignCard key={campaign.slug} campaign={campaign} storyPreview={campaign.id === campaigns[0]?.id} />
+                <CampaignCard key={campaign.slug} campaign={campaign} />
               ))}
             </div>
           ) : (

@@ -5,7 +5,7 @@ import type { Campaign } from "../../lib/campaigns";
 import { CheckBadgeIcon, ExternalLinkIcon, PulseIcon } from "./icons";
 import { useLanguage } from "../../lib/i18n/LanguageProvider";
 import DonationTransition from "../cases/DonationTransition";
-import CampaignStoryShare from "../cases/CampaignStoryShare";
+import CampaignCopyLinkButton from "../cases/CampaignCopyLinkButton";
 import { track } from "../../lib/analytics/track";
 
 /**
@@ -116,7 +116,7 @@ export function MemorialLine({ campaign }: { campaign: Campaign }) {
   );
 }
 
-export default function CampaignCard({ campaign, storyPreview = false }: { campaign: Campaign; storyPreview?: boolean }) {
+export default function CampaignCard({ campaign }: { campaign: Campaign }) {
   const { t, locale } = useLanguage();
   const theme = statusTheme[campaign.status];
   const platformLogo = campaign.platformLogo;
@@ -147,34 +147,35 @@ export default function CampaignCard({ campaign, storyPreview = false }: { campa
 
       <div className="flex flex-1 flex-col">
         <div>
-          {/* Keeps the memorial line clear of the story-share icon in the top end corner. */}
-          <div className={storyPreview ? "pe-8" : undefined}>
+          {/* `pe-10` keeps the memorial line and badges clear of the
+              copy-link button in the top end corner (CampaignCopyLinkButton). */}
+          <div className="pe-10">
             <MemorialLine campaign={campaign} />
-          </div>
 
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <span
-              className={`status-badge inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold leading-none ${theme.badgeClass}`}
-            >
-              {campaign.status === "completed" && <CheckBadgeIcon className="h-3.5 w-3.5" />}
-              {campaign.status === "active" && <PulseIcon className="h-3.5 w-3.5" />}
-              {t.campaignCard.status[campaign.status]}
-            </span>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span
+                className={`status-badge inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold leading-none ${theme.badgeClass}`}
+              >
+                {campaign.status === "completed" && <CheckBadgeIcon className="h-3.5 w-3.5" />}
+                {campaign.status === "active" && <PulseIcon className="h-3.5 w-3.5" />}
+                {t.campaignCard.status[campaign.status]}
+              </span>
 
-            <a
-              href={campaign.platformHomepageUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`tap-expand relative inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold leading-none transition-all active:scale-90 active:brightness-95 ${theme.platformPillClass}`}
-            >
-              {campaign.platformLabel[locale]}
-              {platformLogo ? (
-                // eslint-disable-next-line @next/next/no-img-element -- tiny decorative brand mark, not an optimization-critical image
-                <img src={platformLogo} alt="" className="h-3.5 w-3.5 shrink-0 object-contain" />
-              ) : (
-                <ExternalLinkIcon className="h-3 w-3" />
-              )}
-            </a>
+              <a
+                href={campaign.platformHomepageUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`tap-expand relative inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold leading-none transition-all active:scale-90 active:brightness-95 ${theme.platformPillClass}`}
+              >
+                {campaign.platformLabel[locale]}
+                {platformLogo ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- tiny decorative brand mark, not an optimization-critical image
+                  <img src={platformLogo} alt="" className="h-3.5 w-3.5 shrink-0 object-contain" />
+                ) : (
+                  <ExternalLinkIcon className="h-3 w-3" />
+                )}
+              </a>
+            </div>
           </div>
 
           <h3 className="mt-2 text-lg font-bold leading-7 text-foreground">{title}</h3>
@@ -220,7 +221,7 @@ export default function CampaignCard({ campaign, storyPreview = false }: { campa
           </a>
         )}
       </DonationTransition>
-      {storyPreview && <CampaignStoryShare campaign={campaign} />}
+      <CampaignCopyLinkButton campaign={campaign} />
     </article>
   );
 }

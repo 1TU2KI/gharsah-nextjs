@@ -20,12 +20,16 @@ const STATUS_CLASS: Record<string, string> = {
 export default function CampaignsTable({
   initialRows,
   engagement,
+  translationAttention,
 }: {
   initialRows: CampaignRow[];
+  /** Ids whose English needs attention (derived per field, see app/lib/translation/meta.ts) — the stored translation_status flag alone can be outdated on older rows. */
+  translationAttention?: string[];
   /** Read-only glance numbers — see the full sortable breakdown on الإحصائيات (CampaignAnalyticsTable) instead of duplicating sort/filter logic here. */
   engagement?: CampaignEngagementRow[];
 }) {
   const [rows, setRows] = useState(initialRows);
+  const attention = useMemo(() => (translationAttention ? new Set(translationAttention) : null), [translationAttention]);
   const engagementById = useMemo(() => new Map((engagement ?? []).map((e) => [e.campaignId, e])), [engagement]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "completed">("all");
@@ -190,9 +194,9 @@ export default function CampaignsTable({
                       <Link href={`${ADMIN_BASE_PATH}/campaigns/${row.id}`} className="block truncate font-semibold text-foreground hover:text-primary-dark">
                         {row.title_ar}
                       </Link>
-                      {row.translation_status === "error" && (
+                      {(attention ? attention.has(row.id) : row.translation_status === "error") && (
                         <span
-                          title="تعذّرت الترجمة الإنجليزية التلقائية — افتح الحملة لإعادة المحاولة"
+                          title="الترجمة الإنجليزية ناقصة أو فاشلة أو قديمة أو بحاجة لمراجعة — افتح الحملة للتفاصيل"
                           className="shrink-0 rounded-full bg-red-50 px-1.5 py-0.5 text-[10px] font-bold text-red-600"
                         >
                           EN⚠

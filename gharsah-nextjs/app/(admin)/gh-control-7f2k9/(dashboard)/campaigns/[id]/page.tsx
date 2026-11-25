@@ -8,6 +8,13 @@ import CampaignForm, { type CampaignFormValues, type CampaignTranslationInfo } f
 import CampaignEditToolbar from "@/app/components/admin/CampaignEditToolbar";
 import ShortLinkPanel from "@/app/components/admin/ShortLinkPanel";
 import { updateCampaignAction } from "../actions";
+import { campaignFieldStatuses, campaignTranslationError } from "@/app/lib/translation/campaignTranslation";
+import { isLiveReplaceable, isSettled, parseManual, parseMeta, TRANSLATED_FIELDS, type TranslatedField } from "@/app/lib/translation/meta";
+import { isValidEnglish, normalizeArabic } from "@/app/lib/translation/arabic";
+import { getTranslationEngineHealth } from "@/app/lib/translate";
+import { getLiveCampaignTexts } from "@/app/lib/campaignLiveSync";
+import { cacheKey, getCachedTranslations } from "@/app/lib/db/translationCache";
+import { knownDescriptionEnglish } from "@/app/lib/translation/knownTexts";
 import Link from "next/link";
 
 export const metadata: Metadata = { title: "تعديل حملة | لوحة تحكم غرسة" };
@@ -45,14 +52,56 @@ export default async function EditCampaignPage({
   const engagementRows = await campaignEngagement();
   const engagement = engagementRows.find((c) => c.campaignId === id);
 
+  // Statuses are derived from the provenance metadata + current text, never
+  // from the stored translation_status flag alone (older rows can carry a
+  // stale "ok" or an outdated error message).
+  const statuses = campaignFieldStatuses(campaign);
+  const meta = parseMeta(campaign.translation_meta);
+  const [engine, live] = await Promise.all([getTranslationEngineHealth(), getLiveCampaignTexts(campaign.platform, campaign.url)]);
+  // Only fields whose English live sync may replace (see isLiveReplaceable) —
+  // hand-typed/reviewed/hand-authored English is shown as-is regardless.
+  const manualSet = parseManual(campaign.translation_manual);
+  const liveDiffers = {
+    title:
+      Boolean(live?.title && normalizeArabic(live.title) !== normalizeArabic(campaign.title_ar)) &&
+      isLiveReplaceable(campaign.title_en, manualSet.has("title"), meta.title),
+    description:
+      Boolean(live?.description && normalizeArabic(live.description) !== normalizeArabic(campaign.description_ar ?? "")) &&
+      isLiveReplaceable(campaign.description_en, manualSet.has("description"), meta.description),
+  };
+  const liveCache = await getCachedTranslations([
+    ...(liveDiffers.title && live?.title ? [cacheKey("title", live.title)] : []),
+    ...(liveDiffers.description && live?.description ? [cacheKey("description", live.description)] : []),
+  ]);
+  const liveState = (field: "title" | "description"): CampaignTranslationInfo["live"][typeof field] => {
+    const text = live?.[field];
+    if (!liveDiffers[field] || !text) return null;
+    const known = field === "description" ? knownDescriptionEnglish(text) : null;
+    return { arabic: text, english: known ?? liveCache.get(cacheKey(field, text))?.english ?? null };
+  };
+  const field = (key: TranslatedField, english: string) => ({
+    status: statuses[key],
+    english: isValidEnglish(english) ? english : "",
+    error: statuses[key] === "failed" || statuses[key] === "pending" ? (meta[key]?.pending?.error ?? null) : null,
+  });
+
   const translation: CampaignTranslationInfo = {
-    titleEn: campaign.title_en,
-    relationEn: campaign.relation_en,
-    descriptionEn: campaign.description_en,
+    // Only valid English pre-fills the editable inputs — older rows may still
+    // hold Arabic in *_en columns, which must never be resubmitted as English.
+    titleEn: isValidEnglish(campaign.title_en) ? campaign.title_en : "",
+    relationEn: isValidEnglish(campaign.relation_en) ? campaign.relation_en : "",
+    descriptionEn: isValidEnglish(campaign.description_en) ? campaign.description_en : "",
     memorialPrefixEn: campaign.memorial_prefix_en ?? "",
-    status: campaign.translation_status,
-    error: campaign.translation_error,
+    status: TRANSLATED_FIELDS.every((f) => isSettled(statuses[f])) ? "ok" : "error",
+    error: campaignTranslationError(campaign),
     manualFields: (campaign.translation_manual ?? "").split(",").filter(Boolean),
+    fields: {
+      title: field("title", campaign.title_en),
+      relation: field("relation", campaign.relation_en),
+      description: field("description", campaign.description_en),
+    },
+    engine,
+    live: { title: liveState("title"), description: liveState("description") },
   };
 
   return (

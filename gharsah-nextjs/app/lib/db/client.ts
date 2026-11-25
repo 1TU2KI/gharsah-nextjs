@@ -26,7 +26,37 @@ import { backfillCampaignShortCodes } from "./shortCode";
  */
 const DATABASE_URL = process.env.DATABASE_URL;
 
-const sql = DATABASE_URL ? neon(DATABASE_URL) : null;
+/**
+ * Local isolated testing only: `DATABASE_URL=pglite-http://127.0.0.1:<port>`
+ * sends queries to the local test database started by
+ * `scripts/pglite-test-db.mjs` (PGlite, a devDependency, owned by that ONE
+ * process — Next's dev server uses several processes, which would corrupt a
+ * PGlite folder opened directly). Lets admin saves/backfills be exercised
+ * without touching the real database. Hard-refused in production builds and
+ * on Vercel, and only ever talks to this machine.
+ */
+const PGLITE_HTTP = /^pglite-http:\/\/(127\.0\.0\.1|localhost):(\d{2,5})\/?$/;
+const pgliteMatch = DATABASE_URL?.match(PGLITE_HTTP) ?? null;
+const usePglite = Boolean(DATABASE_URL?.startsWith("pglite"));
+if (usePglite && (process.env.NODE_ENV === "production" || process.env.VERCEL || !pgliteMatch)) {
+  throw new Error(
+    "DATABASE_URL=pglite-http://127.0.0.1:<port> is for local development only (refused in production and for non-local hosts).",
+  );
+}
+
+const sql = DATABASE_URL && !usePglite ? neon(DATABASE_URL) : null;
+
+async function pgliteQuery(text: string, params: unknown[]): Promise<unknown[]> {
+  const response = await fetch(`http://127.0.0.1:${pgliteMatch![2]}/query`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ text, params }),
+    cache: "no-store",
+  });
+  const data = (await response.json()) as { rows?: unknown[]; error?: string };
+  if (!response.ok || !data.rows) throw new Error(`[pglite test db] ${data.error ?? response.status}`);
+  return data.rows;
+}
 
 export type RawQuery = <T = Record<string, unknown>>(text: string, params?: unknown[]) => Promise<T[]>;
 
@@ -45,6 +75,9 @@ function toPgPlaceholders(text: string): string {
  * building, deadlocking forever.
  */
 const rawQuery: RawQuery = async (text, params = []) => {
+  if (usePglite) {
+    return (await pgliteQuery(toPgPlaceholders(text), params)) as never;
+  }
   if (!sql) {
     throw new Error(
       "DATABASE_URL is not set. Add a Postgres connection string (e.g. from a Vercel Neon integration) to the environment.",
@@ -247,6 +280,21 @@ const CAMPAIGN_COLUMN_MIGRATIONS = [
   // right after seeding, below) is what actually fills them in, at which
   // point this index starts enforcing real uniqueness.
   `CREATE UNIQUE INDEX IF NOT EXISTS idx_campaigns_short_code ON campaigns (short_code)`,
+  // Per-field translation provenance (JSON, see app/lib/translation/meta.ts):
+  // which Arabic each *_en value was produced from and how. NULL on older
+  // rows = "legacy": a valid saved English is kept as-is, an invalid one
+  // (empty/Arabic/URL) is reported as missing. Additive and nullable.
+  `ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS translation_meta TEXT`,
+  // Successful translations keyed by a hash of the normalized Arabic source,
+  // so the engine is only ever asked about new or changed text (also used
+  // for live-synced Ehsan text, without translating on page views).
+  `CREATE TABLE IF NOT EXISTS translation_cache (
+    key TEXT PRIMARY KEY,
+    kind TEXT NOT NULL,
+    english TEXT NOT NULL,
+    method TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  )`,
 ];
 
 async function initialize(): Promise<void> {

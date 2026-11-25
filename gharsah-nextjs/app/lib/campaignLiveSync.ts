@@ -38,6 +38,9 @@
 import type { Campaign, CampaignStatus } from "./campaigns";
 import { getCampaignBySlug, getCampaigns } from "./campaigns";
 import { extractMetaContent } from "./ehsanParse";
+import { looksLikeUrl, normalizeArabic } from "./translation/arabic";
+import { knownDescriptionEnglish } from "./translation/knownTexts";
+import { cacheKey, getCachedTranslations, type CachedTranslation } from "./db/translationCache";
 
 const REVALIDATE_SECONDS = 60 * 60; // re-check each campaign at most once an hour
 
@@ -106,38 +109,81 @@ async function fetchLiveEhsanData(url: string): Promise<LiveFields | null> {
   }
 }
 
-/**
- * Resolves a campaign's display fields: live values from Ehsan where
- * possible, manual fallback values otherwise. Never throws — worst case,
- * returns the campaign exactly as passed in.
- */
-export async function resolveCampaignLiveFields(campaign: Campaign): Promise<Campaign> {
-  if (campaign.platform !== EHSAN_PLATFORM_NAME) {
-    // No verified live detector for this platform yet (currently:
-    // Dawa Al-Qasba) — stay entirely on manual fallback values.
-    return campaign;
-  }
-
-  const live = await fetchLiveEhsanData(campaign.url);
-  if (!live) {
-    // Whole fetch failed — keep every field on its manual fallback.
-    return campaign;
-  }
-
+/** Ehsan's live Arabic title/description for a campaign (same hourly-cached fetch the public pages use). null = not Ehsan, or the fetch failed. A URL is never accepted as a title. */
+export async function getLiveCampaignTexts(platform: string, url: string): Promise<{ title: string | null; description: string | null } | null> {
+  if (platform !== EHSAN_PLATFORM_NAME) return null;
+  const live = await fetchLiveEhsanData(url);
+  if (!live) return null;
   return {
-    ...campaign,
-    status: live.status,
-    // Ehsan's live page is Arabic-only, so only the `.ar` side is ever
-    // replaced here — `.en` always stays the manually-authored translation
-    // from campaigns.ts, live sync never touches it.
-    title: { ar: live.title ?? campaign.title.ar, en: campaign.title.en },
-    description: { ar: live.description ?? campaign.description.ar, en: campaign.description.en },
-    percent: live.percent ?? campaign.percent,
+    title: live.title && !looksLikeUrl(live.title) ? live.title : null,
+    description: live.description && !looksLikeUrl(live.description) ? live.description : null,
   };
 }
 
+const differs = (live: string | null, stored: string | undefined) =>
+  Boolean(live && normalizeArabic(live) !== normalizeArabic(stored ?? ""));
+
+/**
+ * Resolves display fields: live values from Ehsan where possible, manual
+ * fallback values otherwise. Never throws.
+ *
+ * English and live Arabic: Ehsan is Arabic-only, so a live Arabic text that
+ * differs from the saved Arabic has NO English of its own. English mode
+ * then shows a translation of that live text only if one was already
+ * produced and cached (by the admin's "retry translation" — never on a page
+ * view); otherwise it keeps the saved English (never Arabic), and the admin
+ * shows the field as needing translation. Only automatically generated (or
+ * missing) English is ever replaced this way — hand-typed, reviewed and
+ * hand-authored legacy English always stays.
+ */
 async function resolveCampaignsLiveFields(campaigns: Campaign[]): Promise<Campaign[]> {
-  return Promise.all(campaigns.map(resolveCampaignLiveFields));
+  const lives = await Promise.all(
+    campaigns.map(async (campaign) => (campaign.platform === EHSAN_PLATFORM_NAME ? fetchLiveEhsanData(campaign.url) : null)),
+  );
+
+  const keys: string[] = [];
+  lives.forEach((live, i) => {
+    if (!live) return;
+    const campaign = campaigns[i];
+    if (live.title && !looksLikeUrl(live.title) && differs(live.title, campaign.title.ar)) keys.push(cacheKey("title", live.title));
+    if (live.description && differs(live.description, campaign.description.ar)) keys.push(cacheKey("description", live.description));
+  });
+  let cached = new Map<string, CachedTranslation>();
+  try {
+    cached = await getCachedTranslations(keys);
+  } catch (error) {
+    console.warn("[campaignLiveSync] translation cache read failed:", error instanceof Error ? error.message : error);
+  }
+
+  return campaigns.map((campaign, i) => {
+    const live = lives[i];
+    if (!live) return campaign;
+    const replaceable = new Set(campaign.liveReplaceableEnglish ?? []);
+    const liveTitle = live.title && !looksLikeUrl(live.title) ? live.title : null;
+
+    let titleEn = campaign.title.en;
+    if (liveTitle && differs(liveTitle, campaign.title.ar) && replaceable.has("title")) {
+      titleEn = cached.get(cacheKey("title", liveTitle))?.english ?? titleEn;
+    }
+    let descriptionEn = campaign.description.en;
+    if (live.description && differs(live.description, campaign.description.ar) && replaceable.has("description")) {
+      descriptionEn =
+        knownDescriptionEnglish(live.description) ?? cached.get(cacheKey("description", live.description))?.english ?? descriptionEn;
+    }
+
+    return {
+      ...campaign,
+      status: live.status,
+      title: { ar: liveTitle ?? campaign.title.ar, en: titleEn },
+      description: { ar: live.description ?? campaign.description.ar, en: descriptionEn },
+      percent: live.percent ?? campaign.percent,
+    };
+  });
+}
+
+export async function resolveCampaignLiveFields(campaign: Campaign): Promise<Campaign> {
+  const [resolved] = await resolveCampaignsLiveFields([campaign]);
+  return resolved;
 }
 
 /** All campaigns with live fields resolved, in display order. */

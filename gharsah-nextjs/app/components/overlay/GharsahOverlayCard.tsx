@@ -28,8 +28,7 @@ import type { GharsahOverlayStyle } from "@/app/lib/overlay/gharsah/types";
  * "qr" style: a scannable QR — Inked Willow modules on a solid pale ivory
  * square that includes the standard 4-module quiet zone (the margin scanners
  * need), inside a rounded green glass panel with a short destination label
- * (globals.css `.obs-qr-panel`; its reflection never reaches the code). Same `qrcode` encoder (error correction M) as the campaign story image
- * (CampaignStoryShare.tsx). SVG + crispEdges so OBS scales it without blur.
+ * (globals.css `.obs-qr-panel`; its reflection never reaches the code). `qrcode` encoder, error correction M. SVG + crispEdges so OBS scales it without blur.
  */
 const QR_QUIET_ZONE = 4;
 

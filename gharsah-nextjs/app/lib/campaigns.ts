@@ -1,5 +1,36 @@
 import { listCampaignRows, type CampaignRow } from "./db/campaignsRepo";
 import { getPlatforms } from "./db/settings";
+import { fallbackEnglishTitle, isValidEnglish } from "./translation/arabic";
+import { fieldStatus, isLiveReplaceable, isTranslated, parseManual, parseMeta, type TranslatedField } from "./translation/meta";
+
+/**
+ * The English the public site may show for one field: only English that
+ * belongs to the CURRENT Arabic (a current translation, or English an admin
+ * typed). Stale English — saved for an older Arabic text, e.g. while a new
+ * translation failed or awaits review — is kept in the database but not
+ * shown, so a campaign is never displayed with another person's name.
+ * Hand-written English with no Arabic counterpart (older descriptions) is shown.
+ */
+function displayableEnglish(row: CampaignRow): Record<TranslatedField, string> {
+  const manual = parseManual(row.translation_manual);
+  const meta = parseMeta(row.translation_meta);
+  const pick = (field: TranslatedField, arabic: string | null, english: string): string => {
+    const status = fieldStatus(arabic, english, manual.has(field), meta[field]);
+    if (status === "none") return isValidEnglish(english) ? english : "";
+    return isTranslated(status) ? english : "";
+  };
+  return {
+    title: pick("title", row.title_ar, row.title_en),
+    relation: pick("relation", row.relation_ar, row.relation_en),
+    description: pick("description", row.description_ar, row.description_en),
+  };
+}
+
+function liveReplaceable(row: CampaignRow, shown: Record<TranslatedField, string>): ("title" | "description")[] {
+  const manual = parseManual(row.translation_manual);
+  const meta = parseMeta(row.translation_meta);
+  return (["title", "description"] as const).filter((field) => isLiveReplaceable(shown[field], manual.has(field), meta[field]));
+}
 
 /**
  * Public read API for campaign data — used by every visitor-facing page
@@ -68,12 +99,15 @@ export type Campaign = {
   platformHomepageUrl: string;
   /** Compact public redirect code for gharsah.sa/c/<code> (see app/c/[code]/route.ts) — never null in practice (backfilled for every campaign on startup), typed nullable only because the DB column technically allows it for the brief instant before that backfill runs. */
   shortCode: string | null;
+  /** Fields whose English live sync may swap for a cached translation of changed live Arabic (see isLiveReplaceable) — never hand-typed, reviewed or hand-authored English. */
+  liveReplaceableEnglish?: ("title" | "description")[];
   /** ISO timestamp of the row's real DB `created_at` — i.e. when the campaign was actually added to Gharsah, not when it was last edited. Exposed only for the /cases/active sort-by-date-added control; not otherwise rendered anywhere. */
   createdAt: string;
 };
 
 async function rowToCampaign(row: CampaignRow): Promise<Campaign> {
   const platforms = await getPlatforms();
+  const shown = displayableEnglish(row);
   const platformConfig = platforms.find((p) => p.value === row.platform);
 
   return {
@@ -87,13 +121,15 @@ async function rowToCampaign(row: CampaignRow): Promise<Campaign> {
         ? { ar: row.memorial_prefix_ar, en: row.memorial_prefix_en }
         : undefined,
     username: row.username ?? undefined,
-    // Display-only fallback: a campaign whose English couldn't be produced yet
-    // (translation engine unavailable) stores EMPTY English, never Arabic —
-    // the English site shows the Arabic text until English is added.
-    relation: { ar: row.relation_ar, en: row.relation_en || row.relation_ar },
-    title: { ar: row.title_ar, en: row.title_en || row.title_ar },
+    // English mode never shows Arabic (or a URL): until valid English exists
+    // the title uses a neutral English fallback and the subtitle/description
+    // are simply left out. Older rows may still hold Arabic in *_en columns
+    // (from a previous translator) — isValidEnglish screens those out too.
+    relation: { ar: row.relation_ar, en: shown.relation },
+    title: { ar: row.title_ar, en: shown.title || fallbackEnglishTitle(row.title_ar) },
     status: row.status,
-    description: { ar: row.description_ar ?? undefined, en: row.description_en || (row.description_ar ?? "") },
+    description: { ar: row.description_ar ?? undefined, en: shown.description },
+    liveReplaceableEnglish: liveReplaceable(row, shown),
     percent: row.percent ?? undefined,
     platformLabel: platformConfig ? { ar: platformConfig.labelAr, en: platformConfig.labelEn } : { ar: row.platform, en: row.platform },
     platformLogo: platformConfig?.logo ?? null,

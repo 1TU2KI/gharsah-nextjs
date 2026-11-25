@@ -6,6 +6,7 @@ import { MemorialLine, statusTheme } from "./CampaignCard";
 import { ExternalLinkIcon, PulseIcon } from "./icons";
 import { useLanguage } from "../../lib/i18n/LanguageProvider";
 import DonationTransition from "../cases/DonationTransition";
+import CampaignCopyLinkButton from "../cases/CampaignCopyLinkButton";
 import { track } from "../../lib/analytics/track";
 
 /**
@@ -20,11 +21,9 @@ import { track } from "../../lib/analytics/track";
  * getAlmostThereCampaigns), so — unlike CampaignCard — the progress block
  * is never conditionally hidden.
  *
- * No short-link copy action here on purpose: that's a detail-page-only
- * affordance (CampaignDetailClient.tsx) once a visitor has actually opened
- * a specific campaign — these list cards stay focused on getting someone
- * to the campaign itself, not on link management. The short-link system
- * (and its admin panel) is unaffected either way.
+ * Shares CampaignCard's one-tap copy-link circle (CampaignCopyLinkButton),
+ * placed at `top-4` so it clears the #1 card's «الأقرب للاكتمال» badge
+ * that overlaps the top border.
  *
  * `rank` drives two things: on `md:`+ screens, AlmostThereGrid's `order-*`
  * classes place #1 in the visual center with #2/#3 flanking it, and the two
@@ -145,7 +144,8 @@ export default function AlmostThereCard({
           shorter title/description just means slightly larger (still
           equal) gaps, never overflow, never a lone empty rectangle. */}
       <div className="flex h-full flex-col justify-between pt-1">
-        <div>
+        {/* `pe-10` keeps the memorial line and badges clear of the copy-link button. */}
+        <div className="pe-10">
           <MemorialLine campaign={campaign} />
 
           <div className="mt-1.5 flex flex-wrap items-center gap-2">
@@ -197,6 +197,7 @@ export default function AlmostThereCard({
           )}
         </DonationTransition>
       </div>
+      <CampaignCopyLinkButton campaign={campaign} className="top-4" />
     </article>
   );
 }

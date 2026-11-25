@@ -8,7 +8,11 @@ import type { PlatformConfig } from "@/app/lib/db/settings";
 import type { Campaign } from "@/app/lib/campaigns";
 import { LanguageProvider } from "@/app/lib/i18n/LanguageProvider";
 import CampaignCard from "@/app/components/home/CampaignCard";
-import { retryCampaignTranslationAction } from "@/app/(admin)/gh-control-7f2k9/(dashboard)/campaigns/actions";
+import {
+  confirmTranslationReviewAction,
+  retryCampaignTranslationAction,
+} from "@/app/(admin)/gh-control-7f2k9/(dashboard)/campaigns/actions";
+import { FIELD_STATUS_LABEL_AR, TRANSLATED_FIELDS, type FieldStatus, type TranslatedField } from "@/app/lib/translation/meta";
 import { fetchOfficialCampaignContentAction } from "@/app/lib/admin/fetchOfficialCampaignContent";
 
 export type CampaignFormValues = {
@@ -47,7 +51,22 @@ export type CampaignTranslationInfo = {
   error: string | null;
   /** English fields an admin typed by hand ("title" | "relation" | "description") — never auto-translated over. */
   manualFields: string[];
+  /** Per-field derived status (app/lib/translation/meta.ts), with the pending/failed reason for the CURRENT Arabic. */
+  fields: Record<TranslatedField, { status: FieldStatus; english: string; error: string | null }>;
+  engine: "online" | "offline" | "not-configured";
+  /** Ehsan's live Arabic, when it differs from the saved Arabic — with its cached English, if already translated. */
+  live: Record<"title" | "description", { arabic: string; english: string | null } | null>;
 };
+
+const FIELD_LABEL_AR: Record<TranslatedField, string> = { title: "العنوان", relation: "العنوان الفرعي", description: "الوصف" };
+
+function statusTone(status: FieldStatus): string {
+  if (status === "current" || status === "manual" || status === "none") return "bg-primary-50 text-primary-dark";
+  if (status === "review_recommended" || status === "manual_outdated" || status === "stale" || status === "pending") {
+    return "bg-amber-50 text-amber-700";
+  }
+  return "bg-red-50 text-red-600";
+}
 
 const fieldClass =
   "mt-1.5 w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none transition-all placeholder:text-muted focus:border-primary-light focus:ring-4 focus:ring-primary-light/15 [&.error]:border-red-400";
@@ -118,16 +137,25 @@ export default function CampaignForm({
     setValues((prev) => ({ ...prev, [key]: value }));
   }
 
+  const [retryMessage, setRetryMessage] = useState<string | null>(null);
+
   function handleRetryTranslation() {
     if (!campaignId) return;
     startRetry(async () => {
-      // No separate error state here on purpose: retryCampaignTranslationAction
-      // persists whatever it computed (success or failure) to the same
-      // translation_status/translation_error columns the `translation` prop
-      // already reads, so router.refresh() alone brings this panel's
-      // existing status badge + error text up to date. Tracking the result
-      // in its own state too would just render the identical message twice.
-      await retryCampaignTranslationAction(campaignId);
+      // The per-field statuses come back through router.refresh(); the
+      // returned message covers what the row itself doesn't store (e.g.
+      // live Ehsan text that still needs attention).
+      const result = await retryCampaignTranslationAction(campaignId);
+      setRetryMessage(result.error);
+      router.refresh();
+    });
+  }
+
+  function handleConfirmReview(field: TranslatedField) {
+    if (!campaignId) return;
+    startRetry(async () => {
+      const result = await confirmTranslationReviewAction(campaignId, field);
+      setRetryMessage(result.error);
       router.refresh();
     });
   }
@@ -750,7 +778,7 @@ export default function CampaignForm({
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-bold text-foreground">الترجمة الإنجليزية</h3>
             {translation?.status === "error" && (
-              <span className="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-600">تعذرت الترجمة — حاول مجددًا</span>
+              <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700">تحتاج متابعة</span>
             )}
             {translation?.status === "ok" && (
               <span className="rounded-full bg-primary-50 px-2 py-0.5 text-[10px] font-bold text-primary">الترجمة جاهزة</span>
@@ -763,18 +791,83 @@ export default function CampaignForm({
             </p>
           )}
 
+          {translation && translation.engine !== "online" && (
+            <p className="mt-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-[11px] leading-5 text-amber-700">
+              {translation.engine === "offline"
+                ? "محرك الترجمة متوقف حاليًا: تُترجَم العناوين المعروفة بالقواعد فقط، وتبقى الإنجليزية المحفوظة لباقي الحقول."
+                : "محرك الترجمة غير مُعدّ (TRANSLATION_ENGINE_URL): تُترجَم العناوين المعروفة بالقواعد فقط."}
+            </p>
+          )}
+
           {translation && (
-            <div dir="ltr" className="mt-3 space-y-2 text-start text-xs text-foreground">
-              <p className="font-semibold text-foreground">{translation.titleEn || "—"}</p>
-              {translation.relationEn && <p>{translation.relationEn}</p>}
-              {translation.memorialPrefixEn && <p className="italic text-muted">{translation.memorialPrefixEn}</p>}
-              {translation.descriptionEn && <p className="leading-6 text-muted">{translation.descriptionEn}</p>}
+            <ul className="mt-3 space-y-3">
+              {TRANSLATED_FIELDS.map((key) => {
+                const info = translation.fields[key];
+                if (info.status === "none") return null;
+                return (
+                  <li key={key} className="text-xs">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-semibold text-foreground">{FIELD_LABEL_AR[key]}</span>
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${statusTone(info.status)}`}>
+                        {FIELD_STATUS_LABEL_AR[info.status]}
+                      </span>
+                    </div>
+                    <p dir="ltr" className={`mt-1 text-start leading-5 ${info.english ? "text-foreground" : "text-muted"}`}>
+                      {info.english || "— (no English yet)"}
+                    </p>
+                    {info.status === "review_recommended" && (
+                      <div className="mt-1.5 rounded-lg border border-amber-200 bg-amber-50/60 p-2">
+                        <p className="text-[11px] leading-5 text-amber-700">
+                          Review recommended — منشورة، لكنها تتضمن اسمًا مكتوبًا بالحروف اللاتينية تقديريًا أو صياغة آلية. راجعها؛
+                          وإن احتاجت تعديلًا فاكتب الإنجليزية في قسم «النص الإنجليزي».
+                        </p>
+                        {campaignId && (
+                          <button
+                            type="button"
+                            onClick={() => handleConfirmReview(key)}
+                            disabled={retrying}
+                            className="mt-1.5 rounded-md border border-border bg-background px-2 py-1 text-[11px] font-semibold text-foreground hover:bg-wash disabled:opacity-50"
+                          >
+                            تمت المراجعة — الترجمة صحيحة
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    {info.error && <p className="mt-1 text-[11px] leading-5 text-red-600">{info.error}</p>}
+                  </li>
+                );
+              })}
+              {translation.memorialPrefixEn && (
+                <li dir="ltr" className="text-start text-xs italic text-muted">
+                  {translation.memorialPrefixEn}
+                </li>
+              )}
+            </ul>
+          )}
+
+          {translation && (translation.live.title || translation.live.description) && (
+            <div className="mt-3 rounded-lg border border-border bg-wash/60 p-2.5 text-[11px] leading-5">
+              <p className="font-semibold text-foreground">نص إحسان المباشر يختلف عن المحفوظ</p>
+              {(["title", "description"] as const).map((key) => {
+                const item = translation.live[key];
+                if (!item) return null;
+                return (
+                  <p key={key} className="mt-1 text-muted">
+                    {FIELD_LABEL_AR[key]}:{" "}
+                    {item.english ? (
+                      <span dir="ltr" className="text-foreground">
+                        {item.english}
+                      </span>
+                    ) : (
+                      <span className="text-amber-700">لم يُترجَم بعد — تعرض النسخة الإنجليزية النص المحفوظ.</span>
+                    )}
+                  </p>
+                );
+              })}
             </div>
           )}
 
-          {translation?.status === "error" && (
-            <p className="mt-3 text-xs text-red-600">{translation.error}</p>
-          )}
+          {retryMessage && <p className="mt-3 text-xs leading-5 text-red-600">{retryMessage}</p>}
 
           {campaignId && (
             <button
@@ -783,11 +876,13 @@ export default function CampaignForm({
               disabled={retrying}
               className="mt-3 w-full rounded-lg border border-border py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-wash disabled:opacity-50"
             >
-              {retrying ? "جارٍ إعادة الترجمة..." : "إعادة إنشاء الترجمة"}
+              {retrying ? "جارٍ إعادة المحاولة..." : "إعادة محاولة الترجمة الناقصة"}
             </button>
           )}
-          {campaignId && (translation?.manualFields.length ?? 0) > 0 && (
-            <p className="mt-2 text-[11px] leading-5 text-muted">الحقول المكتوبة يدويًا لا تُستبدل عند إعادة الإنشاء.</p>
+          {campaignId && (
+            <p className="mt-2 text-[11px] leading-5 text-muted">
+              تُترجَم فقط الحقول الناقصة أو الفاشلة أو القديمة. الإنجليزية المكتوبة يدويًا والحالية لا تُستبدل، ولا تتغير حالة الحملة أو بياناتها.
+            </p>
           )}
         </div>
       </aside>

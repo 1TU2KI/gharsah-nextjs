@@ -9,6 +9,9 @@ const eslintConfig = defineConfig([
   globalIgnores([
     // Default ignores of eslint-config-next:
     ".next/**",
+    // Build output of the isolated local test server (see next.config.ts).
+    ".next-test/**",
+    ".next-release-check/**",
     "out/**",
     "build/**",
     "next-env.d.ts",

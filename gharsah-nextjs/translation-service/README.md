@@ -37,6 +37,7 @@ cd translation-service
 npm ci                     # or: npm install
 npm run download-model     # one-time, ~113 MB into ./.model-cache
 TRANSLATION_ENGINE_KEY=<long-random-secret> TRANSLATION_OFFLINE=1 HOST=0.0.0.0 PORT=8089 npm start
+# or, from the website folder (local development): npm run translation-engine
 ```
 
 Health check: `GET /health` → `{"ok":true,"ready":true,...}`.
@@ -66,10 +67,43 @@ TRANSLATION_ENGINE_KEY=<same secret as the service>
 
 `ANTHROPIC_API_KEY` / `ANTHROPIC_TRANSLATE_MODEL` are no longer used.
 
+## How the website uses it (and when it doesn't)
+
+The engine is only one layer (see `app/lib/translate.ts`):
+
+1. **Curated texts** (`app/lib/translation/knownTexts.ts`) — Ehsan's standard
+   description templates, hand-checked English.
+2. **Cache** (`translation_cache` table) — the same Arabic is never sent twice.
+3. **Rules + name dictionary** (`app/lib/translation/rules.ts`, `names.ts`) —
+   titles/subtitles like «صدقة جارية عن والد محمد رحمه الله». Works with this
+   service offline. A proper name missing from the dictionary is
+   transliterated and the translation is published, flagged
+   "Review recommended" in the admin. Ordinary words are never transliterated.
+4. **This engine** — descriptions and unrecognized titles. Names, @handles,
+   links and religious phrases are swapped for placeholders (`XQA`, `XQB`…)
+   first and put back afterwards; output with Arabic, lost placeholders,
+   repetition or typical filler is rejected as a failure.
+
+Each sentence is translated in its own call: batching sentences of
+different lengths made Opus-MT invent filler (e.g. "…him.th.",
+", I'm not sure.").
+
 ## Quality notes
 
-Opus-MT is a general machine translator. Fixed religious phrases are
-protected by the website, but **personal names can be mistranslated as
-ordinary words** (e.g. «أنس» → "Anse"). Admins should review the English in
-the campaign form; any English field typed by hand is kept and never
-auto-translated over (until the field is cleared).
+Opus-MT is a general machine translator. Expect correct meaning with plain
+wording for descriptions, but it can still mistranslate rare words or
+imperatives (observed: «زوروا» "visit" → "they've visited" in one phrasing).
+Names inside descriptions are only protected when they match the campaign's
+own title/subtitle subject; other names in free text may be mistranslated.
+Admins can always type English by hand; hand-typed English is never
+replaced automatically.
+
+## Local isolated testing (no production data)
+
+```sh
+node scripts/pglite-test-db.mjs ./.pglite-test 5199       # dev-only test DB
+DATABASE_URL=pglite-http://127.0.0.1:5199 GHARSAH_DIST_DIR=.next-test npx next dev -p 3100
+```
+
+`pglite-http://` is refused in production builds, on Vercel, and for any
+host other than 127.0.0.1/localhost.

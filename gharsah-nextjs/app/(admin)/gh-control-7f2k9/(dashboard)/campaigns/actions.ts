@@ -7,7 +7,11 @@ import { revalidatePublicCampaignPages, revalidatePublicNewsPages } from "@/app/
 import { ADMIN_BASE_PATH } from "@/app/lib/auth/constants";
 import { markCampaignRequestConverted } from "@/app/lib/db/requests";
 import { recordCampaignAddedEvent, recordCampaignCompletedEvent } from "@/app/lib/db/newsRepo";
-import { translateCampaignFields } from "@/app/lib/translate";
+import { campaignFieldStatuses, campaignTranslationError, resolveCampaignEnglish } from "@/app/lib/translation/campaignTranslation";
+import { isLiveReplaceable, isSettled, parseManual, parseMeta, serializeMeta, TRANSLATED_FIELDS, type FieldStatus, type TranslatedField } from "@/app/lib/translation/meta";
+import { normalizeArabic } from "@/app/lib/translation/arabic";
+import { translateCampaignText } from "@/app/lib/translate";
+import { getLiveCampaignTexts } from "@/app/lib/campaignLiveSync";
 import { campaignFormSchema, type CampaignFormFieldErrors, type CampaignFormState } from "@/app/lib/admin/campaignSchema";
 import { MEMORIAL_PREFIX_EN } from "@/app/lib/admin/memorialPrefixOptions";
 import {
@@ -22,6 +26,8 @@ import {
   updateCampaignStatus,
   isSlugTaken,
   getCampaignRowById,
+  listAllCampaignRows,
+  updateCampaignTranslation,
   regenerateCampaignShortCode,
   setCampaignShortCode,
   type CampaignInput,
@@ -87,146 +93,44 @@ type ParsedCampaignValues = {
   percent?: number;
 };
 
-type EnglishField = "title" | "relation" | "description";
-const ENGLISH_FIELDS: EnglishField[] = ["title", "relation", "description"];
-
-function parseManual(value: string | null | undefined): Set<EnglishField> {
-  return new Set(
-    (value ?? "")
-      .split(",")
-      .map((s) => s.trim())
-      .filter((s): s is EnglishField => (ENGLISH_FIELDS as string[]).includes(s)),
-  );
-}
-
 /**
- * The admin only ever submits Arabic (see campaignSchema.ts) — this is the
- * one place English gets produced, and it's the crux of the whole
- * "Arabic-only admin" feature:
+ * The admin only ever submits Arabic (see campaignSchema.ts) plus optional
+ * hand-typed English. English for title/subtitle/description is resolved by
+ * `resolveCampaignEnglish` (app/lib/translation/campaignTranslation.ts) —
+ * shared with "retry translation" — which keeps hand-typed and still-current
+ * English, translates only new/changed/failed fields, and never stores
+ * Arabic, a URL, a guess or a partial result as English. Never throws: an
+ * engine failure still saves the Arabic, keeps the previous English and
+ * records the failure for the admin UI (with a retry action).
  *
- * - title/description/relation ("العنوان الفرعي") go through
- *   `translateCampaignFields` (Gharsah's self-hosted engine). Create: every
- *   non-empty field is translated. Update: only re-translated if the Arabic
- *   changed, the English is empty, or the previous attempt failed —
- *   otherwise the current English stays untouched (the seeded campaigns
- *   carry hand-authored English that's better than a machine pass).
- *
- * - The form also has editable English fields. An English value the admin
- *   typed (different from what's saved) is stored as-is and recorded in
- *   `translation_manual`; from then on that field is never auto-translated
- *   over — not on an Arabic edit, not on "regenerate" — until the admin
- *   clears it, which hands it back to automatic translation.
- *
- * - `relation` was previously removed from admin management entirely, then
- *   reinstated as "العنوان الفرعي" — same underlying `relation_ar`/
- *   `relation_en` columns, same public combination with `@username` and
- *   the memorial-prefix phrase (see MemorialLine in CampaignCard.tsx),
- *   just editable again and now translated exactly like title/description
- *   instead of being preserved untouched.
- *
- * - `memorialPrefix` is a controlled selection (MEMORIAL_PREFIX_OPTIONS),
- *   not free text, so its English is resolved from a fixed lookup
- *   (MEMORIAL_PREFIX_EN) instead of an API call — see that file's comment
- *   for why a static map beats AI translation for a closed 3-value set.
- *   Some phrases that are no longer offered as choices are still in that
- *   map on purpose (the "ي"-prefixed forms the list used to carry, see
- *   memorialPrefixOptions.ts), so campaigns still holding one keep
- *   resolving properly. Anything genuinely absent from the map, if it's
- *   resubmitted unchanged (the edit form injects it as a selectable legacy
- *   option specifically so this can happen), keeps its existing English
- *   as-is rather than being blanked.
- *
- * Never throws: a translation failure (engine down, not configured, bad
- * output) still saves the Arabic content, keeps every previously saved
- * English value exactly as it was (a brand-new campaign gets empty English;
- * the public site shows the Arabic on screen in that case, see
- * rowToCampaign) — the Arabic source is NEVER stored as English — and
- * returns translationStatus: "error" so the admin UI shows it with a retry
- * action.
+ * `memorialPrefix` is a controlled selection resolved from a fixed lookup
+ * (MEMORIAL_PREFIX_EN), never machine-translated.
  */
-async function buildCampaignInput(
-  values: ParsedCampaignValues,
-  existing?: CampaignRow,
-  options?: { forceRetranslate?: boolean },
-): Promise<CampaignInput> {
+async function buildCampaignInput(values: ParsedCampaignValues, existing?: CampaignRow): Promise<CampaignInput> {
   const titleAr = values.titleAr.trim();
   const descriptionAr = values.descriptionAr?.trim() || "";
   const memorialPrefixAr = values.memorialPrefixAr?.trim() || "";
-
-  // Purely informational (see the column comment in client.ts) — meaningless
-  // once descriptionAr is empty, so don't persist a stale 'fetched'/'manual'
-  // tag for a field that no longer has any content.
-  const descriptionSource = descriptionAr ? (values.descriptionSource ?? existing?.description_source ?? "manual") : null;
-  // titleAr is always required/non-empty (unlike description), so this
-  // never needs the same empty-field guard.
-  const titleSource = values.titleSource ?? existing?.title_source ?? "manual";
-
   const relationAr = values.relationAr?.trim() || "";
 
-  const arabic: Record<EnglishField, string> = { title: titleAr, relation: relationAr, description: descriptionAr };
-  const previousArabic: Record<EnglishField, string | undefined> = {
-    title: existing?.title_ar,
-    relation: existing?.relation_ar,
-    description: existing ? (existing.description_ar ?? "") : undefined,
-  };
-  const previousEnglish: Record<EnglishField, string> = {
-    title: existing?.title_en ?? "",
-    relation: existing?.relation_en ?? "",
-    description: existing?.description_en ?? "",
-  };
-  const submitted: Record<EnglishField, string | undefined> = {
-    title: values.titleEn,
-    relation: values.relationEn,
-    description: values.descriptionEn,
-  };
-  const manual = parseManual(existing?.translation_manual);
-  // A previous failed attempt may have left stale English behind: retry every
-  // automatic field on the next save, not only the ones whose Arabic changed.
-  const retryPrevious = existing?.translation_status === "error";
+  // Purely informational (see the column comment in client.ts).
+  const descriptionSource = descriptionAr ? (values.descriptionSource ?? existing?.description_source ?? "manual") : null;
+  const titleSource = values.titleSource ?? existing?.title_source ?? "manual";
 
-  const english: Record<EnglishField, string> = { ...previousEnglish };
-  const toTranslate: Parameters<typeof translateCampaignFields>[0] = {};
-  for (const field of ENGLISH_FIELDS) {
-    if (!arabic[field]) {
-      english[field] = "";
-      manual.delete(field);
-      continue;
-    }
-    const typed = submitted[field]?.trim();
-    if (typed !== undefined && typed !== previousEnglish[field]) {
-      if (typed) {
-        // Hand-typed English wins, now and on every later automatic pass.
-        english[field] = typed;
-        manual.add(field);
-        continue;
-      }
-      // Cleared by the admin: back to automatic translation.
-      english[field] = "";
-      manual.delete(field);
-    }
-    if (manual.has(field)) continue;
-    const arabicChanged = previousArabic[field] !== arabic[field];
-    if (options?.forceRetranslate || retryPrevious || arabicChanged || !english[field]) {
-      toTranslate[field] = arabic[field];
-    }
-  }
+  const translation = await resolveCampaignEnglish(
+    {
+      title: { arabic: titleAr, previousArabic: existing?.title_ar, previousEnglish: existing?.title_en ?? "", submitted: values.titleEn },
+      relation: { arabic: relationAr, previousArabic: existing?.relation_ar, previousEnglish: existing?.relation_en ?? "", submitted: values.relationEn },
+      description: {
+        arabic: descriptionAr,
+        previousArabic: existing ? (existing.description_ar ?? "") : undefined,
+        previousEnglish: existing?.description_en ?? "",
+        submitted: values.descriptionEn,
+      },
+    },
+    existing,
+    { memorialPrefixAr },
+  );
 
-  const needsEngine = Object.keys(toTranslate).length > 0;
-  const result: Awaited<ReturnType<typeof translateCampaignFields>> = needsEngine
-    ? await translateCampaignFields(toTranslate)
-    : { ok: true, fields: {} };
-  if (result.ok) {
-    for (const field of ENGLISH_FIELDS) {
-      const value = result.fields[field];
-      if (value) english[field] = value;
-    }
-  }
-  // On failure `english` still holds the previously saved English (or "" for
-  // a brand-new campaign) — never the Arabic source.
-
-  const titleEn = english.title;
-  const descriptionEn = english.description;
-  const relationEn = english.relation;
   const memorialPrefixEn = resolveMemorialPrefixEn(
     memorialPrefixAr,
     existing?.memorial_prefix_ar ?? null,
@@ -241,18 +145,19 @@ async function buildCampaignInput(
     memorialPrefixEn: memorialPrefixEn || null,
     username: values.username?.trim() || null,
     relationAr,
-    relationEn,
+    relationEn: translation.english.relation,
     titleAr,
-    titleEn,
+    titleEn: translation.english.title,
     titleSource,
     status: values.status,
     descriptionAr: descriptionAr || null,
-    descriptionEn,
+    descriptionEn: translation.english.description,
     descriptionSource,
     percent: values.percent ?? null,
-    translationStatus: result.ok ? "ok" : "error",
-    translationError: result.ok ? null : result.error,
-    translationManual: manual.size > 0 ? ENGLISH_FIELDS.filter((f) => manual.has(f)).join(",") : null,
+    translationStatus: translation.translationStatus,
+    translationError: translation.translationError,
+    translationManual: translation.translationManual,
+    translationMeta: translation.translationMeta,
   };
 }
 
@@ -397,43 +302,197 @@ export async function updateCampaignAction(
   return { fieldErrors: {}, formError: null };
 }
 
-/** Re-attempts translation for title/description/relation regardless of whether they changed (bypasses buildCampaignInput's normal change-detection via `forceRetranslate`) — used after a prior failure, or to force-regenerate English without touching the Arabic. memorialPrefix is unaffected by this and resolves exactly as it would on a normal edit (from its fixed lookup). */
-export async function retryCampaignTranslationAction(id: string): Promise<{ error: string | null }> {
+/** Per-campaign result of a retry — shown in the admin after "retry all". */
+export type RetryOutcomeKind = "translated" | "review" | "pending" | "failed";
+export type RetryReportItem = {
+  id: string;
+  slug: string;
+  titleAr: string;
+  outcome: RetryOutcomeKind;
+  /** English was (re)written by this retry. */
+  changed: boolean;
+  error: string | null;
+};
+
+function outcomeOf(statuses: Record<TranslatedField, FieldStatus>, liveKind: RetryOutcomeKind | null): RetryOutcomeKind {
+  const all = TRANSLATED_FIELDS.map((f) => statuses[f]);
+  if (all.includes("pending") || liveKind === "pending") return "pending";
+  if (all.some((s) => s === "failed" || s === "missing" || s === "stale") || liveKind === "failed") return "failed";
+  if (all.includes("review_recommended") || liveKind === "review") return "review";
+  return "translated";
+}
+
+/**
+ * Re-attempts translation for ONE campaign without changing anything but its
+ * English/translation columns (never Arabic, status, order, URL…):
+ * - saved fields that are missing / pending / failed / stale are
+ *   re-translated (hand-typed and still-current English is left alone);
+ * - for Ehsan campaigns, live Arabic that differs from the saved Arabic is
+ *   translated into the shared cache, so English mode can show it.
+ */
+async function retryCampaignTranslation(row: CampaignRow): Promise<RetryReportItem> {
+  const outcome = await resolveCampaignEnglish(
+    {
+      title: { arabic: row.title_ar, previousArabic: row.title_ar, previousEnglish: row.title_en },
+      relation: { arabic: row.relation_ar, previousArabic: row.relation_ar, previousEnglish: row.relation_en },
+      description: { arabic: row.description_ar ?? "", previousArabic: row.description_ar ?? "", previousEnglish: row.description_en },
+    },
+    row,
+    { memorialPrefixAr: row.memorial_prefix_ar },
+  );
+  // Legacy markers alone ({method:"legacy"} for still-valid older English)
+  // are not a change worth writing — such rows are recognized without them.
+  const withoutLegacy = (raw: string | null) => {
+    const meta = parseMeta(raw);
+    for (const f of TRANSLATED_FIELDS) if (meta[f]?.method === "legacy" && !meta[f]?.pending) delete meta[f];
+    return serializeMeta(meta);
+  };
+  const changed =
+    outcome.english.title !== row.title_en ||
+    outcome.english.relation !== row.relation_en ||
+    outcome.english.description !== row.description_en ||
+    withoutLegacy(outcome.translationMeta) !== withoutLegacy(row.translation_meta) ||
+    outcome.translationStatus !== row.translation_status ||
+    outcome.translationError !== row.translation_error;
+  if (changed) {
+    await updateCampaignTranslation(row.id, {
+      titleEn: outcome.english.title,
+      relationEn: outcome.english.relation,
+      descriptionEn: outcome.english.description,
+      translationStatus: outcome.translationStatus,
+      translationError: outcome.translationError,
+      translationMeta: outcome.translationMeta,
+    });
+  }
+
+  let liveError: string | null = null;
+  let liveKind: RetryOutcomeKind | null = null;
+  const live = await getLiveCampaignTexts(row.platform, row.url);
+  if (live) {
+    // Only for fields whose English live sync may actually replace — never
+    // hand-typed, reviewed or hand-authored English (see isLiveReplaceable).
+    const manual = parseManual(outcome.translationManual);
+    const meta = parseMeta(outcome.translationMeta);
+    const request: { title?: string; description?: string } = {};
+    if (
+      live.title &&
+      normalizeArabic(live.title) !== normalizeArabic(row.title_ar) &&
+      isLiveReplaceable(outcome.english.title, manual.has("title"), meta.title)
+    ) {
+      request.title = live.title;
+    }
+    if (
+      live.description &&
+      normalizeArabic(live.description) !== normalizeArabic(row.description_ar ?? "") &&
+      isLiveReplaceable(outcome.english.description, manual.has("description"), meta.description)
+    ) {
+      request.description = live.description;
+    }
+    if (request.title || request.description) {
+      // Successful results are cached by translateCampaignText; nothing on the campaign row changes.
+      const results = await translateCampaignText(request, {
+        titleAr: row.title_ar,
+        relationAr: row.relation_ar,
+        memorialPrefixAr: row.memorial_prefix_ar,
+      });
+      for (const result of Object.values(results)) {
+        if (result?.state === "error") {
+          liveError ??= `نص إحسان المحدَّث: ${result.error}`;
+          liveKind = result.kind === "unavailable" ? "pending" : "failed";
+        } else if (result?.review && !liveKind) {
+          liveKind = "review";
+        }
+      }
+    }
+  }
+
+  const kind = outcomeOf(outcome.statuses, liveKind);
+  const error = kind === "pending" || kind === "failed" ? (outcome.translationError ?? liveError) : null;
+  return { id: row.id, slug: row.slug, titleAr: row.title_ar, outcome: kind, changed, error };
+}
+
+/** "إعادة محاولة الترجمة" for one campaign — see retryCampaignTranslation. */
+export async function retryCampaignTranslationAction(id: string): Promise<{ error: string | null; outcome: RetryOutcomeKind | null }> {
   const session = await requireAdminSession();
   const existing = await getCampaignRowById(id);
-  if (!existing) return { error: "الحملة غير موجودة." };
+  if (!existing) return { error: "الحملة غير موجودة.", outcome: null };
 
-  const input = await buildCampaignInput(
-    {
-      slug: existing.slug,
-      platform: existing.platform,
-      url: existing.url,
-      username: existing.username ?? undefined,
-      memorialPrefixAr: existing.memorial_prefix_ar ?? undefined,
-      relationAr: existing.relation_ar ?? undefined,
-      titleAr: existing.title_ar,
-      descriptionAr: existing.description_ar ?? undefined,
-      status: existing.status === "completed" ? "completed" : "active",
-      percent: existing.percent ?? undefined,
-    },
-    existing,
-    { forceRetranslate: true }, // automatic title/description/relation re-translate regardless of whether they "changed"; hand-typed English is still skipped
-  );
+  const result = await retryCampaignTranslation(existing);
+  if (result.changed) {
+    await logActivity({
+      action: "campaign_updated",
+      targetType: "campaign",
+      targetId: id,
+      targetLabel: existing.title_ar,
+      adminUsername: session.username,
+      details: `retried translation: ${result.outcome}`,
+    });
+  }
+  revalidatePublicCampaignPages(existing.slug);
+  return { error: result.error, outcome: result.outcome };
+}
 
-  // The form schema only knows active/completed; regenerating English must
-  // never reopen a closed campaign, so keep its real status.
-  await updateCampaignRow(id, { ...input, status: existing.status });
+/**
+ * Retries every non-archived campaign (only missing / pending / failed /
+ * stale fields, plus changed live Ehsan text, are actually translated) and
+ * reports the outcome for EACH campaign. Only translation columns are
+ * written, and only for campaigns that change. Never re-translates current
+ * or hand-typed English.
+ */
+export async function retryAllCampaignTranslationsAction(): Promise<{ items: RetryReportItem[] }> {
+  const session = await requireAdminSession();
+  const rows = (await listAllCampaignRows()).filter((row) => !row.archived_at);
+  const items: RetryReportItem[] = [];
+  for (const row of rows) items.push(await retryCampaignTranslation(row));
+  const count = (k: RetryOutcomeKind) => items.filter((i) => i.outcome === k).length;
+  await logActivity({
+    action: "campaign_updated",
+    targetType: "campaign",
+    targetId: null,
+    targetLabel: null,
+    adminUsername: session.username,
+    details: `retried all translations: ${items.filter((i) => i.changed).length} updated; translated ${count("translated")}, review ${count("review")}, pending ${count("pending")}, failed ${count("failed")}`,
+  });
+  revalidatePublicCampaignPages();
+  return { items };
+}
+
+/**
+ * Marks a published "Review recommended" field as checked by an admin (the
+ * English stays exactly as it is). Stored as "reviewed", so a later Arabic
+ * edit re-translates it normally. To change the wording, type English in
+ * the form instead (that makes it hand-typed and protected).
+ */
+export async function confirmTranslationReviewAction(id: string, field: TranslatedField): Promise<{ error: string | null }> {
+  const session = await requireAdminSession();
+  if (!TRANSLATED_FIELDS.includes(field)) return { error: "حقل غير معروف." };
+  const row = await getCampaignRowById(id);
+  if (!row) return { error: "الحملة غير موجودة." };
+  if (campaignFieldStatuses(row)[field] !== "review_recommended") {
+    return { error: "لا توجد ترجمة بانتظار المراجعة لهذا الحقل." };
+  }
+  const meta = parseMeta(row.translation_meta);
+  meta[field] = { src: meta[field]?.src, method: "reviewed" };
+  const next = { ...row, translation_meta: serializeMeta(meta) };
+  const translated = TRANSLATED_FIELDS.every((f) => isSettled(campaignFieldStatuses(next)[f]));
+  await updateCampaignTranslation(id, {
+    titleEn: row.title_en,
+    relationEn: row.relation_en,
+    descriptionEn: row.description_en,
+    translationStatus: translated ? "ok" : "error",
+    translationError: translated ? null : (campaignTranslationError(next) ?? row.translation_error),
+    translationMeta: next.translation_meta,
+  });
   await logActivity({
     action: "campaign_updated",
     targetType: "campaign",
     targetId: id,
-    targetLabel: existing.title_ar,
+    targetLabel: row.title_ar,
     adminUsername: session.username,
-    details: "retried translation",
+    details: `confirmed ${field} translation review`,
   });
-  revalidatePublicCampaignPages(existing.slug);
-
-  return { error: input.translationStatus === "error" ? (input.translationError ?? null) : null };
+  revalidatePublicCampaignPages(row.slug);
+  return { error: null };
 }
 
 export async function deleteCampaignAction(id: string): Promise<void> {

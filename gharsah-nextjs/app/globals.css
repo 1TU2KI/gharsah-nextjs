@@ -3356,17 +3356,31 @@ textarea:focus-visible,
   color: #173e36;
 }
 
-/* Story-card preview (CampaignStoryShare.tsx): a checkerboard behind the
-   transparent card PNG, the same in both themes. */
-.story-card-checker {
-  background-color: #ffffff;
-  background-image:
-    linear-gradient(45deg, #d9d9d9 25%, transparent 25%),
-    linear-gradient(-45deg, #d9d9d9 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #d9d9d9 75%),
-    linear-gradient(-45deg, transparent 75%, #d9d9d9 75%);
-  background-size: 16px 16px;
-  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+/* Campaign card copy-link circle (CampaignCopyLinkButton.tsx): a pale,
+   translucent fill with a centered link icon. Built from the theme tokens,
+   so Light/Dark Mode follow automatically; completed campaigns use the
+   completed palette. */
+.copy-link-btn {
+  background-color: color-mix(in srgb, var(--primary-50) 60%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
+  color: var(--primary);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.copy-link-btn:hover {
+  background-color: color-mix(in srgb, var(--primary-50) 85%, transparent);
+}
+.copy-link-btn--completed {
+  background-color: color-mix(in srgb, var(--completed-surface) 60%, transparent);
+  border-color: rgba(var(--completed-rgb), 0.22);
+  color: var(--completed-link);
+}
+.copy-link-btn--completed:hover {
+  background-color: color-mix(in srgb, var(--completed-surface) 85%, transparent);
+}
+.copy-link-btn:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
 }
 
 /* Dark Mode (public): black text on «تبرع الآن» (header, desktop and mobile

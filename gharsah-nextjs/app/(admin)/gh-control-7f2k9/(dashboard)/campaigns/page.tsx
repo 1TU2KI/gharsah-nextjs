@@ -5,12 +5,21 @@ import { campaignEngagement } from "@/app/lib/db/analyticsRepo";
 import { ADMIN_BASE_PATH } from "@/app/lib/auth/constants";
 import { PlusCircleIcon } from "@/app/components/admin/icons";
 import CampaignsTable from "@/app/components/admin/CampaignsTable";
+import RetryAllTranslationsButton from "@/app/components/admin/RetryAllTranslationsButton";
+import { campaignFieldStatuses } from "@/app/lib/translation/campaignTranslation";
+import { isSettled, TRANSLATED_FIELDS } from "@/app/lib/translation/meta";
 
 export const metadata: Metadata = { title: "الحملات | لوحة تحكم غرسة" };
 
 export default async function CampaignsListPage() {
   const rows = await listAllCampaignRows();
   const engagement = await campaignEngagement();
+  const translationAttention = rows
+    .filter((row) => {
+      const statuses = campaignFieldStatuses(row);
+      return !TRANSLATED_FIELDS.every((field) => isSettled(statuses[field]));
+    })
+    .map((row) => row.id);
 
   return (
     <div>
@@ -19,7 +28,8 @@ export default async function CampaignsListPage() {
           <h1 className="text-xl font-bold text-foreground">الحملات</h1>
           <p className="mt-1 text-sm text-muted">{rows.length} حملة — يظهر الترتيب هنا كما يظهر في الموقع العام</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <RetryAllTranslationsButton pendingCount={translationAttention.length} />
           <Link
             href={`${ADMIN_BASE_PATH}/statistics`}
             className="text-xs font-semibold text-primary hover:underline"
@@ -36,7 +46,7 @@ export default async function CampaignsListPage() {
         </div>
       </div>
 
-      <CampaignsTable initialRows={rows} engagement={engagement} />
+      <CampaignsTable initialRows={rows} engagement={engagement} translationAttention={translationAttention} />
     </div>
   );
 }

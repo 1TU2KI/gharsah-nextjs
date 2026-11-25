@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ARABIC_LETTERS, looksLikeUrl } from "../translation/arabic";
 
 /**
  * Shared validation for the campaign create/edit forms — one schema used by
@@ -38,7 +39,7 @@ import { z } from "zod";
  * under `/cases/active/[slug]` (see the public route) — letters/digits/
  * dashes only, so a bad slug can't produce a broken or confusing URL.
  */
-const ARABIC_LETTERS = /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]/u;
+// Shared definitions (app/lib/translation/arabic.ts), so the schema and the translator agree.
 
 function englishField(max: number) {
   return z
@@ -46,6 +47,7 @@ function englishField(max: number) {
     .trim()
     .max(max)
     .refine((value) => !ARABIC_LETTERS.test(value), { message: "اكتب النص الإنجليزي بحروف إنجليزية فقط" })
+    .refine((value) => !looksLikeUrl(value), { message: "لا يمكن أن يكون النص رابطًا" })
     .optional();
 }
 
@@ -68,7 +70,13 @@ export const campaignFormSchema = z.object({
   username: z.string().trim().max(80).optional().or(z.literal("")),
   memorialPrefixAr: z.string().trim().max(80).optional().or(z.literal("")),
   relationAr: z.string().trim().max(200).optional().or(z.literal("")),
-  titleAr: z.string().trim().min(1, "العنوان مطلوب").max(300),
+  // A pasted donation link is not a title (it was being copied into English as-is).
+  titleAr: z
+    .string()
+    .trim()
+    .min(1, "العنوان مطلوب")
+    .max(300)
+    .refine((value) => !looksLikeUrl(value), { message: "العنوان لا يمكن أن يكون رابطًا — اكتب عنوان الحملة نفسه" }),
   /** Set by CampaignForm.tsx (hidden input) whenever it populates titleAr — 'fetched' after a successful official-title fetch, 'manual' after the admin types/edits the field directly. Purely informational (see the column comment in client.ts); mirrors descriptionSource below. */
   titleSource: z.enum(["fetched", "manual"]).optional(),
   descriptionAr: z.string().trim().max(2000).optional().or(z.literal("")),

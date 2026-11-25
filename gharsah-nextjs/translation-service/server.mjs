@@ -76,13 +76,16 @@ async function translateTexts(texts) {
       out.push("");
       continue;
     }
-    const results = await translator(sentences, { max_new_tokens: 256 });
-    out.push(
-      results
-        .map((r) => String(r.translation_text ?? "").trim())
-        .join(" ")
-        .trim(),
-    );
+    // One sentence per call: batching sentences of different lengths pads
+    // the shorter ones, and Opus-MT then invents filler at their edges
+    // (observed: "…him.th.", ", I'm not sure."). Campaign texts are short,
+    // so the extra calls cost little.
+    const translated = [];
+    for (const sentence of sentences) {
+      const [result] = await translator(sentence, { max_new_tokens: 256 });
+      translated.push(String(result?.translation_text ?? "").trim());
+    }
+    out.push(translated.join(" ").trim());
   }
   return out;
 }

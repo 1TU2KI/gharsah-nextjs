@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 import { all, get, run } from "./client";
 import { toPlain, toPlainArray } from "./utils";
 import { randomShortCode, SHORT_CODE_PATTERN } from "./shortCode";
+import { parseMeta, serializeMeta } from "../translation/meta";
+import { sourceHash } from "../translation/arabic";
 
 export type CampaignStatusDb = "active" | "completed" | "closed";
 
@@ -35,6 +37,8 @@ export type CampaignRow = {
   title_source: "fetched" | "manual" | null;
   /** Comma-separated English fields typed by an admin ("title", "relation", "description") — never auto-translated over. NULL when none. */
   translation_manual: string | null;
+  /** Per-field translation provenance JSON — see app/lib/translation/meta.ts. NULL on rows saved before it existed. */
+  translation_meta: string | null;
   /** Compact public redirect code for gharsah.sa/c/<code> — see shortCode.ts. Assigned automatically on create and by a startup backfill for older rows, so this is only ever null for the brief instant between a row's INSERT and the backfill step; treat it as always-present in practice. */
   short_code: string | null;
 };
@@ -61,6 +65,8 @@ export type CampaignInput = {
   translationError?: string | null;
   /** Comma-separated admin-typed English fields (see CampaignRow.translation_manual). */
   translationManual?: string | null;
+  /** Serialized TranslationMeta (app/lib/translation/meta.ts). */
+  translationMeta?: string | null;
 };
 
 /** Every non-archived campaign, in display order — the exact set/order the public site renders. */
@@ -173,11 +179,12 @@ export async function createCampaignRow(input: CampaignInput): Promise<CampaignR
     description_source: input.descriptionSource ?? null,
     title_source: input.titleSource ?? null,
     translation_manual: input.translationManual ?? null,
+    translation_meta: input.translationMeta ?? null,
   };
   await run(
     `INSERT INTO campaigns
-      (id, slug, order_index, url, platform, memorial_prefix_ar, memorial_prefix_en, username, relation_ar, relation_en, title_ar, title_en, status, description_ar, description_en, percent, archived_at, created_at, updated_at, completed_at, translation_status, translation_error, description_source, title_source, short_code, translation_manual)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, slug, order_index, url, platform, memorial_prefix_ar, memorial_prefix_en, username, relation_ar, relation_en, title_ar, title_en, status, description_ar, description_en, percent, archived_at, created_at, updated_at, completed_at, translation_status, translation_error, description_source, title_source, short_code, translation_manual, translation_meta)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       row.id,
       row.slug,
@@ -205,6 +212,7 @@ export async function createCampaignRow(input: CampaignInput): Promise<CampaignR
       row.title_source,
       row.short_code,
       row.translation_manual,
+      row.translation_meta,
     ],
   );
   return row;
@@ -220,7 +228,7 @@ export async function updateCampaignRow(id: string, input: CampaignInput): Promi
       relation_ar = ?, relation_en = ?, title_ar = ?, title_en = ?, status = ?,
       description_ar = ?, description_en = ?, percent = ?, updated_at = ?, completed_at = ?,
       translation_status = ?, translation_error = ?, description_source = ?, title_source = ?,
-      translation_manual = ?
+      translation_manual = ?, translation_meta = ?
      WHERE id = ?`,
     [
       input.slug,
@@ -244,6 +252,7 @@ export async function updateCampaignRow(id: string, input: CampaignInput): Promi
       input.descriptionSource ?? null,
       input.titleSource ?? null,
       input.translationManual ?? null,
+      input.translationMeta ?? null,
       id,
     ],
   );
@@ -330,7 +339,37 @@ export async function duplicateCampaignRow(id: string): Promise<CampaignRow | un
     translationStatus: source.translation_status,
     translationError: source.translation_error,
     translationManual: source.translation_manual,
+    translationMeta: duplicateMeta(source),
   });
+}
+
+/** The copy's title gains «(نسخة)»/"(Copy)", so its title provenance is re-pointed at the new Arabic; everything else is copied verbatim. */
+function duplicateMeta(source: CampaignRow): string | null {
+  const meta = parseMeta(source.translation_meta);
+  if (meta.title?.src) meta.title = { ...meta.title, src: sourceHash(`${source.title_ar} (نسخة)`) };
+  return serializeMeta(meta);
+}
+
+/**
+ * Writes ONLY the English/translation columns — used by "retry translation"
+ * so it can never change a campaign's Arabic, status, order, URL or any
+ * other data (and deliberately leaves updated_at alone).
+ */
+export async function updateCampaignTranslation(
+  id: string,
+  values: {
+    titleEn: string;
+    relationEn: string;
+    descriptionEn: string;
+    translationStatus: "ok" | "error";
+    translationError: string | null;
+    translationMeta: string | null;
+  },
+): Promise<void> {
+  await run(
+    `UPDATE campaigns SET title_en = ?, relation_en = ?, description_en = ?, translation_status = ?, translation_error = ?, translation_meta = ? WHERE id = ?`,
+    [values.titleEn, values.relationEn, values.descriptionEn, values.translationStatus, values.translationError, values.translationMeta, id],
+  );
 }
 
 /** Full reorder: `orderedIds` is the complete new top-to-bottom id order (drag-and-drop drop result). Ids not present keep their relative order appended after. */
